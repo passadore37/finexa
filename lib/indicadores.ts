@@ -46,24 +46,37 @@ function calcularDespesasPorCategoria(ts: Transacao[]): DespesaPorCategoria[] {
     .sort((a, b) => b.valor - a.valor);
 }
 
+function parseDivisaoParaPerfil(divisao: string | undefined, perfil: 'leticia' | 'giovanna'): number {
+  if (!divisao || divisao === '50/50') return 0.5;
+  const partes = divisao.split('/');
+  if (partes.length === 2) {
+    const a = parseFloat(partes[0]);
+    const b = parseFloat(partes[1]);
+    if (!isNaN(a) && !isNaN(b) && (a + b) > 0) {
+      return perfil === 'leticia' ? a / (a + b) : b / (a + b);
+    }
+  }
+  return 0.5;
+}
+
 function calcularValorParaPerfil(
   t: Transacao,
   perfil: 'leticia' | 'giovanna',
   propPerfil: number
 ): number {
   if (t.recorrente) {
-    // Fixas: rateio proporcional ao salário
-    return t.valor * propPerfil;
+    // Fixas: usar proporção do campo divisao se disponível
+    const prop = t.divisao && t.divisao !== '50/50'
+      ? parseDivisaoParaPerfil(t.divisao, perfil)
+      : propPerfil;
+    return t.valor * prop;
   }
   if (t.responsavel === perfil) {
-    // Gasto próprio: valor total
     return t.valor;
   }
   if (t.divisao === '50/50' || t.responsavel === 'casal' || !t.responsavel) {
-    // Casal ou 50/50: metade
     return t.valor / 2;
   }
-  // Gasto de outra pessoa: não entra
   return 0;
 }
 

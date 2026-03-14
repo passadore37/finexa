@@ -26,6 +26,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: 'Nenhuma conta fixa configurada', inseridas: 0 });
     }
 
+    // Calcular proporção real baseada nos salários
+    const salLet = Number(planejamento.salario_leticia || 0);
+    const salGio = Number(planejamento.salario_giovanna || 0);
+    const total = salLet + salGio;
+    const propLet = total > 0 ? Math.round((salLet / total) * 100) : 50;
+    const propGio = 100 - propLet;
+    const divisaoReal = `${propLet}/${propGio}`;
+
     // Verificar quais fixas já existem este mês
     const { data: existentes } = await supabase
       .from('transacoes')
@@ -50,6 +58,7 @@ export async function POST(req: Request) {
         parcela_atual: 1,
         total_parcelas: 1,
         recorrente: true,
+        divisao: divisaoReal,
       }));
 
     if (novas.length === 0) {
