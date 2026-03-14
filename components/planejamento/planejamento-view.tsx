@@ -204,9 +204,9 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
       {/* Header com botão salvar */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Metodologia</p>
-          <h2 className="text-xl font-medium text-foreground">Planejamento mensal</h2>
-          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → contas fixas → gastos semanais</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Planejamento</p>
+          <h2 className="text-xl font-medium text-foreground">Contas Fixas</h2>
+          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → contas fixas → envelope semanal</p>
         </div>
 
         {/* Botão salvar */}
@@ -289,7 +289,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
             <input
-              type="range" min={5} max={30} step={1} value={pctInvestimento}
+              type="range" min={0} max={30} step={1} value={pctInvestimento}
               onChange={e => { setPctInvestimento(parseInt(e.target.value)); marcarAlterado(); }}
               className="flex-1 accent-primary"
             />

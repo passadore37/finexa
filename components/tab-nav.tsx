@@ -10,7 +10,7 @@ export function TabNav() {
     { label: 'Gastos', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Lançar', href: '/lancar', icon: PlusCircle },
     { label: 'Metas', href: '/metas', icon: Target },
-    { label: 'Planejamento', href: '/planejamento', icon: CalendarDays },
+    { label: 'Contas Fixas', href: '/planejamento', icon: CalendarDays },
   ];
   return (
     <div className="border-b border-border bg-card sticky top-[73px] z-40">

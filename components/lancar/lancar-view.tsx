@@ -11,7 +11,6 @@ type Status = 'idle' | 'saving' | 'success' | 'error';
 const DIVISAO_OPCOES = [
   { id: 'pessoal', label: 'Só meu', valor: 'pessoal' },
   { id: '50/50', label: '50 / 50', valor: '50/50' },
-  { id: 'casal', label: 'Do casal', valor: '50/50' },
 ];
 
 const CORES_CAT: Record<string, string> = {

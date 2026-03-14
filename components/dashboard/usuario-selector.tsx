@@ -19,12 +19,11 @@ export function UsuarioSelector({ usuarioAtivo, onChangeUsuario }: Props) {
           <button
             key={op}
             onClick={() => onChangeUsuario(op)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
               active ? 'text-white' : 'text-muted-foreground hover:text-foreground'
             }`}
             style={active ? { background: config.cor } : {}}
           >
-            <span>{config.emoji}</span>
             {config.nome}
           </button>
         );
