@@ -16,6 +16,8 @@ import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Target, Calendar } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha } from '@/lib/types';
+import { HistoricoView } from '@/components/historico/historico-view';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
 
 interface APIResponse {
   success: boolean;
@@ -28,6 +30,7 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
+  usePushNotifications(usuariaAtiva);
 
   const { data, error, isLoading, mutate } = useSWR<APIResponse>(
     '/api/financeiro',
@@ -159,6 +162,13 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <CategoriasPieChart dados={categorias.length > 0 ? categorias : indicadores.despesasPorCategoria} />
           <ParceladasPanel parceladas={indicadores.parceladas} comprometimentoTotal={indicadores.comprometimentoTotal} />
+        </div>
+
+        <div className="section-separator my-6 sm:my-8" />
+
+        {/* Histórico editável */}
+        <div className="mb-6 sm:mb-8">
+          <HistoricoView />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />

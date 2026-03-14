@@ -1,97 +1,66 @@
-# FinFlow — Deploy no Vercel com Supabase
+# Finexa — Controle Financeiro do Casal
 
-## Variáveis de ambiente necessárias
+## Deploy: finexa-one.vercel.app
+## Repo: github.com/passadore37/finexa
 
-| Variável | Onde encontrar |
+---
+
+## SQL — Execute no Supabase antes de usar as novas funcionalidades
+
+```sql
+-- Metas conjuntas
+create table if not exists metas (
+  id uuid default gen_random_uuid() primary key,
+  titulo text not null,
+  descricao text,
+  valor_alvo numeric(10,2) not null,
+  valor_atual numeric(10,2) default 0,
+  cor text default '#D4537E',
+  emoji text default '🎯',
+  data_alvo date,
+  concluida boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table metas enable row level security;
+create policy "acesso total metas" on metas for all using (true);
+
+-- Push notification subscriptions
+create table if not exists push_subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  perfil text not null,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz default now()
+);
+
+alter table push_subscriptions enable row level security;
+create policy "acesso total push" on push_subscriptions for all using (true);
+
+-- Adicionar campos de metas e reserva na tabela planejamento (se não existirem)
+alter table planejamento
+  add column if not exists reserva_atual numeric(10,2) default 0,
+  add column if not exists meta_economia_leticia numeric(10,2) default 0,
+  add column if not exists meta_economia_giovanna numeric(10,2) default 0;
+```
+
+## Variáveis de ambiente (Vercel)
+
+| Variável | Valor |
 |---|---|
-| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → service_role |
-| `SALARIO_LETICIA` | Valor em número, ex: `8500` |
-| `SALARIO_GIOVANNA` | Valor em número, ex: `6500` |
-| `META_EMERGENCIA` | ex: `30000` |
-
-## Deploy no Vercel
-
-1. Suba o projeto para o GitHub
-2. vercel.com → Add New Project → importe o repo
-3. Adicione as variáveis acima em Environment Variables
-4. Deploy
-
-## Estrutura do Supabase
-
-### Tabela `transacoes`
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| id | uuid | gerado automaticamente |
-| data | date | data da transação |
-| valor | numeric | valor em R$ |
-| categoria | text | ex: Alimentação |
-| descricao | text | ex: Supermercado |
-| perfil | text | leticia / giovanna / casal |
-| divisao | text | ex: 50/50 |
-| parcela_atual | integer | 1 se não parcelado |
-| total_parcelas | integer | 1 se não parcelado |
-| valor_total_compromisso | numeric | opcional |
-| recorrente | boolean | conta fixa? |
-
-### Tabela `configuracao_mensal`
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| mes | text | formato "Mar-26" |
-| limite | numeric | limite de gastos do mês |
-| salario_leticia | numeric | salário do mês |
-| salario_giovanna | numeric | salário do mês |
-
-## Configuração do n8n
-
-Substituir o nó "Append to Google Sheets" por HTTP Request:
-
-```
-Método: POST
-URL: https://SEU-PROJETO.supabase.co/rest/v1/transacoes
-Headers:
-  apikey: SUA_SERVICE_ROLE_KEY
-  Authorization: Bearer SUA_SERVICE_ROLE_KEY
-  Content-Type: application/json
-  Prefer: return=representation
-
-Body (JSON):
-{
-  "valor": {{ $json.valor }},
-  "categoria": "{{ $json.categoria }}",
-  "descricao": "{{ $json.descricao }}",
-  "perfil": "{{ $json.perfil }}",
-  "divisao": "{{ $json.divisao }}",
-  "parcela_atual": {{ $json.parcelaAtual }},
-  "total_parcelas": {{ $json.totalParcelas }}
-}
-```
-
-Substituir o nó "Get row(s) in sheet" por HTTP Request:
-```
-Método: GET
-URL: https://SEU-PROJETO.supabase.co/rest/v1/transacoes
-  ?select=valor,categoria,data
-  &data=gte.2026-03-01
-  &data=lte.2026-03-31
-Headers:
-  apikey: SUA_SERVICE_ROLE_KEY
-  Authorization: Bearer SUA_SERVICE_ROLE_KEY
-```
-
-## Mensagem de confirmação no Telegram (atualizar no n8n)
-
-```
-✅ Despesa registrada!
-💰 Valor: R$ {{ $json.valor }}
-📂 Categoria: {{ $json.categoria }}
-📝 Descrição: {{ $json.descricao }}
-
-📊 Ver dashboard: https://SEU-APP.vercel.app
-```
+| SUPABASE_URL | https://ajdhiuwalkupvbalwoxp.supabase.co |
+| SUPABASE_SERVICE_ROLE_KEY | eyJ... |
+| SALARIO_LETICIA | 8500 |
+| SALARIO_GIOVANNA | 6500 |
+| META_EMERGENCIA | 30000 |
+| VAPID_PUBLIC_KEY | (gerar em web-push-codelab.glitch.me) |
+| VAPID_PRIVATE_KEY | (gerar junto com a pública) |
 
 ## Rotas
-
 - `/` → redireciona para `/dashboard`
 - `/dashboard` → gastos, projeção, categorias, alertas
+- `/lancar` → formulário de lançamento nativo
 - `/planejamento` → salário → investimento → fixas → semanas
+- `/metas` → metas conjuntas e individuais

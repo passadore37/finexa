@@ -10,6 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Finexa - Controle Financeiro',
   description: 'Controle financeiro inteligente para casais',
+  manifest: '/manifest.json',
   icons: {
     icon: [
       { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
@@ -39,6 +40,13 @@ export default function RootLayout({
           </div>
         </header>
         <TabNav />
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js');
+            });
+          }
+        `}} />
         <main>{children}</main>
         <Analytics />
       </body>

@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { salario_leticia, salario_giovanna, percentual_investimento, contas_fixas } = body;
+    const { salario_leticia, salario_giovanna, percentual_investimento, contas_fixas, reserva_atual, meta_economia_leticia, meta_economia_giovanna } = body;
 
     // Buscar ID do registro existente
     const { data: existing } = await supabase
@@ -33,14 +33,14 @@ export async function POST(request: Request) {
     if (existing?.id) {
       result = await supabase
         .from('planejamento')
-        .update({ salario_leticia, salario_giovanna, percentual_investimento, contas_fixas, updated_at: new Date().toISOString() })
+        .update({ salario_leticia, salario_giovanna, percentual_investimento, contas_fixas, reserva_atual: reserva_atual || 0, meta_economia_leticia: meta_economia_leticia || 0, meta_economia_giovanna: meta_economia_giovanna || 0, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
         .single();
     } else {
       result = await supabase
         .from('planejamento')
-        .insert({ salario_leticia, salario_giovanna, percentual_investimento, contas_fixas })
+        .insert({ salario_leticia, salario_giovanna, percentual_investimento, contas_fixas, reserva_atual: reserva_atual || 0, meta_economia_leticia: meta_economia_leticia || 0, meta_economia_giovanna: meta_economia_giovanna || 0 })
         .select()
         .single();
     }

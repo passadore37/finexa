@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CalendarDays, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, PlusCircle, Target } from 'lucide-react';
 
 export function TabNav() {
   const pathname = usePathname();
   const tabs = [
     { label: 'Gastos', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Lançar', href: '/lancar', icon: PlusCircle },
+    { label: 'Metas', href: '/metas', icon: Target },
     { label: 'Planejamento', href: '/planejamento', icon: CalendarDays },
   ];
   return (
