@@ -131,30 +131,9 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
     });
   }
 
-  // Contas fixas como despesas recorrentes (se não existirem nas transações reais)
-  const descricoesExistentes = new Set(
-    transacoes
-      .filter(t => {
-        const d = new Date(t.data);
-        return t.tipo === 'despesa' && t.recorrente &&
-          d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
-      })
-      .map(t => t.descricao.toLowerCase().trim())
-  );
-
-  contasFixasConfig.forEach((conta, i) => {
-    if (!descricoesExistentes.has(conta.descricao.toLowerCase().trim())) {
-      transacoes.push({
-        id: `fixo-${i}`,
-        data: new Date(hoje.getFullYear(), hoje.getMonth(), 5),
-        descricao: conta.descricao,
-        categoria: conta.categoria,
-        tipo: 'despesa',
-        valor: Number(conta.valor),
-        recorrente: true,
-      });
-    }
-  });
+  // Nota: contas fixas do planejamento NÃO são injetadas como transações sintéticas.
+  // Elas são usadas apenas para cálculo de metodologia e rateio por perfil.
+  // As transações reais vêm do Supabase (lançadas via n8n ou formulário).
 
   return {
     transacoes,
