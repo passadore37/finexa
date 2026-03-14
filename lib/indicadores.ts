@@ -46,19 +46,44 @@ function calcularDespesasPorCategoria(ts: Transacao[]): DespesaPorCategoria[] {
     .sort((a, b) => b.valor - a.valor);
 }
 
-function calcularDespesasPorCategoriaPerfil(ts: Transacao[], perfil: 'leticia' | 'giovanna'): DespesaPorCategoria[] {
+function calcularDespesasPorCategoriaPerfil(
+  ts: Transacao[],
+  perfil: 'leticia' | 'giovanna',
+  salarioLeticia: number,
+  salarioGiovanna: number
+): DespesaPorCategoria[] {
   const hoje = new Date();
+  const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
+  const propPerfil = prop[perfil];
+
   const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
-    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel);
+    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.recorrente);
 
   const porCat: Record<string, number> = {};
   let total = 0;
+
   despesas.forEach(t => {
-    const val = (t.responsavel === 'casal' || !t.responsavel) && t.divisao === '50/50' ? t.valor / 2 : t.valor;
+    let val: number;
+
+    if (t.recorrente) {
+      // Fixas: rateio proporcional ao salário
+      val = t.valor * propPerfil;
+    } else if (t.responsavel === perfil) {
+      // Gasto próprio: valor total
+      val = t.valor;
+    } else if (t.divisao === '50/50') {
+      // Casal 50/50: metade
+      val = t.valor / 2;
+    } else {
+      // Casal sem divisão definida: proporcional
+      val = t.valor * propPerfil;
+    }
+
     porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
     total += val;
   });
+
   return Object.entries(porCat)
     .map(([categoria, valor]) => ({ categoria, valor, percentual: total > 0 ? valor / total * 100 : 0 }))
     .sort((a, b) => b.valor - a.valor);
@@ -204,7 +229,7 @@ function calcularIndicadoresPerfil(
     saldoLivre, comprometimento, envelopeSemanal,
     metaEconomia: salario * 0.2, // meta padrão 20%
     progressoMeta: salario > 0 ? (saldoLivre / (salario * 0.2)) * 100 : 0,
-    categorias: calcularDespesasPorCategoriaPerfil(ts, perfil),
+    categorias: calcularDespesasPorCategoriaPerfil(ts, perfil, salarioLeticia, salarioGiovanna),
   };
 }
 
