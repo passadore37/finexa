@@ -9,9 +9,9 @@ import { PERFIL_CONFIG } from '@/lib/perfil-config';
 type Status = 'idle' | 'saving' | 'success' | 'error';
 
 const DIVISAO_OPCOES = [
-  { id: 'meu', label: 'Só meu' },
-  { id: '50/50', label: '50 / 50' },
-  { id: 'casal', label: 'Do casal' },
+  { id: 'pessoal', label: 'Só meu', valor: 'pessoal' },
+  { id: '50/50', label: '50 / 50', valor: '50/50' },
+  { id: 'casal', label: 'Do casal', valor: '50/50' },
 ];
 
 const CORES_CAT: Record<string, string> = {
@@ -150,9 +150,9 @@ export function LancarView() {
           {DIVISAO_OPCOES.map(op => (
             <button
               key={op.id}
-              onClick={() => setDivisao(op.id)}
+              onClick={() => setDivisao(op.valor)}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border"
-              style={divisao === op.id
+              style={divisao === op.valor
                 ? { background: perfilConfig.cor, color: 'white', borderColor: perfilConfig.cor }
                 : { background: 'transparent', color: 'var(--muted-foreground)', borderColor: 'rgba(255,255,255,0.06)' }
               }

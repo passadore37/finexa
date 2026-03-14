@@ -46,6 +46,27 @@ function calcularDespesasPorCategoria(ts: Transacao[]): DespesaPorCategoria[] {
     .sort((a, b) => b.valor - a.valor);
 }
 
+function calcularValorParaPerfil(
+  t: Transacao,
+  perfil: 'leticia' | 'giovanna',
+  propPerfil: number
+): number {
+  if (t.recorrente) {
+    // Fixas: rateio proporcional ao salário
+    return t.valor * propPerfil;
+  }
+  if (t.responsavel === perfil) {
+    // Gasto próprio: valor total
+    return t.valor;
+  }
+  if (t.divisao === '50/50' || t.responsavel === 'casal' || !t.responsavel) {
+    // Casal ou 50/50: metade
+    return t.valor / 2;
+  }
+  // Gasto de outra pessoa: não entra
+  return 0;
+}
+
 function calcularDespesasPorCategoriaPerfil(
   ts: Transacao[],
   perfil: 'leticia' | 'giovanna',
@@ -58,28 +79,20 @@ function calcularDespesasPorCategoriaPerfil(
 
   const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
-    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.recorrente);
+    .filter(t =>
+      t.recorrente ||
+      t.responsavel === perfil ||
+      t.responsavel === 'casal' ||
+      !t.responsavel ||
+      t.divisao === '50/50'
+    );
 
   const porCat: Record<string, number> = {};
   let total = 0;
 
   despesas.forEach(t => {
-    let val: number;
-
-    if (t.recorrente) {
-      // Fixas: rateio proporcional ao salário
-      val = t.valor * propPerfil;
-    } else if (t.responsavel === perfil) {
-      // Gasto próprio: valor total
-      val = t.valor;
-    } else if (t.divisao === '50/50') {
-      // Casal 50/50: metade
-      val = t.valor / 2;
-    } else {
-      // Casal sem divisão definida: proporcional
-      val = t.valor * propPerfil;
-    }
-
+    const val = calcularValorParaPerfil(t, perfil, propPerfil);
+    if (val <= 0) return;
     porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
     total += val;
   });
@@ -207,11 +220,13 @@ function calcularIndicadoresPerfil(
   // Gastos variáveis do perfil no mês
   const gastosMes = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
-    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel)
-    .reduce((acc, t) => {
-      const val = (t.responsavel === 'casal' || !t.responsavel) && t.divisao === '50/50' ? t.valor / 2 : t.valor;
-      return acc + val;
-    }, 0);
+    .filter(t =>
+      t.responsavel === perfil ||
+      t.responsavel === 'casal' ||
+      !t.responsavel ||
+      t.divisao === '50/50'
+    )
+    .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
 
   const investimento = salario * (pctInvestimento / 100);
   const saldoLivre = salario - investimento - parteFixas - gastosMes;
