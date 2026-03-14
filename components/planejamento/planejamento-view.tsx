@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check, X, Info, Save, Loader2 } from 'lucide-react';
+import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check, X, Info, Save, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Props {
@@ -64,6 +64,8 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
   const [novoValor, setNovoValor] = useState('');
   const [adicionando, setAdicionando] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [importandoFixas, setImportandoFixas] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [alterado, setAlterado] = useState(false);
 
@@ -102,6 +104,27 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
 
   // Marcar como alterado quando qualquer valor muda
   const marcarAlterado = () => setAlterado(true);
+
+  async function importarFixasMes() {
+    setImportandoFixas(true);
+    setImportMsg('');
+    try {
+      const secret = process.env.NEXT_PUBLIC_CRON_SECRET || '';
+      const res = await fetch(`/api/fixas-mensais?secret=${secret}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setImportMsg(data.message);
+        window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
+      } else {
+        setImportMsg('Erro ao importar');
+      }
+    } catch {
+      setImportMsg('Erro ao importar');
+    } finally {
+      setImportandoFixas(false);
+      setTimeout(() => setImportMsg(''), 4000);
+    }
+  }
 
   async function salvar() {
     setSaveStatus('saving');
@@ -317,6 +340,26 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
               )}
             </div>
           ))}
+
+          {/* Botão importar fixas do mês */}
+          <div className="flex items-center gap-3 py-1">
+            <button
+              onClick={importarFixasMes}
+              disabled={importandoFixas}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            >
+              {importandoFixas
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <RefreshCw className="h-3 w-3" />
+              }
+              Lançar fixas deste mês no dashboard
+            </button>
+            {importMsg && (
+              <span className={`text-xs ${importMsg.includes('Erro') ? 'text-[#E24B4A]' : 'text-[#3B6D11]'}`}>
+                {importMsg}
+              </span>
+            )}
+          </div>
 
           {adicionando ? (
             <div className="flex gap-2 pt-1">
