@@ -10,23 +10,23 @@ export const PERFIL_CONFIG: Record<Perfil, {
   emoji: string;
 }> = {
   leticia: {
-    cor: '#378ADD',
-    corSecundaria: '#1A5FA8',
-    corBg: 'rgba(55,138,221,0.1)',
+    cor: '#82a1fd',
+    corSecundaria: '#5330ff',
+    corBg: 'rgba(130,161,253,0.1)',
     nome: 'Letícia',
     emoji: '',
   },
   giovanna: {
-    cor: '#D4537E',
-    corSecundaria: '#99294F',
-    corBg: 'rgba(212,83,126,0.1)',
+    cor: '#ff64ca',
+    corSecundaria: '#de7ed1',
+    corBg: 'rgba(255,100,202,0.1)',
     nome: 'Giovanna',
     emoji: '',
   },
   casal: {
-    cor: '#EF9F27',
-    corSecundaria: '#B8770F',
-    corBg: 'rgba(239,159,39,0.1)',
+    cor: '#ffa857',
+    corSecundaria: '#e08020',
+    corBg: 'rgba(255,168,87,0.1)',
     nome: 'Geral',
     emoji: '',
   },

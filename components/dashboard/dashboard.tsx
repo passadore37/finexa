@@ -107,9 +107,9 @@ export function Dashboard() {
 
         {/* KPIs principais */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <KPICard titulo="Saldo do Mês" valor={saldo} variacao={indicadores.variacaoSaldo} icone={Wallet} corIcone="text-primary" corBarra="var(--primary)" />
-          <KPICard titulo="Receitas" valor={receitas} variacao={indicadores.variacaoReceitas} icone={TrendingUp} corIcone="text-[#3B6D11]" corBarra="#3B6D11" />
-          <KPICard titulo="Despesas" valor={despesas} variacao={indicadores.variacaoDespesas} icone={TrendingDown} corIcone="text-[#A32D2D]" corBarra="#A32D2D" />
+          <KPICard titulo="Saldo do Mês" valor={saldo} variacao={indicadores.variacaoSaldo} icone={Wallet} corIcone="text-primary" corBarra="var(--indigo)" />
+          <KPICard titulo="Receitas" valor={receitas} variacao={indicadores.variacaoReceitas} icone={TrendingUp} corIcone="text-teal" corBarra="var(--teal)" />
+          <KPICard titulo="Despesas" valor={despesas} variacao={indicadores.variacaoDespesas} icone={TrendingDown} corIcone="text-magenta" corBarra="var(--magenta)" />
           <KPICard
             titulo="Saldo Livre"
             valor={saldoLivre}

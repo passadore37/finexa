@@ -1,11 +1,11 @@
 {
   "name": "Finexa",
   "short_name": "Finexa",
-  "description": "Controle financeiro do casal",
+  "description": "Seu dinheiro, com clareza.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0F0F0F",
-  "theme_color": "#D4537E",
+  "background_color": "#ffffff",
+  "theme_color": "#5330ff",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-light-32x32.png", "sizes": "32x32", "type": "image/png" },
