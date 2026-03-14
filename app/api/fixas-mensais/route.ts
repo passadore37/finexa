@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    // Validar secret para evitar chamadas não autorizadas
+    // Secret opcional — obrigatório apenas para chamadas externas (cron)
     const { searchParams } = new URL(req.url);
     const secret = searchParams.get('secret');
-    if (secret !== process.env.CRON_SECRET) {
+    if (secret && secret !== process.env.CRON_SECRET) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -109,8 +109,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
     setImportandoFixas(true);
     setImportMsg('');
     try {
-      const secret = process.env.NEXT_PUBLIC_CRON_SECRET || '';
-      const res = await fetch(`/api/fixas-mensais?secret=${secret}`, { method: 'POST' });
+      const res = await fetch('/api/fixas-mensais', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setImportMsg(data.message);
