@@ -251,8 +251,8 @@ function calcularIndicadoresPerfil(
   const parteFixas = contasFixasConfig.reduce((acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna), 0);
 
   // Parte proporcional das parceladas (apenas o que cabe ao perfil)
-  const parceladas = calcularParceladas(ts, hoje, perfil, proporcaoRenda);
-  const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela, 0);
+  const parceladasPerfil = calcularParceladas(ts, hoje, perfil, proporcaoRenda);
+  const parteParceladas = parceladasPerfil.reduce((acc, p) => acc + p.valorParcela, 0);
 
   // Gastos variáveis do perfil no mês
   const gastosMes = filtrarPorMes(ts, mes, ano)
