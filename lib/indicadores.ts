@@ -34,13 +34,30 @@ export function calcularEvolucaoMensal(ts: Transacao[]): EvolucaoMensal[] {
   });
 }
 
-function calcularDespesasPorCategoria(ts: Transacao[]): DespesaPorCategoria[] {
+function calcularDespesasPorCategoria(
+  ts: Transacao[], 
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
+): DespesaPorCategoria[] {
   const hoje = new Date();
   const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário');
+  
   const porCat: Record<string, number> = {};
   let total = 0;
-  despesas.forEach(t => { porCat[t.categoria] = (porCat[t.categoria] || 0) + t.valor; total += t.valor; });
+  
+  // Adicionar despesas variáveis
+  despesas.forEach(t => { 
+    porCat[t.categoria] = (porCat[t.categoria] || 0) + t.valor; 
+    total += t.valor; 
+  });
+
+  // Adicionar Contas Fixas (Total Geral)
+  const totalFixas = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
+  if (totalFixas > 0) {
+    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + totalFixas;
+    total += totalFixas;
+  }
+
   return Object.entries(porCat)
     .map(([categoria, valor]) => ({ categoria, valor, percentual: total > 0 ? valor / total * 100 : 0 }))
     .sort((a, b) => b.valor - a.valor);
@@ -66,7 +83,6 @@ function calcularValorParaPerfil(
   propPerfil: number
 ): number {
   if (t.recorrente) {
-    // Fixas: usar proporção do salário (ou a divisão explícita, se for um ratio válido)
     const prop = parseDivisaoParaPerfil(t.divisao, perfil);
     return t.valor * (prop ?? propPerfil);
   }
@@ -83,7 +99,8 @@ function calcularDespesasPorCategoriaPerfil(
   ts: Transacao[],
   perfil: 'leticia' | 'giovanna',
   salarioLeticia: number,
-  salarioGiovanna: number
+  salarioGiovanna: number,
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
 ): DespesaPorCategoria[] {
   const hoje = new Date();
   const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
@@ -100,12 +117,20 @@ function calcularDespesasPorCategoriaPerfil(
   const porCat: Record<string, number> = {};
   let total = 0;
 
+  // Despesas variáveis do perfil
   despesas.forEach(t => {
     const val = calcularValorParaPerfil(t, perfil, propPerfil);
     if (val <= 0) return;
     porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
     total += val;
   });
+
+  // Adicionar Contas Fixas Proporcionalizadas
+  const parteFixas = contasFixasConfig.reduce((acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna), 0);
+  if (parteFixas > 0) {
+    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + parteFixas;
+    total += parteFixas;
+  }
 
   return Object.entries(porCat)
     .map(([categoria, valor]) => ({ categoria, valor, percentual: total > 0 ? valor / total * 100 : 0 }))
@@ -279,7 +304,7 @@ function calcularIndicadoresPerfil(
     saldoLivre, comprometimento, envelopeSemanal,
     metaEconomia: salario * 0.2, // meta padrão 20%
     progressoMeta: salario > 0 ? (saldoLivre / (salario * 0.2)) * 100 : 0,
-    categorias: calcularDespesasPorCategoriaPerfil(ts, perfil, salarioLeticia, salarioGiovanna),
+    categorias: calcularDespesasPorCategoriaPerfil(ts, perfil, salarioLeticia, salarioGiovanna, contasFixasConfig),
   };
 }
 
@@ -350,7 +375,7 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
   const variacaoReceitas = totaisAnterior.receitas > 0 ? ((totaisAtual.receitas - totaisAnterior.receitas) / totaisAnterior.receitas) * 100 : 0;
   const variacaoDespesas = totaisAnterior.despesas > 0 ? ((totaisAtual.despesas - totaisAnterior.despesas) / totaisAnterior.despesas) * 100 : 0;
 
-  const despesasPorCategoria = calcularDespesasPorCategoria(transacoes);
+  const despesasPorCategoria = calcularDespesasPorCategoria(transacoes, contasFixasConfig);
   const catsAnt = (() => {
     const d = tsMesAnt.filter(t => t.tipo === 'despesa');
     const m: Record<string, number> = {}; let total = 0;

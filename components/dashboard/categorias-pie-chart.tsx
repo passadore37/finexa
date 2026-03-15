@@ -22,6 +22,7 @@ const CORES_CATEGORIA: Record<string, string> = {
   'Gatos': '#C4843E',
   'Serviços': '#5A7A52',
   'Viagem': '#2D8A7B',
+  'Contas Fixas': '#7B5EA7',
   'Outros': '#666666',
 };
 
