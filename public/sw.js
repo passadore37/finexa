@@ -33,7 +33,7 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title || 'Finexa', {
       body: data.body || '',
-      icon: '/apple-icon.png',
+      icon: '/apple-icon.svg',
       badge: '/icon-light-32x32.png',
       data: data.url || '/dashboard',
       vibrate: [200, 100, 200],

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { TabNav } from '@/components/tab-nav'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Logo } from '@/components/logo'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
       { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
     ],
   },
   manifest: '/manifest.json',
@@ -43,9 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
               {/* Logo */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-lg" style={{ background: 'var(--indigo)', border: '2px solid rgba(130,161,253,0.4)' }}>
-                  F
-                </div>
+                <Logo />
                 <div>
                   <h1 className="text-base font-bold text-foreground leading-none tracking-tight">Finexa</h1>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Seu dinheiro, com clareza.</p>
