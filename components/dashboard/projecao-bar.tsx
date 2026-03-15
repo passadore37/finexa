@@ -1,6 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 import type { DadosProjecaoBar } from '@/lib/types';
 
 interface ProjecaoBarProps {
@@ -8,7 +11,8 @@ interface ProjecaoBarProps {
 }
 
 export function ProjecaoBar({ dados }: ProjecaoBarProps) {
-  const { gastoAtual, projecao, limite } = dados;
+  const router = useRouter();
+  const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
   const fmtCompact = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(v);
@@ -26,11 +30,24 @@ export function ProjecaoBar({ dados }: ProjecaoBarProps) {
 
   return (
     <Card className="border border-border bg-card card-hover">
-      <CardHeader className="pb-2">
-        <CardTitle className="label-uppercase text-muted-foreground">Projeção de Gastos do Mês</CardTitle>
-        <p className="text-[10px] text-muted-foreground mt-1">
-          Ritmo diário × dias restantes — projeção linear
-        </p>
+      <CardHeader className="pb-2 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="label-uppercase text-muted-foreground">Projeção de Gastos do Mês</CardTitle>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Ritmo diário × dias restantes — projeção linear
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/planejamento')}
+            className="whitespace-nowrap"
+          >
+            Ajustar limite
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
 
@@ -98,7 +115,14 @@ export function ProjecaoBar({ dados }: ProjecaoBarProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 rounded-lg bg-secondary/50 border border-border">
             <p className="label-uppercase text-muted-foreground mb-1">Gasto atual</p>
-            <p className="text-xl font-medium tabular-nums" style={{ color: corGasto }}>{fmt(gastoAtual)}</p>
+            <p className="text-xl font-medium tabular-nums" style={{ color: corGasto }}>
+              {fmt(gastoAtualComFixas ?? gastoAtual)}
+            </p>
+            {gastoAtualComFixas !== undefined && gastoAtualComFixas !== gastoAtual && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Inclui fixas: {fmt(gastoAtualComFixas - gastoAtual)}
+              </p>
+            )}
             <p className="text-[10px] text-muted-foreground mt-1">{Math.round(pctGasto)}% do limite</p>
           </div>
           <div className={`p-3 rounded-lg border ${overflow ? 'bg-[#A32D2D]/10 border-[#A32D2D]/30' : 'bg-secondary/50 border-border'}`}>

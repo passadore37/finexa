@@ -87,6 +87,7 @@ export interface Sugestao {
 
 export interface DadosProjecaoBar {
   gastoAtual: number;
+  gastoAtualComFixas?: number;
   projecao: number;
   limite: number;
 }

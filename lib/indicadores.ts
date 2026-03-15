@@ -25,7 +25,7 @@ function calcularTotais(ts: Transacao[]) {
   );
 }
 
-function calcularEvolucaoMensal(ts: Transacao[]): EvolucaoMensal[] {
+export function calcularEvolucaoMensal(ts: Transacao[]): EvolucaoMensal[] {
   const hoje = new Date();
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
@@ -112,19 +112,38 @@ function calcularDespesasPorCategoriaPerfil(
     .sort((a, b) => b.valor - a.valor);
 }
 
-function calcularParceladas(ts: Transacao[], mesAtual: Date): Parcelada[] {
-  return ts
+export function calcularParceladas(
+  ts: Transacao[],
+  mesAtual: Date,
+  perfil?: 'leticia' | 'giovanna',
+  propPerfil?: number,
+): Parcelada[] {
+  const transacoes = ts
     .filter(t => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1)
+    .filter(t => {
+      if (!perfil) return true;
+      return t.responsavel === perfil || t.divisao === '50/50';
+    });
+
+  return transacoes
     .map(t => {
       const parcelaAtual = t.parcelaAtual || 1;
       const totalParcelas = t.totalParcelas || 1;
       const parcelasRestantes = totalParcelas - parcelaAtual;
       const fim = new Date(mesAtual);
       fim.setMonth(fim.getMonth() + parcelasRestantes);
+      const valorParcela = perfil
+        ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5)
+        : t.valor;
+      const comprometimentoFuturo = valorParcela * parcelasRestantes;
       return {
-        descricao: t.descricao, categoria: t.categoria, valorParcela: t.valor,
-        parcelaAtual, totalParcelas, parcelasRestantes,
-        comprometimentoFuturo: t.valor * parcelasRestantes,
+        descricao: t.descricao,
+        categoria: t.categoria,
+        valorParcela,
+        parcelaAtual,
+        totalParcelas,
+        parcelasRestantes,
+        comprometimentoFuturo,
         mesTermino: `${MESES[fim.getMonth()]}/${fim.getFullYear()}`,
       };
     })
@@ -132,14 +151,21 @@ function calcularParceladas(ts: Transacao[], mesAtual: Date): Parcelada[] {
     .sort((a, b) => b.comprometimentoFuturo - a.comprometimentoFuturo);
 }
 
-function calcularProjecaoBar(ts: Transacao[], mes: number, ano: number, limite: number): DadosProjecaoBar {
-  const despesas = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa');
-  const gastoAtual = despesas.reduce((acc, t) => acc + t.valor, 0);
+export export function calcularProjecaoBar(
+  ts: Transacao[],
+  mes: number,
+  ano: number,
+  limite: number,
+  fixas = 0,
+): DadosProjecaoBar {
+  const despesasVariaveis = filtrarPorMes(ts, mes, ano)
+    .filter(t => t.tipo === 'despesa' && !t.recorrente);
+  const gastoAtual = despesasVariaveis.reduce((acc, t) => acc + t.valor, 0);
   const hoje = new Date();
   const diaAtual = Math.max(hoje.getDate(), 1);
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const projecao = gastoAtual > 0 ? (gastoAtual / diaAtual) * diasNoMes : 0;
-  return { gastoAtual, projecao, limite };
+  return { gastoAtual, gastoAtualComFixas: gastoAtual + fixas, projecao, limite };
 }
 
 function calcularSemanasDoMes(ano: number, mes: number) {
@@ -224,16 +250,15 @@ function calcularIndicadoresPerfil(
   // Parte proporcional das fixas
   const parteFixas = contasFixasConfig.reduce((acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna), 0);
 
-  // Parte proporcional das parceladas (50/50 dividido)
-  const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela * 0.5, 0);
+  // Parte proporcional das parceladas (apenas o que cabe ao perfil)
+  const parceladas = calcularParceladas(ts, hoje, perfil, proporcaoRenda);
+  const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela, 0);
 
   // Gastos variáveis do perfil no mês
   const gastosMes = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
     .filter(t =>
       t.responsavel === perfil ||
-      t.responsavel === 'casal' ||
-      !t.responsavel ||
       t.divisao === '50/50'
     )
     .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
@@ -335,7 +360,7 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
 
   const evolucaoMensal = calcularEvolucaoMensal(transacoes);
   const projecao = calcularProjecao(transacoes);
-  const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal);
+  const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal, contasFixasTotal);
   const parceladas = calcularParceladas(transacoes, hoje);
   const comprometimentoTotal = parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0);
   const metodologia = calcularMetodologia(transacoes, mes, ano, percentualInvestimento, contasFixasConfig);

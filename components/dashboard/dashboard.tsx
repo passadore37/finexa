@@ -15,9 +15,10 @@ import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Target, Calendar } from 'lucide-react';
-import type { IndicadoresFinanceiros, DadosPlanilha } from '@/lib/types';
+import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
 import { HistoricoView } from '@/components/historico/historico-view';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
+import { calcularEvolucaoMensal, calcularProjecaoBar, calcularParceladas } from '@/lib/indicadores';
 
 interface APIResponse {
   success: boolean;
@@ -82,6 +83,30 @@ export function Dashboard() {
   const saldo = receitas - despesas;
   const saldoLivre = isPerfil ? perfilDados!.saldoLivre : indicadores.metodologia.saldoLivre;
   const categorias = isPerfil ? perfilDados!.categorias : indicadores.despesasPorCategoria;
+
+  const transacoesVisiveis: Transacao[] = isPerfil
+    ? data.dados.transacoes.filter(t => {
+        if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
+        return t.recorrente || t.responsavel === usuariaAtiva || t.divisao === '50/50';
+      })
+    : data.dados.transacoes;
+
+  const evolucaoMensal = isPerfil
+    ? calcularEvolucaoMensal(transacoesVisiveis)
+    : indicadores.evolucaoMensal;
+
+  const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
+  const projecaoBar = isPerfil
+    ? calcularProjecaoBar(transacoesVisiveis, new Date().getMonth(), new Date().getFullYear(), indicadores.limiteMensal, fixas)
+    : indicadores.projecaoBar;
+
+  const parceladas = isPerfil
+    ? calcularParceladas(transacoesVisiveis, new Date(), usuariaAtiva, perfilDados!.proporcaoRenda)
+    : indicadores.parceladas;
+
+  const comprometimentoTotal = isPerfil
+    ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)
+    : indicadores.comprometimentoTotal;
 
   const semRestantes = indicadores.metodologia.semanas.length - indicadores.metodologia.semanaAtual + 1;
   const sobraAcumulada = indicadores.metodologia.semanas
@@ -152,8 +177,8 @@ export function Dashboard() {
 
         {/* Projeção + Evolução */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <ProjecaoBar dados={indicadores.projecaoBar} />
-          <EvolucaoChart dados={indicadores.evolucaoMensal} />
+          <ProjecaoBar dados={projecaoBar} />
+          <EvolucaoChart dados={evolucaoMensal} />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
@@ -161,7 +186,7 @@ export function Dashboard() {
         {/* Categorias + Parceladas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <CategoriasPieChart dados={categorias} />
-          <ParceladasPanel parceladas={indicadores.parceladas} comprometimentoTotal={indicadores.comprometimentoTotal} />
+          <ParceladasPanel parceladas={parceladas} comprometimentoTotal={comprometimentoTotal} />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />

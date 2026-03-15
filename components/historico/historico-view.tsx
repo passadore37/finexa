@@ -152,6 +152,7 @@ export function HistoricoView() {
                       <span className="text-[10px] text-muted-foreground">{new Date(t.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
                       {t.perfil && t.perfil !== 'casal' && <span className="text-[10px] text-muted-foreground">{t.perfil}</span>}
                       {t.divisao === '50/50' && <span className="text-[10px] text-muted-foreground">50/50</span>}
+                      {t.divisao === 'pessoal' && <span className="text-[10px] text-muted-foreground">Pessoal</span>}
                     </div>
                   </div>
                   <span className="text-sm font-medium tabular-nums text-foreground flex-shrink-0">{fmt(t.valor)}</span>
