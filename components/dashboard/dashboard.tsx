@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardSkeleton } from './dashboard-skeleton';
 import { KPICard } from './kpi-card';
 import { ProjecaoBar } from './projecao-bar';
@@ -18,7 +18,14 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Ta
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
 import { HistoricoView } from '@/components/historico/historico-view';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
-import { calcularEvolucaoMensal, calcularProjecaoBar, calcularParceladas } from '@/lib/indicadores';
+import {
+  calcularEvolucaoMensal,
+  calcularProjecaoBar,
+  calcularParceladas,
+  calcularDespesasPorCategoriaPerfilMes,
+  gerarAlertas,
+  gerarSugestoes,
+} from '@/lib/indicadores';
 
 interface APIResponse {
   success: boolean;
@@ -95,28 +102,86 @@ export function Dashboard() {
     ? calcularEvolucaoMensal(transacoesVisiveis)
     : indicadores.evolucaoMensal;
 
+  const [limiteCustom, setLimiteCustom] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isPerfil) {
+      setLimiteCustom(null);
+      return;
+    }
+
+    const key = `finexa-limite-${usuariaAtiva}`;
+    const stored = localStorage.getItem(key);
+    setLimiteCustom(stored ? Number(stored) : null);
+  }, [isPerfil, usuariaAtiva]);
+
+  const limite = limiteCustom ?? indicadores.limiteMensal;
+  const atualizarLimite = (novoLimite: number) => {
+    const key = `finexa-limite-${usuariaAtiva}`;
+    localStorage.setItem(key, novoLimite.toString());
+    setLimiteCustom(novoLimite);
+  };
+
   const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const totalCategorias = categorias.reduce((acc, item) => acc + item.valor, 0);
 
+  const hoje = new Date();
+  const mes = hoje.getMonth();
+  const ano = hoje.getFullYear();
+  const mesAnt = mes === 0 ? 11 : mes - 1;
+  const anoAnt = mes === 0 ? ano - 1 : ano;
+
   const projecaoBar = isPerfil
-    ? {
-        ...calcularProjecaoBar(
-          transacoesVisiveis,
-          new Date().getMonth(),
-          new Date().getFullYear(),
-          indicadores.limiteMensal,
-          fixas,
-          usuariaAtiva as 'leticia' | 'giovanna',
-          perfilDados!.proporcaoRenda,
-        ),
-        gastoAtual: totalCategorias,
-        gastoAtualComFixas: totalCategorias,
-      }
-    : indicadores.projecaoBar;
+    ? calcularProjecaoBar(
+        transacoesVisiveis,
+        mes,
+        ano,
+        limite,
+        fixas,
+        usuariaAtiva as 'leticia' | 'giovanna',
+        perfilDados!.proporcaoRenda,
+        totalCategorias,
+      )
+    : calcularProjecaoBar(
+        transacoesVisiveis,
+        mes,
+        ano,
+        limite,
+        fixas,
+      );
 
   const parceladas = isPerfil
     ? calcularParceladas(transacoesVisiveis, new Date(), usuariaAtiva, perfilDados!.proporcaoRenda)
     : indicadores.parceladas;
+
+  const catsAntPerfil = isPerfil
+    ? calcularDespesasPorCategoriaPerfilMes(
+        data.dados.transacoes,
+        usuariaAtiva as 'leticia' | 'giovanna',
+        data.dados.salarioLeticia,
+        data.dados.salarioGiovanna,
+        data.dados.contasFixasConfig,
+        mesAnt,
+        anoAnt,
+      )
+    : [];
+
+  const totaisAtualPerfil = isPerfil
+    ? { receitas: perfilDados!.salario, despesas: totalCategorias }
+    : { receitas: indicadores.receitasMes, despesas: indicadores.despesasMes };
+
+  const totalCategoriasAnt = catsAntPerfil.reduce((acc, c) => acc + c.valor, 0);
+  const totaisAnteriorPerfil = isPerfil
+    ? { receitas: perfilDados!.salario, despesas: totalCategoriasAnt }
+    : { receitas: indicadores.receitasMes, despesas: indicadores.despesasMes };
+
+  const alertasPerfil = isPerfil
+    ? gerarAlertas(totaisAtualPerfil, totaisAnteriorPerfil, categorias, parceladas, limite, projecaoBar.projecao)
+    : indicadores.alertas;
+
+  const sugestoesPerfil = isPerfil
+    ? gerarSugestoes(totaisAtualPerfil, categorias, catsAntPerfil)
+    : indicadores.sugestoes;
 
   const comprometimentoTotal = isPerfil
     ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)
@@ -191,7 +256,11 @@ export function Dashboard() {
 
         {/* Projeção + Evolução */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <ProjecaoBar dados={projecaoBar} />
+          <ProjecaoBar
+            dados={projecaoBar}
+            limite={limite}
+            onAjustarLimite={isPerfil ? atualizarLimite : undefined}
+          />
           <EvolucaoChart dados={evolucaoMensal} />
         </div>
 
@@ -214,8 +283,8 @@ export function Dashboard() {
 
         {/* Alertas + Sugestões */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <AlertasPanel alertas={indicadores.alertas} />
-          <SugestoesPanel sugestoes={indicadores.sugestoes} />
+          <AlertasPanel alertas={alertasPerfil} />
+          <SugestoesPanel sugestoes={sugestoesPerfil} />
         </div>
       </main>
 

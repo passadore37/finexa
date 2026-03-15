@@ -95,18 +95,19 @@ function calcularValorParaPerfil(
   return 0;
 }
 
-function calcularDespesasPorCategoriaPerfil(
+export function calcularDespesasPorCategoriaPerfilMes(
   ts: Transacao[],
   perfil: 'leticia' | 'giovanna',
   salarioLeticia: number,
   salarioGiovanna: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
+  mes: number,
+  ano: number,
 ): DespesaPorCategoria[] {
-  const hoje = new Date();
   const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
   const propPerfil = prop[perfil];
 
-  const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
+  const despesas = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
     .filter(t =>
       t.recorrente ||
@@ -135,6 +136,25 @@ function calcularDespesasPorCategoriaPerfil(
   return Object.entries(porCat)
     .map(([categoria, valor]) => ({ categoria, valor, percentual: total > 0 ? valor / total * 100 : 0 }))
     .sort((a, b) => b.valor - a.valor);
+}
+
+export function calcularDespesasPorCategoriaPerfil(
+  ts: Transacao[],
+  perfil: 'leticia' | 'giovanna',
+  salarioLeticia: number,
+  salarioGiovanna: number,
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
+): DespesaPorCategoria[] {
+  const hoje = new Date();
+  return calcularDespesasPorCategoriaPerfilMes(
+    ts,
+    perfil,
+    salarioLeticia,
+    salarioGiovanna,
+    contasFixasConfig,
+    hoje.getMonth(),
+    hoje.getFullYear(),
+  );
 }
 
 export function calcularParceladas(
@@ -184,20 +204,26 @@ export function calcularProjecaoBar(
   fixas = 0,
   perfil?: 'leticia' | 'giovanna',
   propPerfil?: number,
+  gastoAtualOverride?: number,
 ): DadosProjecaoBar {
   const despesasVariaveis = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && !t.recorrente);
 
-  const gastoAtual = despesasVariaveis.reduce((acc, t) => {
+  const gastoAtualCalculado = despesasVariaveis.reduce((acc, t) => {
     const valor = perfil ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5) : t.valor;
     return acc + valor;
   }, 0);
+
+  const gastoAtual = typeof gastoAtualOverride === 'number' ? gastoAtualOverride : gastoAtualCalculado;
+  const gastoAtualComFixas =
+    typeof gastoAtualOverride === 'number' ? gastoAtualOverride : gastoAtual + fixas;
 
   const hoje = new Date();
   const diaAtual = Math.max(hoje.getDate(), 1);
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const projecao = gastoAtual > 0 ? (gastoAtual / diaAtual) * diasNoMes : 0;
-  return { gastoAtual, gastoAtualComFixas: gastoAtual + fixas, projecao, limite };
+
+  return { gastoAtual, gastoAtualComFixas, projecao, limite };
 }
 
 function calcularSemanasDoMes(ano: number, mes: number) {
@@ -315,7 +341,7 @@ function calcularIndicadoresPerfil(
   };
 }
 
-function gerarAlertas(
+export function gerarAlertas(
   totaisAtual: { receitas: number; despesas: number },
   totaisAnterior: { receitas: number; despesas: number },
   cats: DespesaPorCategoria[], parceladas: Parcelada[],
@@ -343,7 +369,7 @@ function gerarAlertas(
   return alertas;
 }
 
-function gerarSugestoes(
+export function gerarSugestoes(
   totaisAtual: { receitas: number; despesas: number },
   cats: DespesaPorCategoria[], catsAnt: DespesaPorCategoria[]
 ): Sugestao[] {

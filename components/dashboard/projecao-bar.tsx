@@ -1,25 +1,48 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import type { DadosProjecaoBar } from '@/lib/types';
 
 interface ProjecaoBarProps {
   dados: DadosProjecaoBar;
+  limite?: number;
+  onAjustarLimite?: (newLimite: number) => void;
 }
 
-export function ProjecaoBar({ dados }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados, limite: limiteProp, onAjustarLimite }: ProjecaoBarProps) {
   const router = useRouter();
-  const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
+  const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteDados } = dados;
+  const limite = limiteProp ?? limiteDados;
+
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(limite);
+
+  useEffect(() => {
+    setInputValue(limite);
+  }, [limite]);
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
   const fmtCompact = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(v);
 
-  const pctGasto = Math.min((gastoAtual / limite) * 100, 100);
-  const pctProjecao = Math.min((projecao / limite) * 100, 110); // permite leve overflow visual
-  const overflow = projecao > limite;
+  const handleAjustarLimiteClick = () => {
+    if (onAjustarLimite) {
+      setOpen(true);
+      setInputValue(limite);
+      return;
+    }
+    router.push('/planejamento');
+  };
+
+  const limiteSafe = limite > 0 ? limite : 1;
+  const pctGasto = Math.min((gastoAtual / limiteSafe) * 100, 100);
+  const pctProjecao = Math.min((projecao / limiteSafe) * 100, 110); // permite leve overflow visual
+  const overflow = projecao > limiteSafe;
 
   const getCorGasto = () => {
     if (pctGasto >= 90) return '#E24B4A';
@@ -41,7 +64,7 @@ export function ProjecaoBar({ dados }: ProjecaoBarProps) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => router.push('/planejamento')}
+            onClick={handleAjustarLimiteClick}
             className="whitespace-nowrap"
           >
             Ajustar limite
@@ -143,6 +166,41 @@ export function ProjecaoBar({ dados }: ProjecaoBarProps) {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajustar limite</DialogTitle>
+            <DialogDescription>Defina o limite mensal usado para calcular o progresso e a projeção.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Limite mensal</label>
+            <Input
+              type="number"
+              value={inputValue}
+              onChange={e => setInputValue(Number(e.target.value))}
+              min={1}
+              step={50}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                const val = Number(inputValue);
+                if (!Number.isNaN(val) && val > 0) {
+                  onAjustarLimite?.(val);
+                }
+                setOpen(false);
+              }}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
