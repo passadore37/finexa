@@ -182,10 +182,17 @@ export function calcularProjecaoBar(
   ano: number,
   limite: number,
   fixas = 0,
+  perfil?: 'leticia' | 'giovanna',
+  propPerfil?: number,
 ): DadosProjecaoBar {
   const despesasVariaveis = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && !t.recorrente);
-  const gastoAtual = despesasVariaveis.reduce((acc, t) => acc + t.valor, 0);
+
+  const gastoAtual = despesasVariaveis.reduce((acc, t) => {
+    const valor = perfil ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5) : t.valor;
+    return acc + valor;
+  }, 0);
+
   const hoje = new Date();
   const diaAtual = Math.max(hoje.getDate(), 1);
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();

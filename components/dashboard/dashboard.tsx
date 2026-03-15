@@ -96,8 +96,22 @@ export function Dashboard() {
     : indicadores.evolucaoMensal;
 
   const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
+  const totalCategorias = categorias.reduce((acc, item) => acc + item.valor, 0);
+
   const projecaoBar = isPerfil
-    ? calcularProjecaoBar(transacoesVisiveis, new Date().getMonth(), new Date().getFullYear(), indicadores.limiteMensal, fixas)
+    ? {
+        ...calcularProjecaoBar(
+          transacoesVisiveis,
+          new Date().getMonth(),
+          new Date().getFullYear(),
+          indicadores.limiteMensal,
+          fixas,
+          usuariaAtiva as 'leticia' | 'giovanna',
+          perfilDados!.proporcaoRenda,
+        ),
+        gastoAtual: totalCategorias,
+        gastoAtualComFixas: totalCategorias,
+      }
     : indicadores.projecaoBar;
 
   const parceladas = isPerfil
