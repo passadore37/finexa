@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { DashboardSkeleton } from './dashboard-skeleton';
 import { KPICard } from './kpi-card';
 import { ProjecaoBar } from './projecao-bar';
@@ -22,9 +22,6 @@ import {
   calcularEvolucaoMensal,
   calcularProjecaoBar,
   calcularParceladas,
-  calcularDespesasPorCategoriaPerfilMes,
-  gerarAlertas,
-  gerarSugestoes,
 } from '@/lib/indicadores';
 
 interface APIResponse {
@@ -60,7 +57,7 @@ export function Dashboard() {
 
   if (!mounted || isLoading) return <DashboardSkeleton />;
 
-  if (error || !data?.success) {
+  if (error || !data?.success || !data?.dados || !data?.indicadores) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
@@ -102,25 +99,7 @@ export function Dashboard() {
     ? calcularEvolucaoMensal(transacoesVisiveis)
     : indicadores.evolucaoMensal;
 
-  const [limiteCustom, setLimiteCustom] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!isPerfil) {
-      setLimiteCustom(null);
-      return;
-    }
-
-    const key = `finexa-limite-${usuariaAtiva}`;
-    const stored = localStorage.getItem(key);
-    setLimiteCustom(stored ? Number(stored) : null);
-  }, [isPerfil, usuariaAtiva]);
-
-  const limite = limiteCustom ?? indicadores.limiteMensal;
-  const atualizarLimite = (novoLimite: number) => {
-    const key = `finexa-limite-${usuariaAtiva}`;
-    localStorage.setItem(key, novoLimite.toString());
-    setLimiteCustom(novoLimite);
-  };
+  const limite = indicadores.limiteMensal;
 
   const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const totalCategorias = categorias.reduce((acc, item) => acc + item.valor, 0);
@@ -140,7 +119,6 @@ export function Dashboard() {
         fixas,
         usuariaAtiva as 'leticia' | 'giovanna',
         perfilDados!.proporcaoRenda,
-        totalCategorias,
       )
     : calcularProjecaoBar(
         transacoesVisiveis,
@@ -154,34 +132,8 @@ export function Dashboard() {
     ? calcularParceladas(transacoesVisiveis, new Date(), usuariaAtiva, perfilDados!.proporcaoRenda)
     : indicadores.parceladas;
 
-  const catsAntPerfil = isPerfil
-    ? calcularDespesasPorCategoriaPerfilMes(
-        data.dados.transacoes,
-        usuariaAtiva as 'leticia' | 'giovanna',
-        data.dados.salarioLeticia,
-        data.dados.salarioGiovanna,
-        data.dados.contasFixasConfig,
-        mesAnt,
-        anoAnt,
-      )
-    : [];
-
-  const totaisAtualPerfil = isPerfil
-    ? { receitas: perfilDados!.salario, despesas: totalCategorias }
-    : { receitas: indicadores.receitasMes, despesas: indicadores.despesasMes };
-
-  const totalCategoriasAnt = catsAntPerfil.reduce((acc, c) => acc + c.valor, 0);
-  const totaisAnteriorPerfil = isPerfil
-    ? { receitas: perfilDados!.salario, despesas: totalCategoriasAnt }
-    : { receitas: indicadores.receitasMes, despesas: indicadores.despesasMes };
-
-  const alertasPerfil = isPerfil
-    ? gerarAlertas(totaisAtualPerfil, totaisAnteriorPerfil, categorias, parceladas, limite, projecaoBar.projecao)
-    : indicadores.alertas;
-
-  const sugestoesPerfil = isPerfil
-    ? gerarSugestoes(totaisAtualPerfil, categorias, catsAntPerfil)
-    : indicadores.sugestoes;
+  const alertasPerfil = indicadores.alertas;
+  const sugestoesPerfil = indicadores.sugestoes;
 
   const comprometimentoTotal = isPerfil
     ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)
@@ -258,8 +210,6 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar
             dados={projecaoBar}
-            limite={limite}
-            onAjustarLimite={isPerfil ? atualizarLimite : undefined}
           />
           <EvolucaoChart dados={evolucaoMensal} />
         </div>

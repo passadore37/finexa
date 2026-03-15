@@ -1,41 +1,27 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import type { DadosProjecaoBar } from '@/lib/types';
 
 interface ProjecaoBarProps {
   dados: DadosProjecaoBar;
-  limite?: number;
-  onAjustarLimite?: (newLimite: number) => void;
 }
 
-export function ProjecaoBar({ dados, limite: limiteProp, onAjustarLimite }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados }: ProjecaoBarProps) {
   const router = useRouter();
-  const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteDados } = dados;
-  const limite = limiteProp ?? limiteDados;
+  const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
 
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
-
-  useEffect(() => {
-    setInputValue(limite);
-  }, [limite]);
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
   const fmtCompact = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(v);
 
   const handleAjustarLimiteClick = () => {
-    if (onAjustarLimite) {
-      setOpen(true);
-      setInputValue(limite);
-      return;
-    }
     router.push('/planejamento');
   };
 
