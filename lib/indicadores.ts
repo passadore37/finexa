@@ -360,10 +360,11 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
 
   const evolucaoMensal = calcularEvolucaoMensal(transacoes);
   const projecao = calcularProjecao(transacoes);
+  const metodologia = calcularMetodologia(transacoes, mes, ano, percentualInvestimento, contasFixasConfig);
+  const contasFixasTotal = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
   const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal, contasFixasTotal);
   const parceladas = calcularParceladas(transacoes, hoje);
   const comprometimentoTotal = parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0);
-  const metodologia = calcularMetodologia(transacoes, mes, ano, percentualInvestimento, contasFixasConfig);
   const alertas = gerarAlertas(totaisAtual, totaisAnterior, despesasPorCategoria, parceladas, limiteMensal, projecaoBar.projecao);
   const sugestoes = gerarSugestoes(totaisAtual, despesasPorCategoria, catsAnt);
 
