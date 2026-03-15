@@ -28,13 +28,16 @@ export function LancarView() {
   const [categoria, setCategoria] = useState('');
   const [descricao, setDescricao] = useState('');
   const [divisao, setDivisao] = useState('50/50');
+  const [responsavel, setResponsavel] = useState<'leticia' | 'giovanna'>('leticia');
   const [parcelado, setParcelado] = useState(false);
   const [totalParcelas, setTotalParcelas] = useState('2');
   const [parcelaAtual, setParcelaAtual] = useState('1');
   const [status, setStatus] = useState<Status>('idle');
   const [mostrarAvancado, setMostrarAvancado] = useState(false);
 
-  const perfil = usuariaAtiva === 'casal' ? 'casal' : usuariaAtiva;
+  const perfil = divisao === 'pessoal'
+    ? (usuariaAtiva === 'casal' ? responsavel : usuariaAtiva)
+    : (usuariaAtiva === 'casal' ? 'casal' : usuariaAtiva);
 
   async function handleSubmit() {
     if (!valor || !categoria) return;
@@ -65,6 +68,7 @@ export function LancarView() {
           setCategoria('');
           setDescricao('');
           setDivisao('50/50');
+          setResponsavel('leticia');
           setParcelado(false);
           setTotalParcelas('2');
           setParcelaAtual('1');
@@ -160,6 +164,27 @@ export function LancarView() {
             </button>
           ))}
         </div>
+
+        {divisao === 'pessoal' && usuariaAtiva === 'casal' && (
+          <div className="mt-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Responsável</p>
+            <div className="flex gap-2">
+              {(['leticia', 'giovanna'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setResponsavel(p)}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border"
+                  style={responsavel === p
+                    ? { background: perfilConfig.cor, color: 'white', borderColor: perfilConfig.cor }
+                    : { background: 'transparent', color: 'var(--muted-foreground)', borderColor: 'rgba(255,255,255,0.06)' }
+                  }
+                >
+                  {p === 'leticia' ? 'Letícia' : 'Giovanna'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Avançado (Descrição + Parcelamento) */}
