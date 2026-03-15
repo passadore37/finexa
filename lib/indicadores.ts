@@ -252,20 +252,27 @@ export function calcularProjecaoBar(
   gastoAtualOverride?: number,
 ): DadosProjecaoBar {
 
-  const despesasVariaveis = filtrarPorMes(ts, mes, ano)
-    .filter(t => t.tipo === 'despesa' && !t.recorrente);
+  // Despesas consideradas: variáveis + parceladas (exclui recorrentes/fixas)
+  const despesasConsideradas = filtrarPorMes(ts, mes, ano)
+    .filter(t =>
+      t.tipo === 'despesa' &&
+      !t.recorrente
+    );
 
-  const gastoAtualCalculado = despesasVariaveis.reduce((acc, t) => {
+  const gastoAtualCalculado = despesasConsideradas.reduce((acc, t) => {
+
     const valor = perfil
       ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5)
       : t.valor;
 
     return acc + valor;
+
   }, 0);
 
-  const gastoAtual = typeof gastoAtualOverride === 'number'
-    ? gastoAtualOverride
-    : gastoAtualCalculado;
+  const gastoAtual =
+    typeof gastoAtualOverride === 'number'
+      ? gastoAtualOverride
+      : gastoAtualCalculado;
 
   const gastoAtualComFixas =
     typeof gastoAtualOverride === 'number'
@@ -276,10 +283,16 @@ export function calcularProjecaoBar(
   const diaAtual = Math.max(hoje.getDate(), 1);
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
 
-  const projecao =
+  // Evita projeções irreais no começo do mês
+  const diasConsiderados = Math.max(diaAtual, 5);
+
+  let projecao =
     gastoAtual > 0
-      ? (gastoAtual / diaAtual) * diasNoMes
+      ? (gastoAtual / diasConsiderados) * diasNoMes
       : 0;
+
+  // Limita projeção para evitar explosões
+  projecao = Math.min(projecao, gastoAtual * 2);
 
   return {
     gastoAtual,
