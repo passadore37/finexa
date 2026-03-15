@@ -151,7 +151,7 @@ export function calcularParceladas(
     .sort((a, b) => b.comprometimentoFuturo - a.comprometimentoFuturo);
 }
 
-export export function calcularProjecaoBar(
+export function calcularProjecaoBar(
   ts: Transacao[],
   mes: number,
   ano: number,
