@@ -280,7 +280,15 @@ export function calcularProjecaoBar(
       : gastoAtual + fixas;
 
   const hoje = new Date();
-  const diaAtual = Math.max(hoje.getDate(), 1);
+
+  const mesAtual = hoje.getMonth();
+  const anoAtual = hoje.getFullYear();
+
+  const diaAtual =
+    mes === mesAtual && ano === anoAtual
+      ? Math.max(hoje.getDate(), 1)
+      : 30;
+
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
 
   // Evita projeções irreais no começo do mês
