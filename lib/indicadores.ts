@@ -46,8 +46,9 @@ function calcularDespesasPorCategoria(ts: Transacao[]): DespesaPorCategoria[] {
     .sort((a, b) => b.valor - a.valor);
 }
 
-function parseDivisaoParaPerfil(divisao: string | undefined, perfil: 'leticia' | 'giovanna'): number {
-  if (!divisao || divisao === '50/50') return 0.5;
+function parseDivisaoParaPerfil(divisao: string | undefined, perfil: 'leticia' | 'giovanna'): number | null {
+  if (!divisao) return null;
+  if (divisao === '50/50') return 0.5;
   const partes = divisao.split('/');
   if (partes.length === 2) {
     const a = parseFloat(partes[0]);
@@ -56,7 +57,7 @@ function parseDivisaoParaPerfil(divisao: string | undefined, perfil: 'leticia' |
       return perfil === 'leticia' ? a / (a + b) : b / (a + b);
     }
   }
-  return 0.5;
+  return null;
 }
 
 function calcularValorParaPerfil(
@@ -65,16 +66,14 @@ function calcularValorParaPerfil(
   propPerfil: number
 ): number {
   if (t.recorrente) {
-    // Fixas: usar proporção do campo divisao se disponível
-    const prop = t.divisao && t.divisao !== '50/50'
-      ? parseDivisaoParaPerfil(t.divisao, perfil)
-      : propPerfil;
-    return t.valor * prop;
+    // Fixas: usar proporção do salário (ou a divisão explícita, se for um ratio válido)
+    const prop = parseDivisaoParaPerfil(t.divisao, perfil);
+    return t.valor * (prop ?? propPerfil);
   }
   if (t.responsavel === perfil) {
     return t.valor;
   }
-  if (t.divisao === '50/50' || t.responsavel === 'casal' || !t.responsavel) {
+  if (t.divisao === '50/50') {
     return t.valor / 2;
   }
   return 0;
@@ -95,8 +94,6 @@ function calcularDespesasPorCategoriaPerfil(
     .filter(t =>
       t.recorrente ||
       t.responsavel === perfil ||
-      t.responsavel === 'casal' ||
-      !t.responsavel ||
       t.divisao === '50/50'
     );
 

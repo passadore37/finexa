@@ -160,7 +160,7 @@ export function Dashboard() {
 
         {/* Categorias + Parceladas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <CategoriasPieChart dados={categorias.length > 0 ? categorias : indicadores.despesasPorCategoria} />
+          <CategoriasPieChart dados={categorias} />
           <ParceladasPanel parceladas={indicadores.parceladas} comprometimentoTotal={indicadores.comprometimentoTotal} />
         </div>
 
