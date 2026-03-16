@@ -295,9 +295,12 @@ export function calcularProjecaoBar(
   const diasConsiderados = Math.max(diaAtual, 5);
 
   let projecao =
-    gastoAtual > 0
-      ? (gastoAtual / diasConsiderados) * diasNoMes
-      : 0;
+  gastoAtual > 0
+    ? (gastoAtual / diasConsiderados) * diasNoMes
+    : 0;
+
+// adiciona fixas na projeção total
+const projecaoComFixas = projecao + fixas;
 
   // Limita projeção para evitar explosões
   projecao = Math.min(projecao, gastoAtual * 2);
@@ -306,6 +309,7 @@ export function calcularProjecaoBar(
     gastoAtual,
     gastoAtualComFixas,
     projecao,
+    projecaoComFixas,
     limite
   };
 }

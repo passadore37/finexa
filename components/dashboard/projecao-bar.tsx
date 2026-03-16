@@ -24,6 +24,7 @@ interface ProjecaoBarProps {
 export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
   const router = useRouter();
   const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
+  const projecaoComFixas = projecao + (gastoAtualComFixas - gastoAtual);
 
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
@@ -49,7 +50,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
 
   const limiteSafe = limite > 0 ? limite : 1;
   const pctGasto = Math.min(((gastoAtualComFixas ?? gastoAtual) / limiteSafe) * 100, 100);
-  const pctProjecao = Math.min((projecao / limiteSafe) * 100, 110);
+  const pctProjecao = Math.min((projecaoComFixas / limiteSafe) * 100, 110);
   const overflow = projecao > limiteSafe;
 
   const getCorGasto = () => {
@@ -114,7 +115,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
           <div className="relative h-10 rounded-xl overflow-visible">
             <div className="absolute inset-0 rounded-xl bg-secondary border border-border" />
 
-            {projecao > (gastoAtualComFixas ?? gastoAtual) && (
+            {projecaoComFixas > (gastoAtualComFixas ?? gastoAtual) && (
               <div
                 className="absolute top-0 bottom-0 left-0 rounded-xl transition-all duration-700"
                 style={{
@@ -200,7 +201,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
                 overflow ? 'text-[#E24B4A]' : 'text-muted-foreground'
               }`}
             >
-              {fmt(projecao)}
+              {fmt(projecaoComFixas)}
             </p>
 
             <p className="text-[10px] text-muted-foreground mt-1">
