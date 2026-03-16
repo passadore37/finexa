@@ -28,6 +28,10 @@ interface APIResponse {
   success: boolean;
   dados: DadosPlanilha;
   indicadores: IndicadoresFinanceiros;
+  limites: {
+    leticia: number;
+    giovanna: number;
+  };
   error?: string;
 }
 
@@ -75,13 +79,8 @@ export function Dashboard() {
   }
 
   const { indicadores } = data;
+  const limites = data.limites;
   const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
-
-  // limites individuais
-const [limites, setLimites] = useState({
-  leticia: 3500,
-  giovanna: 3500
-});
 
   // Dados por contexto de visualização
   const isPerfil = usuariaAtiva === 'leticia' || usuariaAtiva === 'giovanna';
@@ -102,21 +101,32 @@ const [limites, setLimites] = useState({
     : data.dados.transacoes;
 
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(transacoesVisiveis)
-    : indicadores.evolucaoMensal;
+  ? calcularEvolucaoMensal(transacoesVisiveis)
+  : indicadores.evolucaoMensal;
 
-  const limite =
+const limites = data.limites;
+
+const limite =
   usuariaAtiva === 'geral'
     ? limites.leticia + limites.giovanna
     : limites[usuariaAtiva];
-    function atualizarLimite(novoLimite: number) {
+
+async function atualizarLimite(novoLimite: number) {
 
   if (usuariaAtiva === 'geral') return;
 
-  setLimites(prev => ({
-    ...prev,
-    [usuariaAtiva]: novoLimite
-  }));
+  await fetch('/api/limite', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      perfil: usuariaAtiva,
+      limite: novoLimite
+    })
+  });
+
+  mutate(); // recarrega dados do dashboard
 
 }
 
