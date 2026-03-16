@@ -93,11 +93,11 @@ export function HistoricoView() {
           <span className="text-xs text-muted-foreground">{transacoes.length} lançamentos · {fmt(total)}</span>
         </div>
       </CardHeader>
-      <CardContent className="max-h-[32rem] overflow-y-auto">
+      <CardContent>
         {transacoes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Nenhum lançamento ainda</p>
         ) : (
-          <div className="space-y-1">
+          <div className="max-h-[22rem] overflow-y-auto space-y-1">
             {transacoes.map(t => {
               const cor = CORES_CAT[t.categoria] || '#666';
               const isEditando = editandoId === t.id;

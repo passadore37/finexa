@@ -58,9 +58,9 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
           Parceladas Ativas
         </CardTitle>
       </CardHeader>
-      <CardContent className="max-h-[32rem] overflow-y-auto">
-        {/* KPI de Dívida Futura */}
-        <div className="p-4 rounded-lg bg-secondary/50 mb-4">
+      <CardContent className="flex flex-col gap-4">
+        {/* KPI de Dívida Futura (fixed) */}
+        <div className="p-4 rounded-lg bg-secondary/50">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="label-uppercase text-muted-foreground mb-1">
@@ -79,8 +79,8 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
           </div>
         </div>
 
-        {/* Lista de Parceladas */}
-        <div className="space-y-3">
+        {/* Lista de Parceladas (scroll dentro do card) */}
+        <div className="flex-1 overflow-y-auto max-h-[22rem] space-y-3">
           {parceladas.slice(0, 5).map((parcelada, index) => {
             const cor = CORES_CATEGORIA[parcelada.categoria] || CORES_CATEGORIA.Outros;
             const progressPercent = (parcelada.parcelaAtual / parcelada.totalParcelas) * 100;
