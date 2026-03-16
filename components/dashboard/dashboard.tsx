@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardSkeleton } from './dashboard-skeleton';
 import { KPICard } from './kpi-card';
 import { ProjecaoBar } from './projecao-bar';
@@ -77,6 +77,12 @@ export function Dashboard() {
   const { indicadores } = data;
   const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
 
+  // limites individuais
+const [limites, setLimites] = useState({
+  leticia: 3500,
+  giovanna: 3500
+});
+
   // Dados por contexto de visualização
   const isPerfil = usuariaAtiva === 'leticia' || usuariaAtiva === 'giovanna';
   const perfilDados = isPerfil ? indicadores[usuariaAtiva === 'leticia' ? 'perfilLeticia' : 'perfilGiovanna'] : null;
@@ -99,7 +105,20 @@ export function Dashboard() {
     ? calcularEvolucaoMensal(transacoesVisiveis)
     : indicadores.evolucaoMensal;
 
-  const limite = indicadores.limiteMensal;
+  const limite =
+  usuariaAtiva === 'geral'
+    ? limites.leticia + limites.giovanna
+    : limites[usuariaAtiva];
+    function atualizarLimite(novoLimite: number) {
+
+  if (usuariaAtiva === 'geral') return;
+
+  setLimites(prev => ({
+    ...prev,
+    [usuariaAtiva]: novoLimite
+  }));
+
+}
 
   const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const totalCategorias = categorias.reduce((acc, item) => acc + item.valor, 0);
@@ -208,9 +227,7 @@ export function Dashboard() {
 
         {/* Projeção + Evolução */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <ProjecaoBar
-            dados={projecaoBar}
-          />
+          <ProjecaoBar dados={{ ...projecaoBar, limite }} onAjustarLimite={atualizarLimite} />
           <EvolucaoChart dados={evolucaoMensal} />
         </div>
 
