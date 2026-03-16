@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 function KPISkeleton() {
   return (
     <Card className="border border-border bg-card">
-      <CardContent className="p-5">
+      <CardContent className="p-10">
         <Skeleton className="h-2.5 w-24 mb-3 bg-secondary" />
         <Skeleton className="h-10 w-36 mb-2 bg-secondary" />
         <Skeleton className="h-2.5 w-16 bg-secondary" />
