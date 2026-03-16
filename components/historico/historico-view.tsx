@@ -93,7 +93,7 @@ export function HistoricoView() {
           <span className="text-xs text-muted-foreground">{transacoes.length} lançamentos · {fmt(total)}</span>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-h-[32rem] overflow-y-auto">
         {transacoes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Nenhum lançamento ainda</p>
         ) : (

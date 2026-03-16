@@ -39,7 +39,7 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
             Parceladas
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[32rem] overflow-y-auto">
           <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
             <CreditCard className="h-5 w-5 text-muted-foreground flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
@@ -58,7 +58,7 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
           Parceladas Ativas
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-h-[32rem] overflow-y-auto">
         {/* KPI de Dívida Futura */}
         <div className="p-4 rounded-lg bg-secondary/50 mb-4">
           <div className="flex items-start justify-between gap-4">
