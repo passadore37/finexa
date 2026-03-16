@@ -103,7 +103,7 @@ export function DashboardSkeleton() {
 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
   <ChartSkeleton height={200} />
   {/* Container com scroll */}
-  <div className="h-[300px] overflow-y-auto border border-gray-300 rounded-lg p-2 bg-white">
+  <div className="relative max-h-[350px] overflow-y-auto rounded-lg bg-gradient-to-b from-white via-gray-50 to-white shadow-lg border border-gray-200 p-4 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-400">
     <ListSkeleton items={3} />
   </div>
 </div>
