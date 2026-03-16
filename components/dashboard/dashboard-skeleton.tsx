@@ -101,9 +101,12 @@ export function DashboardSkeleton() {
 
         {/* Categorias + Parceladas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <ChartSkeleton height={200} />
-          <ListSkeleton items={3} />
-        </div>
+       <ChartSkeleton height={200} />
+         {/* Envolvendo o ListSkeleton com scroll */}
+         <div className="max-h-[300px] overflow-y-auto">
+         <ListSkeleton items={3} />
+          </div>
+          </div>
 
         {/* Separador */}
         <div className="section-separator my-8" />
