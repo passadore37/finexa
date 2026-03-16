@@ -48,7 +48,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
   };
 
   const limiteSafe = limite > 0 ? limite : 1;
-  const pctGasto = Math.min((gastoAtual / limiteSafe) * 100, 100);
+  const pctGasto = Math.min(((gastoAtualComFixas ?? gastoAtual) / limiteSafe) * 100, 100);
   const pctProjecao = Math.min((projecao / limiteSafe) * 100, 110);
   const overflow = projecao > limiteSafe;
 
@@ -114,7 +114,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
           <div className="relative h-10 rounded-xl overflow-visible">
             <div className="absolute inset-0 rounded-xl bg-secondary border border-border" />
 
-            {projecao > gastoAtual && (
+            {projecao > (gastoAtualComFixas ?? gastoAtual) && (
               <div
                 className="absolute top-0 bottom-0 left-0 rounded-xl transition-all duration-700"
                 style={{
@@ -173,8 +173,7 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
               {fmt(gastoAtualComFixas ?? gastoAtual)}
             </p>
 
-            {gastoAtualComFixas !== undefined &&
-              gastoAtualComFixas !== gastoAtual && (
+            {gastoAtualComFixas !== undefined && (
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Inclui fixas: {fmt(gastoAtualComFixas - gastoAtual)}
                 </p>
