@@ -144,9 +144,9 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
           })}
         </div>
 
-        {parceladas.length > 5 && (
+        {parceladas.length > 10 && (
           <p className="text-xs text-muted-foreground text-center pt-3 mt-3 border-t border-border">
-            +{parceladas.length - 5} parceladas adicionais
+            +{parceladas.length - 10} parceladas adicionais
           </p>
         )}
       </CardContent>
