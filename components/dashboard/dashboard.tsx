@@ -138,22 +138,22 @@ export function Dashboard() {
   const categorias = isPerfil
     ? perfilDados!.categorias
     : indicadores.despesasPorCategoria;
-    const alertas = isPerfil
+   const alertas = isPerfil && perfilDados
   ? gerarAlertas(
       { receitas, despesas },
-      { receitas: 0, despesas: 0 }, // sem comparativo anterior por perfil
-      perfilDados!.categorias,
+      { receitas: 0, despesas: 0 },
+      perfilDados.categorias,
       parceladas,
       limite,
       projecaoBar.projecao
     )
   : indicadores.alertas;
 
-const sugestoes = isPerfil
+const sugestoes = isPerfil && perfilDados
   ? gerarSugestoes(
       { receitas, despesas },
-      perfilDados!.categorias,
-      [] // sem categorias anteriores por perfil
+      perfilDados.categorias,
+      []
     )
   : indicadores.sugestoes;
 
