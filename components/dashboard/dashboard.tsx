@@ -289,9 +289,10 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar
-            dados={{ ...projecaoBar, limite }}
-            onAjustarLimite={atualizarLimite}
-          />
+  dados={{ ...projecaoBar, limite }}
+  onAjustarLimite={atualizarLimite}
+  perfilGeral={usuariaAtiva === 'geral'}
+/>
 
           <EvolucaoChart dados={evolucaoMensal} />
         </div>

@@ -81,7 +81,7 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
 
         {/* Lista de Parceladas (scroll dentro do card) */}
         <div className="flex-1 overflow-y-auto max-h-[22rem] space-y-3">
-          {parceladas.slice(0, 5).map((parcelada, index) => {
+          {parceladas.map((parcelada, index) => {
             const cor = CORES_CATEGORIA[parcelada.categoria] || CORES_CATEGORIA.Outros;
             const progressPercent = (parcelada.parcelaAtual / parcelada.totalParcelas) * 100;
 

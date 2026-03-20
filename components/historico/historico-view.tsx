@@ -156,7 +156,7 @@ export function HistoricoView() {
                     </div>
                   </div>
                   <span className="text-sm font-medium tabular-nums text-foreground flex-shrink-0">{fmt(t.valor)}</span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button onClick={() => iniciarEdicao(t)} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>

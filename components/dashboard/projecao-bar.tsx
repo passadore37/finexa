@@ -19,9 +19,10 @@ import type { DadosProjecaoBar } from '@/lib/types';
 interface ProjecaoBarProps {
   dados: DadosProjecaoBar;
   onAjustarLimite?: (valor: number) => void;
+  perfilGeral?: boolean; // adicione esta linha
 }
 
-export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBarProps) {
   const router = useRouter();
   const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
   const projecaoComFixas = projecao + (gastoAtualComFixas - gastoAtual);
@@ -73,15 +74,17 @@ export function ProjecaoBar({ dados, onAjustarLimite }: ProjecaoBarProps) {
               Ritmo diário × dias restantes — projeção linear
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleAjustarLimiteClick}
-            className="whitespace-nowrap"
-          >
-            Ajustar limite
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
+{!perfilGeral && (
+  <Button
+    size="sm"
+    variant="outline"
+    onClick={handleAjustarLimiteClick}
+    className="whitespace-nowrap"
+  >
+    Ajustar limite
+    <ArrowRight className="h-3.5 w-3.5" />
+  </Button>
+)} 
         </div>
       </CardHeader>
 

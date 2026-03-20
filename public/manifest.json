@@ -16,9 +16,9 @@
       "type": "image/png"
     },
     {
-      "src": "/apple-icon.svg",
+      "src": "/icon-192.png",
       "sizes": "180x180",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

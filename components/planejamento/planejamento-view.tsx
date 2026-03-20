@@ -57,7 +57,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
   const [salLet, setSalLet] = useState(salarioLeticia || 8500);
   const [salGio, setSalGio] = useState(salarioGiovanna || 6500);
   const [pctInvestimento, setPctInvestimento] = useState(10);
-  const [contasFixas, setContasFixas] = useState<ContaFixa[]>(CONTAS_FIXAS_PADRAO);
+  const [contasFixas, setContasFixas] = useState<ContaFixa[]>([]);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editValor, setEditValor] = useState('');
   const [novaDescricao, setNovaDescricao] = useState('');
@@ -167,13 +167,13 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
   }
 
   function salvarEdicao(id: string) {
-    const novoVal = parseFloat(editValor.replace(',', '.'));
-    if (!isNaN(novoVal) && novoVal >= 0) {
-      setContasFixas(prev => prev.map(c => c.id === id ? { ...c, valor: novoVal } : c));
-      marcarAlterado();
-    }
-    setEditandoId(null);
+  const novoVal = parseFloat(editValor.replace(',', '.'));
+  if (!isNaN(novoVal) && novoVal >= 0) {
+    setContasFixas(prev => prev.map(c => c.id === id ? { ...c, valor: novoVal } : c));
+    salvar(); // salva direto, sem precisar clicar no botão
   }
+  setEditandoId(null);
+}
 
   function removerConta(id: string) {
     setContasFixas(prev => prev.filter(c => c.id !== id));
