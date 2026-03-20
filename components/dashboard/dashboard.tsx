@@ -36,6 +36,8 @@ import {
   calcularEvolucaoMensal,
   calcularProjecaoBar,
   calcularParceladas,
+  gerarAlertas,
+  gerarSugestoes,
 } from '@/lib/indicadores';
 
 interface APIResponse {
@@ -136,6 +138,24 @@ export function Dashboard() {
   const categorias = isPerfil
     ? perfilDados!.categorias
     : indicadores.despesasPorCategoria;
+    const alertas = isPerfil
+  ? gerarAlertas(
+      { receitas, despesas },
+      { receitas: 0, despesas: 0 }, // sem comparativo anterior por perfil
+      perfilDados!.categorias,
+      parceladas,
+      limite,
+      projecaoBar.projecao
+    )
+  : indicadores.alertas;
+
+const sugestoes = isPerfil
+  ? gerarSugestoes(
+      { receitas, despesas },
+      perfilDados!.categorias,
+      [] // sem categorias anteriores por perfil
+    )
+  : indicadores.sugestoes;
 
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter((t) => {
@@ -315,8 +335,8 @@ export function Dashboard() {
         <div className="section-separator my-6 sm:my-8" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <AlertasPanel alertas={indicadores.alertas} />
-          <SugestoesPanel sugestoes={indicadores.sugestoes} />
+          <AlertasPanel alertas={alertas} />
+<SugestoesPanel sugestoes={sugestoes} />
         </div>
       </main>
 
