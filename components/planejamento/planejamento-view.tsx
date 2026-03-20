@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check, X, Info, Save, Loader2, RefreshCw } from 'lucide-react';
+import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check, X as XIcon, Info, Save, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Props {
@@ -228,7 +228,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
           ) : saveStatus === 'saved' ? (
             <><Check className="h-4 w-4" />Salvo</>
           ) : saveStatus === 'error' ? (
-            <><X className="h-4 w-4" />Erro</>
+            <><XIcon className="h-4 w-4" />Erro</>
           ) : (
             <><Save className="h-4 w-4" />{alterado ? 'Salvar' : 'Salvo'}</>
           )}
@@ -326,7 +326,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
                     className="w-24 bg-secondary border border-primary rounded px-2 py-1 text-sm text-foreground focus:outline-none"
                   />
                   <button onClick={() => salvarEdicao(conta.id)} className="text-[#3B6D11]"><Check className="h-4 w-4" /></button>
-                  <button onClick={() => setEditandoId(null)} className="text-muted-foreground"><X className="h-4 w-4" /></button>
+                  <button onClick={() => setEditandoId(null)} className="text-muted-foreground"><XIcon className="h-4 w-4" /></button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
@@ -369,7 +369,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
                 onChange={e => setNovoValor(e.target.value)}
                 className="w-28 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
               <button onClick={adicionarConta} className="px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">+</button>
-              <button onClick={() => setAdicionando(false)} className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
+              <button onClick={() => setAdicionando(false)} className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary"><XIcon className="h-4 w-4" /></button>
             </div>
           ) : (
             <button onClick={() => setAdicionando(true)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">

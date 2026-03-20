@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Check, Pencil, X, Loader2, Target, PiggyBank, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Check, Pencil, X as XIcon, Loader2, Target, PiggyBank, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Meta {
@@ -302,7 +302,7 @@ export function MetasView() {
                   <Check className="h-4 w-4" />Criar meta
                 </button>
                 <button onClick={() => setCriando(false)} className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary">
-                  <X className="h-4 w-4" />
+                  <XIcon className="h-4 w-4" />
                 </button>
               </div>
             </CardContent>
@@ -416,7 +416,7 @@ function DepositarForm({ valorAtual, onSalvar, onCancelar }: { valorAtual: numbe
           className="flex-1 bg-transparent py-1.5 text-sm text-foreground focus:outline-none" />
       </div>
       <button onClick={() => onSalvar(parseFloat(novo) || 0)} className="px-2 py-1.5 rounded-lg bg-primary text-white text-xs"><Check className="h-3.5 w-3.5" /></button>
-      <button onClick={onCancelar} className="px-2 py-1.5 rounded-lg border border-border text-xs text-muted-foreground"><X className="h-3.5 w-3.5" /></button>
+      <button onClick={onCancelar} className="px-2 py-1.5 rounded-lg border border-border text-xs text-muted-foreground"><XIcon className="h-3.5 w-3.5" /></button>
     </div>
   );
 }
