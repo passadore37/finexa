@@ -138,24 +138,24 @@ export function Dashboard() {
   const categorias = isPerfil
     ? perfilDados!.categorias
     : indicadores.despesasPorCategoria;
-   const alertas = isPerfil && perfilDados
-  ? gerarAlertas(
-      { receitas, despesas },
-      { receitas: 0, despesas: 0 },
-      perfilDados.categorias,
-      parceladas,
-      limite,
-      projecaoBar.projecao
-    )
-  : indicadores.alertas;
+  const alertas = isPerfil && perfilDados
+    ? gerarAlertas(
+        { receitas, despesas },
+        { receitas: 0, despesas: 0 },
+        perfilDados.categorias,
+        parceladas,
+        limite,
+        projecaoBar.projecao
+      )
+    : indicadores.alertas;
 
-const sugestoes = isPerfil && perfilDados
-  ? gerarSugestoes(
-      { receitas, despesas },
-      perfilDados.categorias,
-      []
-    )
-  : indicadores.sugestoes;
+  const sugestoes = isPerfil && perfilDados
+    ? gerarSugestoes(
+        { receitas, despesas },
+        perfilDados.categorias,
+        []
+      )
+    : indicadores.sugestoes;
 
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter((t) => {
