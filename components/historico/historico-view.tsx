@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Check, X, Loader2, ChevronDown } from 'lucide-react';
+import { Pencil, Trash2, Check, X as XIcon, Loader2, ChevronDown } from 'lucide-react';
 import { CATEGORIAS_DISPONIVEIS } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -163,7 +163,7 @@ export function HistoricoView() {
                     {isConfirmando ? (
                       <>
                         <button onClick={() => deletar(t.id)} className="p-1 rounded bg-[#A32D2D]/20 text-[#E24B4A]"><Check className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => setConfirmandoDelete(null)} className="p-1 rounded hover:bg-secondary text-muted-foreground"><X className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => setConfirmandoDelete(null)} className="p-1 rounded hover:bg-secondary text-muted-foreground"><XIcon className="h-3.5 w-3.5" /></button>
                       </>
                     ) : (
                       <button onClick={() => setConfirmandoDelete(t.id)} className="p-1 rounded hover:bg-[#A32D2D]/20 text-muted-foreground hover:text-[#E24B4A]">
