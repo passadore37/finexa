@@ -26,19 +26,29 @@ function calcularTotais(ts: Transacao[]) {
   );
 }
 
-export function calcularEvolucaoMensal(ts: Transacao[]): EvolucaoMensal[] {
+export function calcularEvolucaoMensal(
+  ts: Transacao[],
+  perfil?: 'leticia' | 'giovanna',
+  propPerfil?: number
+): EvolucaoMensal[] {
   const hoje = new Date();
 
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
-    const tot = calcularTotais(filtrarPorMes(ts, d.getMonth(), d.getFullYear()));
+    const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
 
-    return {
-      mes: MESES[d.getMonth()],
-      receitas: tot.receitas,
-      despesas: tot.despesas,
-      saldo: tot.receitas - tot.despesas
-    };
+    if (perfil && propPerfil !== undefined) {
+      const receitas = tsMes
+        .filter(t => t.tipo === 'receita' && t.responsavel === perfil)
+        .reduce((acc, t) => acc + t.valor, 0);
+      const despesas = tsMes
+        .filter(t => t.tipo === 'despesa')
+        .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, propPerfil), 0);
+      return { mes: MESES[d.getMonth()], receitas, despesas, saldo: receitas - despesas };
+    }
+
+    const tot = calcularTotais(tsMes);
+    return { mes: MESES[d.getMonth()], receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
   });
 }
 

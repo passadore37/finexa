@@ -151,8 +151,8 @@ export function Dashboard() {
     : dados.transacoes;
 
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(transacoesVisiveis)
-    : indicadores.evolucaoMensal;
+  ? calcularEvolucaoMensal(transacoesVisiveis, usuariaAtiva, perfilDados!.proporcaoRenda)
+  : indicadores.evolucaoMensal;
 
   const limite =
     usuariaAtiva === 'geral'
