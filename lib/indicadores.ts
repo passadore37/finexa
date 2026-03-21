@@ -509,17 +509,17 @@ function calcularIndicadoresPerfil(
     .reduce((acc, p) => acc + p.valorParcela, 0);
 
   const gastosMes = filtrarPorMes(ts, mes, ano)
-    .filter(t =>
-      t.tipo === 'despesa' &&
-      !t.recorrente &&
-      !(t.totalParcelas && t.totalParcelas > 1)
-    )
-    .filter(t =>
-      t.responsavel === perfil ||
-      t.divisao === '50/50'
-    )
-    .reduce((acc, t) =>
-      acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
+  .filter(t =>
+    t.tipo === 'despesa' &&
+    !t.recorrente
+  )
+  .filter(t =>
+    t.responsavel === perfil ||
+    t.divisao === '50/50' ||
+    (!t.responsavel && !t.divisao)
+  )
+  .reduce((acc, t) =>
+    acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
 
   const investimento = salario * (pctInvestimento / 100);
 
