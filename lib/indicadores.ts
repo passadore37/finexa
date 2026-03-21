@@ -120,6 +120,12 @@ function calcularValorParaPerfil(
     return t.valor / 2;
   }
 
+  // transações do casal sem divisão explícita: divide proporcionalmente
+  if (!t.responsavel || t.responsavel === 'casal') {
+    const prop = parseDivisaoParaPerfil(t.divisao, perfil);
+    return t.valor * (prop ?? propPerfil);
+  }
+
   return 0;
 }
 
