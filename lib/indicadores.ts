@@ -10,7 +10,11 @@ const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov'
 
 function filtrarPorMes(ts: Transacao[], mes: number, ano: number) {
   return ts.filter(t => {
-    const raw = t.data instanceof Date ? t.data : new Date(t.data + 'T12:00:00');
+    const raw = t.data instanceof Date
+      ? t.data
+      : new Date(typeof t.data === 'string' && t.data.length === 10
+          ? t.data + 'T12:00:00'
+          : t.data);
     return raw.getMonth() === mes && raw.getFullYear() === ano;
   });
 }
