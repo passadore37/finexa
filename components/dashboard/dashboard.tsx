@@ -138,29 +138,10 @@ export function Dashboard() {
   const categorias = isPerfil
     ? perfilDados!.categorias
     : indicadores.despesasPorCategoria;
-  const alertas = isPerfil && perfilDados
-    ? gerarAlertas(
-        { receitas, despesas },
-        { receitas: 0, despesas: 0 },
-        perfilDados.categorias,
-        parceladas,
-        limite,
-        projecaoBar.projecao
-      )
-    : indicadores.alertas;
-
-  const sugestoes = isPerfil && perfilDados
-    ? gerarSugestoes(
-        { receitas, despesas },
-        perfilDados.categorias,
-        []
-      )
-    : indicadores.sugestoes;
 
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter((t) => {
         if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
-
         return (
           t.recorrente ||
           t.responsavel === usuariaAtiva ||
@@ -180,13 +161,11 @@ export function Dashboard() {
 
   async function atualizarLimite(novoLimite: number) {
     if (usuariaAtiva === 'geral') return;
-
     await fetch('/api/limite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ perfil: usuariaAtiva, limite: novoLimite }),
     });
-
     mutate();
   }
 
@@ -228,6 +207,25 @@ export function Dashboard() {
   const comprometimentoTotal = isPerfil
     ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)
     : indicadores.comprometimentoTotal;
+
+  const alertas = isPerfil && perfilDados
+    ? gerarAlertas(
+        { receitas, despesas },
+        { receitas: 0, despesas: 0 },
+        perfilDados.categorias,
+        parceladas,
+        limite,
+        projecaoBar.projecao
+      )
+    : indicadores.alertas;
+
+  const sugestoes = isPerfil && perfilDados
+    ? gerarSugestoes(
+        { receitas, despesas },
+        perfilDados.categorias,
+        []
+      )
+    : indicadores.sugestoes;
 
   const semRestantes =
     indicadores.metodologia.semanas.length -
@@ -309,10 +307,10 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar
-  dados={{ ...projecaoBar, limite }}
-  onAjustarLimite={atualizarLimite}
-  perfilGeral={usuariaAtiva === 'geral'}
-/>
+            dados={{ ...projecaoBar, limite }}
+            onAjustarLimite={atualizarLimite}
+            perfilGeral={usuariaAtiva === 'geral'}
+          />
 
           <EvolucaoChart dados={evolucaoMensal} />
         </div>
@@ -336,7 +334,7 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <AlertasPanel alertas={alertas} />
-<SugestoesPanel sugestoes={sugestoes} />
+          <SugestoesPanel sugestoes={sugestoes} />
         </div>
       </main>
 
