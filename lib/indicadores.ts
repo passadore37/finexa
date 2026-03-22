@@ -158,11 +158,15 @@ export function calcularDespesasPorCategoriaPerfilMes(
 
   const despesas = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
-    .filter(t =>
-      t.recorrente ||
-      t.responsavel === perfil ||
-      t.divisao === '50/50'
-    );
+    .filter(t => {
+      // Inclui: recorrentes, responsável do perfil, 50/50, ou qualquer divisão customizada
+      if (t.recorrente) return true;
+      if (t.responsavel === perfil) return true;
+      if (t.divisao === '50/50') return true;
+      // Inclui divisões customizadas (ex: 70/30, 60/40)
+      if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true;
+      return false;
+    });
 
   const porCat: Record<string, number> = {};
   let total = 0;
@@ -227,7 +231,15 @@ export function calcularParceladas(
     .filter(t => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1)
     .filter(t => {
       if (!perfil) return true;
-      return t.responsavel === perfil || t.divisao === '50/50';
+      // Inclui: responsavel do perfil, 50/50, ou divisoes customizadas
+      if (t.responsavel === perfil) return true;
+      if (t.divisao === '50/50') return true;
+      // Inclui divisoes customizadas (ex: 70/30, 60/40)
+      if (t.divisao) {
+        const prop = parseDivisaoParaPerfil(t.divisao, perfil);
+        if (prop !== null) return true;
+      }
+      return false;
     });
 
   return transacoes
@@ -292,12 +304,9 @@ export function calcularProjecaoBar(
   const gastoAtual =
     typeof gastoAtualOverride === 'number'
       ? gastoAtualOverride
-      : gastoAtualCalculado;
+      : gastoAtualCalculado + fixas;
 
-  const gastoAtualComFixas =
-    typeof gastoAtualOverride === 'number'
-      ? gastoAtualOverride
-      : gastoAtual + fixas;
+  const gastoAtualComFixas = gastoAtual;
 
   const hoje = new Date();
 
@@ -533,11 +542,14 @@ function calcularIndicadoresPerfil(
     t.tipo === 'despesa' &&
     !t.recorrente
   )
-  .filter(t =>
-    t.responsavel === perfil ||
-    t.divisao === '50/50' ||
-    (!t.responsavel && !t.divisao)
-  )
+  .filter(t => {
+    // Inclui: responsavel do perfil, 50/50, divisoes customizadas, ou sem divisao explicita
+    if (t.responsavel === perfil) return true;
+    if (t.divisao === '50/50') return true;
+    if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true;
+    if (!t.responsavel && !t.divisao) return true;
+    return false;
+  })
   .reduce((acc, t) =>
     acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
 

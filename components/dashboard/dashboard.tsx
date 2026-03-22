@@ -150,11 +150,22 @@ export function Dashboard() {
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter((t) => {
         if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
-        return (
-          t.recorrente ||
-          t.responsavel === usuariaAtiva ||
-          t.divisao === '50/50'
-        );
+        // Inclui: recorrentes, responsavel do perfil, 50/50, divisoes customizadas, ou sem divisao explicita
+        if (t.recorrente) return true;
+        if (t.responsavel === usuariaAtiva) return true;
+        if (t.divisao === '50/50') return true;
+        // Inclui divisoes customizadas (ex: 70/30, 60/40)
+        if (t.divisao) {
+          const partes = t.divisao.split('/');
+          if (partes.length === 2) {
+            const a = parseFloat(partes[0]);
+            const b = parseFloat(partes[1]);
+            if (!isNaN(a) && !isNaN(b) && (a + b) > 0) return true;
+          }
+        }
+        // Inclui transacoes sem divisao explicita
+        if (!t.responsavel && !t.divisao) return true;
+        return false;
       })
     : dados.transacoes;
 
