@@ -17,7 +17,7 @@ export async function GET() {
     const indicadores = calcularTodosIndicadores(dados)
 
     const { data: limitesData } = await supabase
-      .from('limites')
+      .from('limites_financeiros')
       .select('*')
 
     const limites = {
