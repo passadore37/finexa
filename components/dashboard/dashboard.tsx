@@ -106,13 +106,7 @@ export function Dashboard() {
     );
   }
 
-  descricao: t.descricao,
-  tipo: t.tipo,
-  valor: t.valor,
-  responsavel: t.responsavel,
-  divisao: t.divisao,
-  recorrente: t.recorrente,
-})));
+  const { indicadores, dados, limites } = data;
 
   const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
 
