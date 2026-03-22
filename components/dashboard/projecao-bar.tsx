@@ -19,14 +19,21 @@ import type { DadosProjecaoBar } from '@/lib/types';
 interface ProjecaoBarProps {
   dados: DadosProjecaoBar;
   onAjustarLimite?: (valor: number) => void;
-  perfilGeral?: boolean; // adicione esta linha
+  perfilGeral?: boolean;
+  fixas?: number;
 }
 
-export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0 }: ProjecaoBarProps) {
   const router = useRouter();
-  const { gastoAtual, gastoAtualComFixas, projecao, projecaoComFixas: projecaoComFixasBackend, limite } = dados;
-  const valorFixas = (gastoAtualComFixas ?? gastoAtual) - gastoAtual;
+  const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteRaw } = dados;
+
+  // Garante que limite nunca é undefined/NaN
+  const limite = typeof limiteRaw === 'number' && !isNaN(limiteRaw) ? limiteRaw : 0;
+
+  // Valor das fixas: usa prop explícita se disponível, senão calcula da diferença
+  const valorFixas = fixas > 0 ? fixas : Math.max(0, (gastoAtualComFixas ?? gastoAtual) - gastoAtual);
   const projecaoComFixas = projecao + valorFixas;
+
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
 
@@ -74,17 +81,17 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
               Ritmo diário × dias restantes — projeção linear
             </p>
           </div>
-{!perfilGeral && (
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={handleAjustarLimiteClick}
-    className="whitespace-nowrap"
-  >
-    Ajustar limite
-    <ArrowRight className="h-3.5 w-3.5" />
-  </Button>
-)} 
+          {!perfilGeral && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAjustarLimiteClick}
+              className="whitespace-nowrap"
+            >
+              Ajustar limite
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -152,14 +159,19 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
             />
           </div>
 
+          {/* Labels do eixo X — só mostra se limite > 0 */}
           <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
             <span>R$ 0</span>
-            <span>{fmtCompact(limite * 0.25)}</span>
-            <span>{fmtCompact(limite * 0.5)}</span>
-            <span>{fmtCompact(limite * 0.75)}</span>
-            <span className={overflow ? 'text-[#E24B4A]' : ''}>
-              {fmtCompact(limite)}
-            </span>
+            {limite > 0 ? (
+              <>
+                <span>{fmtCompact(limite * 0.25)}</span>
+                <span>{fmtCompact(limite * 0.5)}</span>
+                <span>{fmtCompact(limite * 0.75)}</span>
+                <span className={overflow ? 'text-[#E24B4A]' : ''}>{fmtCompact(limite)}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground/50">Limite não definido</span>
+            )}
           </div>
         </div>
 
@@ -174,17 +186,17 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
               className="text-xl font-medium tabular-nums"
               style={{ color: corGasto }}
             >
-              {fmt(gastoAtualComFixas ?? gastoAtual)}
+              {fmt(gastoAtual)}
             </p>
 
-            {gastoAtualComFixas !== undefined && (
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Inclui fixas: {fmt(valorFixas)}
-                </p>
-              )}
+            {valorFixas > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                + Fixas: {fmt(valorFixas)}
+              </p>
+            )}
 
             <p className="text-[10px] text-muted-foreground mt-1">
-              {Math.round(pctGasto)}% do limite
+              {limite > 0 ? `${Math.round(pctGasto)}% do limite` : 'Limite não definido'}
             </p>
           </div>
 
@@ -208,9 +220,11 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
             </p>
 
             <p className="text-[10px] text-muted-foreground mt-1">
-              {overflow
-                ? `+${fmt(projecao - limite)} acima do limite`
-                : `${fmt(limite - projecao)} abaixo do limite`}
+              {limite > 0
+                ? overflow
+                  ? `+${fmt(projecao - limite)} acima do limite`
+                  : `${fmt(limite - projecao)} abaixo do limite`
+                : 'Defina um limite'}
             </p>
           </div>
         </div>
@@ -254,11 +268,9 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
             <Button
               onClick={() => {
                 const val = Number(inputValue);
-
                 if (!Number.isNaN(val) && val > 0) {
                   onAjustarLimite?.(val);
                 }
-
                 setOpen(false);
               }}
             >
