@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const { perfil, limite } = await req.json()
 
   await supabase
-    .from('limites')
+    .from('limites_financeiros')
     .upsert({
       perfil,
       limite
