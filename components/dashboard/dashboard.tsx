@@ -106,8 +106,6 @@ export function Dashboard() {
     );
   }
 
-  const { indicadores, dados, limites } = data;
-  console.log('transacoes amostra:', dados.transacoes.slice(0, 5).map(t => ({
   descricao: t.descricao,
   tipo: t.tipo,
   valor: t.valor,

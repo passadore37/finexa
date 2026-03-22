@@ -24,9 +24,9 @@ interface ProjecaoBarProps {
 
 export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBarProps) {
   const router = useRouter();
-  const { gastoAtual, gastoAtualComFixas, projecao, limite } = dados;
-  const projecaoComFixas = projecao + (gastoAtualComFixas - gastoAtual);
-
+  const { gastoAtual, gastoAtualComFixas, projecao, projecaoComFixas: projecaoComFixasBackend, limite } = dados;
+  const valorFixas = (gastoAtualComFixas ?? gastoAtual) - gastoAtual;
+  const projecaoComFixas = projecao + valorFixas;
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
 
@@ -179,7 +179,7 @@ export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral }: ProjecaoBar
 
             {gastoAtualComFixas !== undefined && (
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Inclui fixas: {fmt(gastoAtualComFixas - gastoAtual)}
+                  Inclui fixas: {fmt(valorFixas)}
                 </p>
               )}
 
