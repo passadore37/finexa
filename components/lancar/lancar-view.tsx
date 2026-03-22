@@ -110,7 +110,7 @@ export function LancarView() {
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">R$</span>
           <input
-            type="number"
+            type="text"
             inputMode="decimal"
             placeholder="0,00"
             value={valor}

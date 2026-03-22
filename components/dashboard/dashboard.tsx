@@ -166,9 +166,9 @@ export function Dashboard() {
   : indicadores.evolucaoMensal;
 
   const limite =
-    usuariaAtiva === 'geral'
-      ? limites.leticia + limites.giovanna
-      : limites[usuariaAtiva];
+  usuariaAtiva === 'geral'
+    ? (limites.leticia ?? 0) + (limites.giovanna ?? 0)
+    : (limites[usuariaAtiva] ?? 0);
 
   async function atualizarLimite(novoLimite: number) {
     if (usuariaAtiva === 'geral') return;
