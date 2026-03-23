@@ -178,7 +178,11 @@ export function Dashboard() {
   const mes = hoje.getMonth();
   const ano = hoje.getFullYear();
 
-  const projecaoBar = calcularProjecaoBar(transacoesVisiveis, mes, ano, limite);
+  // Para perfis, usar o total real calculado com rateio
+  const gastoAtualPerfil = isPerfil ? perfilDados!.gastosVariaveis : undefined;
+  const projecaoBar = isPerfil && gastoAtualPerfil !== undefined
+    ? { gastoAtual: gastoAtualPerfil, projecao: gastoAtualPerfil, limite }
+    : calcularProjecaoBar(transacoesVisiveis, mes, ano, limite);
 
   const parceladas = isPerfil
     ? calcularParceladas(transacoesVisiveis, new Date())
@@ -311,7 +315,7 @@ export function Dashboard() {
 
         <div className="section-separator my-6 sm:my-8" />
 
-        <HistoricoView />
+        <HistoricoView categoriaFiltro={categoriaAtiva} perfil={usuariaAtiva} proporcao={isPerfil ? perfilDados!.proporcaoRenda : 0.5} />
 
         <div className="section-separator my-6 sm:my-8" />
 
