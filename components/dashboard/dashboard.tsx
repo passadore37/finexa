@@ -155,12 +155,12 @@ export function Dashboard() {
     : indicadores.evolucaoMensal;
 
   const limite =
-    usuariaAtiva === 'geral'
-      ? limites.leticia + limites.giovanna
-      : limites[usuariaAtiva];
+    usuariaAtiva === 'casal'
+      ? ((limites?.leticia || 0) + (limites?.giovanna || 0)) || 9000
+      : (limites?.[usuariaAtiva as 'leticia' | 'giovanna'] || 9000);
 
   async function atualizarLimite(novoLimite: number) {
-    if (usuariaAtiva === 'geral') return;
+    if (usuariaAtiva === 'casal') return;
     await fetch('/api/limite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -177,31 +177,10 @@ export function Dashboard() {
   const mes = hoje.getMonth();
   const ano = hoje.getFullYear();
 
-  const projecaoBar = isPerfil
-    ? calcularProjecaoBar(
-        transacoesVisiveis,
-        mes,
-        ano,
-        limite,
-        fixas,
-        usuariaAtiva as 'leticia' | 'giovanna',
-        perfilDados!.proporcaoRenda
-      )
-    : calcularProjecaoBar(
-        transacoesVisiveis,
-        mes,
-        ano,
-        limite,
-        fixas
-      );
+  const projecaoBar = calcularProjecaoBar(transacoesVisiveis, mes, ano, limite);
 
   const parceladas = isPerfil
-    ? calcularParceladas(
-        transacoesVisiveis,
-        new Date(),
-        usuariaAtiva,
-        perfilDados!.proporcaoRenda
-      )
+    ? calcularParceladas(transacoesVisiveis, new Date())
     : indicadores.parceladas;
 
   const comprometimentoTotal = isPerfil
@@ -210,20 +189,22 @@ export function Dashboard() {
 
   const alertas = isPerfil && perfilDados
     ? gerarAlertas(
+        transacoesVisiveis,
+        dados,
         { receitas, despesas },
         { receitas: 0, despesas: 0 },
         perfilDados.categorias,
         parceladas,
-        limite,
-        projecaoBar.projecao
+        limite
       )
     : indicadores.alertas;
 
   const sugestoes = isPerfil && perfilDados
     ? gerarSugestoes(
+        transacoesVisiveis,
+        dados,
         { receitas, despesas },
-        perfilDados.categorias,
-        []
+        perfilDados.categorias
       )
     : indicadores.sugestoes;
 
@@ -309,7 +290,7 @@ export function Dashboard() {
           <ProjecaoBar
             dados={{ ...projecaoBar, limite }}
             onAjustarLimite={atualizarLimite}
-            perfilGeral={usuariaAtiva === 'geral'}
+            perfilGeral={usuariaAtiva === 'casal'}
             fixas={fixas}
           />
 

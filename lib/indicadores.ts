@@ -84,7 +84,7 @@ function calcularTotaisComRateio(
 /**
  * Calcula evolução mensal dos últimos 6 meses
  */
-function calcularEvolucaoMensal(
+export function calcularEvolucaoMensal(
   transacoesRaw: Transacao[],
   perfil?: 'leticia' | 'giovanna',
   proporcao?: number
@@ -151,7 +151,7 @@ function calcularDespesasPorCategoria(transacoes: Transacao[]): DespesaPorCatego
 /**
  * Calcula parceladas ativas
  */
-function calcularParceladas(transacoes: Transacao[], mesAtual: Date): Parcelada[] {
+export function calcularParceladas(transacoes: Transacao[], mesAtual: Date, _perfilLegacy?: string, _proporcaoLegacy?: number): Parcelada[] {
   const parceladas = transacoes.filter(
     (t) => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1
   );
@@ -193,11 +193,14 @@ function calcularComprometimentoTotal(parceladas: Parcelada[]): number {
 /**
  * Calcula dados para a barra de projeção (gauge)
  */
-function calcularProjecaoBar(
+export function calcularProjecaoBar(
   transacoes: Transacao[],
   mes: number,
   ano: number,
-  limite: number
+  limite: number,
+  _fixasLegacy?: number,
+  _perfilLegacy?: string,
+  _proporcaoLegacy?: number
 ): DadosProjecaoBar {
   const transacoesMes = filtrarPorMes(transacoes, mes, ano);
   const gastoAtual = transacoesMes
@@ -408,7 +411,7 @@ function calcularProjecao(transacoes: Transacao[], metaMensal: number): Projecao
 /**
  * Gera alertas automáticos baseados nos indicadores
  */
-function gerarAlertas(
+export function gerarAlertas(
   transacoes: Transacao[],
   dados: DadosPlanilha,
   totaisMesAtual: { receitas: number; despesas: number },
@@ -520,7 +523,7 @@ function gerarAlertas(
 /**
  * Gera sugestões inteligentes baseadas nos dados
  */
-function gerarSugestoes(
+export function gerarSugestoes(
   transacoes: Transacao[],
   dados: DadosPlanilha,
   totaisMesAtual: { receitas: number; despesas: number },
