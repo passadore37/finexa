@@ -56,11 +56,11 @@ export function HistoricoView({ categoriaFiltro }: Props) {
     return () => window.removeEventListener('planejamento-atualizado', handler);
   }, []);
 
-  const transacoesFiltradas = categoriaFiltro
-    ? transacoes.filter(t => t.categoria === categoriaFiltro)
-    : transacoes;
-
-  const total = transacoesFiltradas.reduce((acc, t) => acc + t.valor, 0);
+  // Com filtro ativo: mostra todos mas dimma os que não são da categoria
+  const transacoesFiltradas = transacoes;
+  const total = categoriaFiltro
+    ? transacoes.filter(t => t.categoria === categoriaFiltro).reduce((acc, t) => acc + t.valor, 0)
+    : transacoes.reduce((acc, t) => acc + t.valor, 0);
 
   function iniciarEdicao(t: Transacao) {
     setEditandoId(t.id);
@@ -113,7 +113,10 @@ export function HistoricoView({ categoriaFiltro }: Props) {
             )}
           </div>
           <span className="text-xs text-muted-foreground">
-            {transacoesFiltradas.length} lançamentos · {fmt(total)}
+            {categoriaFiltro
+              ? `${transacoes.filter(t => t.categoria === categoriaFiltro).length} de ${transacoes.length} lançamentos · ${fmt(total)}`
+              : `${transacoes.length} lançamentos · ${fmt(total)}`
+            }
           </span>
         </div>
       </CardHeader>
@@ -128,6 +131,8 @@ export function HistoricoView({ categoriaFiltro }: Props) {
               const cor = CORES_CAT[t.categoria] || '#888';
               const isEditando = editandoId === t.id;
               const isConfirmando = confirmandoDelete === t.id;
+              const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;
+              const isDimmed = categoriaFiltro && t.categoria !== categoriaFiltro;
 
               if (isEditando) {
                 return (
@@ -169,7 +174,15 @@ export function HistoricoView({ categoriaFiltro }: Props) {
               }
 
               return (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 group transition-colors">
+                <div
+                  key={t.id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 group transition-all"
+                  style={{
+                    opacity: isDimmed ? 0.3 : 1,
+                    background: isDestacado && categoriaFiltro ? `${cor}10` : 'transparent',
+                    borderLeft: isDestacado && categoriaFiltro ? `3px solid ${cor}` : '3px solid transparent',
+                  }}
+                >
                   <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: cor }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">

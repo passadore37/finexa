@@ -147,13 +147,48 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
                 <button
                   key={d.categoria}
                   onClick={() => handleClick(d, i)}
-                  className="w-full flex items-center gap-2 text-left transition-all rounded-lg px-2 py-1.5 hover:bg-secondary/60"
-                  style={{ opacity: isDimmed ? 0.35 : 1 }}
+                  className="w-full flex items-center gap-2 text-left transition-all rounded-lg px-2 py-1.5"
+                  style={{
+                    opacity: isDimmed ? 0.3 : 1,
+                    background: isActive ? cor : 'transparent',
+                    border: isActive ? `1.5px solid ${cor}` : '1.5px solid transparent',
+                  }}
                 >
-                  <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: cor }} />
-                  <span className="text-sm text-foreground flex-1 truncate font-medium">{d.categoria}</span>
-                  <span className="text-[11px] text-muted-foreground w-8 text-right">{Math.round(d.percentual)}%</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: isActive ? cor : undefined }}>{fmt(d.valor)}</span>
+                  {/* Ponto colorido — vira check quando ativo */}
+                  <div
+                    className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center text-xs font-bold transition-all"
+                    style={{
+                      background: isActive ? 'rgba(0,0,0,0.2)' : `${cor}25`,
+                      color: isActive ? '#fff' : cor,
+                    }}
+                  >
+                    {isActive ? '✓' : ''}
+                    {!isActive && <span style={{ width: 8, height: 8, borderRadius: 2, background: cor, display: 'block' }} />}
+                  </div>
+
+                  {/* Nome */}
+                  <span
+                    className="text-sm flex-1 truncate font-semibold"
+                    style={{ color: isActive ? '#ffffff' : 'var(--foreground)' }}
+                  >
+                    {d.categoria}
+                  </span>
+
+                  {/* Percentual */}
+                  <span
+                    className="text-[11px] w-8 text-right font-medium"
+                    style={{ color: isActive ? 'rgba(255,255,255,0.75)' : 'var(--muted-foreground)' }}
+                  >
+                    {Math.round(d.percentual)}%
+                  </span>
+
+                  {/* Valor */}
+                  <span
+                    className="text-sm font-bold tabular-nums"
+                    style={{ color: isActive ? '#ffffff' : 'var(--foreground)' }}
+                  >
+                    {fmt(d.valor)}
+                  </span>
                 </button>
               );
             })}
