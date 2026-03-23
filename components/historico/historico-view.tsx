@@ -15,17 +15,10 @@ interface Transacao {
   divisao: string;
   parcela_atual: number;
   total_parcelas: number;
-  recorrente?: boolean;
-  responsavel?: string;
-  tipo?: string;
 }
-
-type Perfil = 'leticia' | 'giovanna' | 'casal';
 
 interface Props {
   categoriaFiltro?: string | null;
-  perfil?: Perfil;
-  proporcao?: number; // proporção do salário (ex: 0.57 para leticia)
 }
 
 const CORES_CAT: Record<string, string> = {
@@ -39,27 +32,7 @@ function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-// Calcula valor da transação para o perfil ativo com rateio correto
-function valorRateado(t: Transacao, perfil: Perfil, prop: number): number {
-  if (perfil === 'casal') return t.valor;
-  if (t.recorrente) return t.valor * prop;              // fixa: proporcional ao salário
-  if (t.responsavel === perfil) return t.valor;          // gasto próprio: valor total
-  if (t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50') return t.valor / 2; // 50/50
-  return 0;                                              // gasto da outra pessoa: não entra
-}
-
-// Verifica se transação pertence ao perfil
-function pertenceAoPerfil(t: Transacao, perfil: Perfil): boolean {
-  if (perfil === 'casal') return true;
-  if (t.tipo === 'receita') return t.responsavel === perfil;
-  return t.recorrente === true ||
-    t.responsavel === perfil ||
-    t.responsavel === 'casal' ||
-    !t.responsavel ||
-    t.divisao === '50/50';
-}
-
-export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0.5 }: Props) {
+export function HistoricoView({ categoriaFiltro }: Props) {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -76,24 +49,20 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
   }, []);
 
   function buscarTransacoes() {
-    setCarregando(true);
     fetch('/api/transacoes')
       .then(r => r.json())
       .then(res => { if (res.success) setTransacoes(res.data || []); })
       .finally(() => setCarregando(false));
   }
 
-  // Filtrar por perfil ativo
-  const transacoesPerfil = transacoes.filter(t => pertenceAoPerfil(t, perfil));
-
-  // Aplicar filtro de categoria (highlight/dim, não esconde)
-  const totalGeral = transacoesPerfil.reduce((acc, t) => acc + valorRateado(t, perfil, proporcao), 0);
+  // Separa destacados e dimmed mas mantém todos visíveis
+  const totalGeral = transacoes.reduce((acc, t) => acc + t.valor, 0);
   const totalFiltrado = categoriaFiltro
-    ? transacoesPerfil.filter(t => t.categoria === categoriaFiltro).reduce((acc, t) => acc + valorRateado(t, perfil, proporcao), 0)
+    ? transacoes.filter(t => t.categoria === categoriaFiltro).reduce((acc, t) => acc + t.valor, 0)
     : totalGeral;
   const countFiltrado = categoriaFiltro
-    ? transacoesPerfil.filter(t => t.categoria === categoriaFiltro).length
-    : transacoesPerfil.length;
+    ? transacoes.filter(t => t.categoria === categoriaFiltro).length
+    : transacoes.length;
 
   function iniciarEdicao(t: Transacao) {
     setEditandoId(t.id);
@@ -110,7 +79,7 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
       body: JSON.stringify({ id, valor: parseFloat(editValor.replace(',', '.')), categoria: editCategoria, descricao: editDescricao }),
     });
     const data = await res.json();
-    if (data.success) setTransacoes(prev => prev.map(t => t.id === id ? { ...t, ...data.data } : t));
+    if (data.success) setTransacoes(prev => prev.map(t => t.id === id ? data.data : t));
     window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
     setEditandoId(null);
   }
@@ -137,34 +106,39 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
           <div className="flex items-center gap-2">
             <CardTitle className="label-uppercase text-muted-foreground">Histórico do mês</CardTitle>
             {categoriaFiltro && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                style={{ background: CORES_CAT[categoriaFiltro] || '#888', color: ['#dffd6e','#fff245','#ffa857'].includes(CORES_CAT[categoriaFiltro]) ? '#000' : '#fff' }}>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{
+                  background: CORES_CAT[categoriaFiltro] || '#888',
+                  color: ['#dffd6e','#fff245','#ffa857'].includes(CORES_CAT[categoriaFiltro]) ? '#000' : '#fff',
+                }}
+              >
                 {categoriaFiltro}
               </span>
             )}
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">
             {categoriaFiltro
-              ? `${countFiltrado} de ${transacoesPerfil.length} · ${fmt(totalFiltrado)}`
-              : `${transacoesPerfil.length} lançamentos · ${fmt(totalGeral)}`
+              ? `${countFiltrado} de ${transacoes.length} · ${fmt(totalFiltrado)}`
+              : `${transacoes.length} lançamentos · ${fmt(totalGeral)}`
             }
           </span>
         </div>
       </CardHeader>
+
       <CardContent className="p-0">
-        {transacoesPerfil.length === 0 ? (
+        {transacoes.length === 0 ? (
           <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
             Nenhum lançamento ainda
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {transacoesPerfil.map(t => {
+            {transacoes.map(t => {
               const cor = CORES_CAT[t.categoria] || '#888';
               const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;
               const isDimmed = !!categoriaFiltro && !isDestacado;
               const isEditando = editandoId === t.id;
               const isConfirmando = confirmandoDelete === t.id;
-              const valorExibido = valorRateado(t, perfil, proporcao);
 
               if (isEditando) {
                 return (
@@ -184,7 +158,8 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
                           className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all"
                           style={editCategoria === cat
                             ? { background: CORES_CAT[cat] || '#888', color: '#000' }
-                            : { background: `${CORES_CAT[cat] || '#888'}20`, color: CORES_CAT[cat] || '#888' }}>
+                            : { background: `${CORES_CAT[cat] || '#888'}20`, color: CORES_CAT[cat] || '#888' }
+                          }>
                           {cat}
                         </button>
                       ))}
@@ -205,7 +180,8 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
               }
 
               return (
-                <div key={t.id}
+                <div
+                  key={t.id}
                   className="flex items-center gap-3 px-4 py-3 group transition-all duration-150"
                   style={{
                     opacity: isDimmed ? 0.25 : 1,
@@ -213,7 +189,10 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
                     borderLeft: `3px solid ${isDestacado && categoriaFiltro ? cor : 'transparent'}`,
                   }}
                 >
+                  {/* Ponto */}
                   <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: cor }} />
+
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm text-foreground font-medium truncate">{t.descricao}</span>
@@ -234,30 +213,23 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
                       {t.perfil && t.perfil !== 'casal' && (
                         <span className="text-[11px] text-muted-foreground capitalize">{t.perfil}</span>
                       )}
-                      {/* Mostrar divisão real */}
-                      {t.divisao && perfil !== 'casal' && (
+                      {t.divisao && (
                         <span className="text-[11px] text-muted-foreground">{t.divisao}</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Valor com rateio aplicado */}
-                  <div className="flex flex-col items-end flex-shrink-0">
-                    <span className="text-sm font-bold tabular-nums text-foreground">
-                      {fmt(valorExibido)}
-                    </span>
-                    {/* Mostrar valor original se diferente (para contexto) */}
-                    {perfil !== 'casal' && valorExibido !== t.valor && (
-                      <span className="text-[10px] text-muted-foreground tabular-nums">
-                        total: {fmt(t.valor)}
-                      </span>
-                    )}
-                  </div>
+                  {/* Valor */}
+                  <span className="text-sm font-bold tabular-nums text-foreground flex-shrink-0">
+                    {fmt(t.valor)}
+                  </span>
 
-                  {/* Ações: sempre visíveis no mobile */}
+                  {/* Ações: sempre visíveis no mobile, hover no desktop */}
                   <div className="flex gap-1 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => iniciarEdicao(t)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      onClick={() => iniciarEdicao(t)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                    >
                       <Pencil className="h-4 w-4" />
                     </button>
                     {isConfirmando ? (
@@ -275,8 +247,10 @@ export function HistoricoView({ categoriaFiltro, perfil = 'casal', proporcao = 0
                     ) : (
                       <button onClick={() => setConfirmandoDelete(t.id)}
                         className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                        style={{ ['--hover-bg' as any]: 'rgba(226,75,74,0.1)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,75,74,0.1)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
