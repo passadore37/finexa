@@ -108,7 +108,7 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
   if (salarioLeticia > 0) {
     transacoes.push({
       id: 'sal-let',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
+      data: new Date(`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-05T12:00:00`),
       descricao: 'Salário Letícia',
       categoria: 'Salário',
       tipo: 'receita',
@@ -121,7 +121,7 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
   if (salarioGiovanna > 0) {
     transacoes.push({
       id: 'sal-gio',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
+      data: new Date(`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-05T12:00:00`),
       descricao: 'Salário Giovanna',
       categoria: 'Salário',
       tipo: 'receita',
