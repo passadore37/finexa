@@ -18,36 +18,63 @@ const CORES: Record<string, string> = {
   Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
 };
 
+// Cores que precisam de texto ESCURO quando usadas como fundo (amarelos, verdes claros)
+const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
+
 function getCor(cat: string) { return CORES[cat] || '#888780'; }
 
-// Cores claras que precisam de texto escuro quando usadas como fundo
-const CORES_CLARAS = new Set(['#dffd6e', '#fff245', '#ffa857']);
-
-function getTextoCor(cor: string, isActive: boolean) {
-  if (!isActive) return 'var(--foreground)';
-  return CORES_CLARAS.has(cor) ? '#000000' : '#ffffff';
-}
-
-function getTextoCorMuted(cor: string, isActive: boolean) {
-  if (!isActive) return 'var(--muted-foreground)';
-  return CORES_CLARAS.has(cor) ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.75)';
+// Retorna cor do texto sobre o fundo da categoria — funciona em light e dark
+function getTextSobreCor(cor: string): string {
+  return FUNDO_CLARO.has(cor) ? '#1a1a1a' : '#ffffff';
 }
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 
+// Shape expandido para fatia ativa
 function ActiveShape(props: any) {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
   return (
     <g>
-      <Sector cx={cx} cy={cy} innerRadius={innerRadius - 4} outerRadius={outerRadius + 8}
-        startAngle={startAngle} endAngle={endAngle} fill={fill} />
+      <Sector
+        cx={cx} cy={cy}
+        innerRadius={innerRadius - 3}
+        outerRadius={outerRadius + 7}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
     </g>
+  );
+}
+
+// Tooltip customizado com nome da categoria
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload as DespesaPorCategoria;
+  const cor = getCor(d.categoria);
+  return (
+    <div style={{
+      background: 'var(--card)',
+      border: `1.5px solid ${cor}`,
+      borderRadius: 10,
+      padding: '8px 12px',
+      fontSize: 12,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <div style={{ width: 10, height: 10, borderRadius: 2, background: cor, flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, color: 'var(--foreground)', fontSize: 13 }}>{d.categoria}</span>
+      </div>
+      <div style={{ color: 'var(--foreground)', fontWeight: 700, fontSize: 15 }}>{fmt(d.valor)}</div>
+      <div style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{Math.round(d.percentual)}% do total</div>
+    </div>
   );
 }
 
 export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
   if (!dados || dados.length === 0) {
     return (
@@ -73,6 +100,13 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
     onCategoriaSelect?.(categoriaAtiva === cat ? null : cat);
   }
 
+  // Categoria em destaque para label central do donut
+  const catDestaque = categoriaAtiva
+    ? dados.find(d => d.categoria === categoriaAtiva)
+    : hoverIndex !== null
+    ? dados[hoverIndex]
+    : null;
+
   return (
     <Card className="border bg-card">
       <CardHeader className="pb-3">
@@ -81,7 +115,7 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
           {categoriaAtiva && (
             <button
               onClick={() => onCategoriaSelect?.(null)}
-              className="text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               Limpar ✕
             </button>
@@ -91,8 +125,8 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
       <CardContent>
         <div className="flex flex-col sm:flex-row items-center gap-4">
 
-          {/* Gráfico donut */}
-          <div className="w-44 h-44 flex-shrink-0 cursor-pointer">
+          {/* Gráfico donut com label central */}
+          <div className="relative w-44 h-44 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -102,7 +136,7 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
                   dataKey="valor" nameKey="categoria"
                   activeIndex={activeIndex >= 0 ? activeIndex : hoverIndex ?? undefined}
                   activeShape={ActiveShape}
-                  onClick={(entry) => handleClick(entry)}
+                  onClick={handleClick}
                   onMouseEnter={(_, i) => setHoverIndex(i)}
                   onMouseLeave={() => setHoverIndex(null)}
                   style={{ cursor: 'pointer', outline: 'none' }}
@@ -111,21 +145,30 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
                     <Cell
                       key={entry.categoria}
                       fill={getCor(entry.categoria)}
-                      opacity={categoriaAtiva && categoriaAtiva !== entry.categoria ? 0.2 : 1}
+                      opacity={categoriaAtiva && categoriaAtiva !== entry.categoria ? 0.18 : 1}
                       stroke="var(--card)"
                       strokeWidth={2}
                     />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value: number) => [fmt(value), '']}
-                  contentStyle={{
-                    background: 'var(--card)', border: '1px solid var(--border)',
-                    borderRadius: '8px', fontSize: '12px', color: 'var(--foreground)',
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
+
+            {/* Label central — aparece no hover ou quando há categoria ativa */}
+            {catDestaque && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                style={{ borderRadius: '50%' }}
+              >
+                <span className="text-[10px] text-muted-foreground font-medium text-center leading-tight px-2 truncate max-w-[80px]">
+                  {catDestaque.categoria}
+                </span>
+                <span className="text-sm font-bold text-foreground tabular-nums mt-0.5">
+                  {Math.round(catDestaque.percentual)}%
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Legenda clicável */}
@@ -133,47 +176,73 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
             {dados.map((d) => {
               const cor = getCor(d.categoria);
               const isActive = categoriaAtiva === d.categoria;
+              const isHover = hoverLegenda === d.categoria;
               const isDimmed = !!categoriaAtiva && !isActive;
-              const textoCor = getTextoCor(cor, isActive);
-              const textoMuted = getTextoCorMuted(cor, isActive);
+              // Texto sobre fundo colorido — sempre legível em light e dark
+              const textoSobreCor = getTextSobreCor(cor);
 
               return (
                 <button
                   key={d.categoria}
                   onClick={() => handleClick(d)}
+                  onMouseEnter={() => setHoverLegenda(d.categoria)}
+                  onMouseLeave={() => setHoverLegenda(null)}
                   className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 transition-all duration-150 text-left"
                   style={{
-                    opacity: isDimmed ? 0.25 : 1,
-                    background: isActive ? cor : 'transparent',
-                    border: `1.5px solid ${isActive ? cor : 'transparent'}`,
+                    opacity: isDimmed ? 0.2 : 1,
+                    // Fundo: cor sólida se ativo, cor suave se hover, transparente se normal
+                    background: isActive
+                      ? cor
+                      : isHover
+                      ? `${cor}20`
+                      : 'transparent',
+                    border: `1.5px solid ${isActive ? cor : isHover ? `${cor}60` : 'transparent'}`,
                   }}
                 >
-                  {/* Indicador */}
+                  {/* Indicador / check */}
                   <div
                     className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center text-[11px] font-bold"
                     style={{
                       background: isActive ? 'rgba(0,0,0,0.18)' : `${cor}25`,
-                      color: isActive ? textoCor : cor,
+                      // Cor do ícone: branco/preto sobre o fundo ativo, cor da categoria se normal
+                      color: isActive ? textoSobreCor : cor,
                     }}
                   >
-                    {isActive ? '✓' : ''}
-                    {!isActive && (
-                      <span style={{ width: 8, height: 8, borderRadius: 2, background: cor, display: 'block' }} />
-                    )}
+                    {isActive
+                      ? <span style={{ color: textoSobreCor, fontSize: 12 }}>✓</span>
+                      : <span style={{ width: 8, height: 8, borderRadius: 2, background: cor, display: 'block' }} />
+                    }
                   </div>
 
-                  {/* Nome */}
-                  <span className="text-sm flex-1 truncate font-semibold" style={{ color: textoCor }}>
+                  {/* Nome da categoria */}
+                  <span
+                    className="text-sm flex-1 truncate font-semibold"
+                    style={{
+                      // CRÍTICO: quando ativo usa textoSobreCor (preto ou branco sobre a cor)
+                      // Quando inativo usa variável CSS do tema — funciona em light E dark
+                      color: isActive ? textoSobreCor : 'var(--foreground)',
+                    }}
+                  >
                     {d.categoria}
                   </span>
 
                   {/* Percentual */}
-                  <span className="text-[11px] font-medium w-8 text-right" style={{ color: textoMuted }}>
+                  <span
+                    className="text-[11px] font-medium w-8 text-right tabular-nums"
+                    style={{
+                      color: isActive
+                        ? FUNDO_CLARO.has(cor) ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)'
+                        : 'var(--muted-foreground)',
+                    }}
+                  >
                     {Math.round(d.percentual)}%
                   </span>
 
                   {/* Valor */}
-                  <span className="text-sm font-bold tabular-nums" style={{ color: textoCor }}>
+                  <span
+                    className="text-sm font-bold tabular-nums"
+                    style={{ color: isActive ? textoSobreCor : 'var(--foreground)' }}
+                  >
                     {fmt(d.valor)}
                   </span>
                 </button>
