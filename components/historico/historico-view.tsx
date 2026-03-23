@@ -42,25 +42,27 @@ export function HistoricoView({ categoriaFiltro }: Props) {
   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/transacoes')
-      .then(r => r.json())
-      .then(res => { if (res.success) setTransacoes(res.data || []); })
-      .finally(() => setCarregando(false));
-
-    const handler = () => {
-      fetch('/api/transacoes').then(r => r.json()).then(res => {
-        if (res.success) setTransacoes(res.data || []);
-      });
-    };
+    buscarTransacoes();
+    const handler = () => buscarTransacoes();
     window.addEventListener('planejamento-atualizado', handler);
     return () => window.removeEventListener('planejamento-atualizado', handler);
   }, []);
 
-  // Com filtro ativo: mostra todos mas dimma os que não são da categoria
-  const transacoesFiltradas = transacoes;
-  const total = categoriaFiltro
+  function buscarTransacoes() {
+    fetch('/api/transacoes')
+      .then(r => r.json())
+      .then(res => { if (res.success) setTransacoes(res.data || []); })
+      .finally(() => setCarregando(false));
+  }
+
+  // Separa destacados e dimmed mas mantém todos visíveis
+  const totalGeral = transacoes.reduce((acc, t) => acc + t.valor, 0);
+  const totalFiltrado = categoriaFiltro
     ? transacoes.filter(t => t.categoria === categoriaFiltro).reduce((acc, t) => acc + t.valor, 0)
-    : transacoes.reduce((acc, t) => acc + t.valor, 0);
+    : totalGeral;
+  const countFiltrado = categoriaFiltro
+    ? transacoes.filter(t => t.categoria === categoriaFiltro).length
+    : transacoes.length;
 
   function iniciarEdicao(t: Transacao) {
     setEditandoId(t.id);
@@ -77,10 +79,8 @@ export function HistoricoView({ categoriaFiltro }: Props) {
       body: JSON.stringify({ id, valor: parseFloat(editValor.replace(',', '.')), categoria: editCategoria, descricao: editDescricao }),
     });
     const data = await res.json();
-    if (data.success) {
-      setTransacoes(prev => prev.map(t => t.id === id ? data.data : t));
-      window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
-    }
+    if (data.success) setTransacoes(prev => prev.map(t => t.id === id ? data.data : t));
+    window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
     setEditandoId(null);
   }
 
@@ -106,33 +106,39 @@ export function HistoricoView({ categoriaFiltro }: Props) {
           <div className="flex items-center gap-2">
             <CardTitle className="label-uppercase text-muted-foreground">Histórico do mês</CardTitle>
             {categoriaFiltro && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                style={{ background: `${CORES_CAT[categoriaFiltro] || '#888'}20`, color: CORES_CAT[categoriaFiltro] || '#888' }}>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{
+                  background: CORES_CAT[categoriaFiltro] || '#888',
+                  color: ['#dffd6e','#fff245','#ffa857'].includes(CORES_CAT[categoriaFiltro]) ? '#000' : '#fff',
+                }}
+              >
                 {categoriaFiltro}
               </span>
             )}
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {categoriaFiltro
-              ? `${transacoes.filter(t => t.categoria === categoriaFiltro).length} de ${transacoes.length} lançamentos · ${fmt(total)}`
-              : `${transacoes.length} lançamentos · ${fmt(total)}`
+              ? `${countFiltrado} de ${transacoes.length} · ${fmt(totalFiltrado)}`
+              : `${transacoes.length} lançamentos · ${fmt(totalGeral)}`
             }
           </span>
         </div>
       </CardHeader>
+
       <CardContent className="p-0">
-        {transacoesFiltradas.length === 0 ? (
+        {transacoes.length === 0 ? (
           <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-            {categoriaFiltro ? `Nenhum lançamento em ${categoriaFiltro}` : 'Nenhum lançamento ainda'}
+            Nenhum lançamento ainda
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {transacoesFiltradas.map(t => {
+            {transacoes.map(t => {
               const cor = CORES_CAT[t.categoria] || '#888';
+              const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;
+              const isDimmed = !!categoriaFiltro && !isDestacado;
               const isEditando = editandoId === t.id;
               const isConfirmando = confirmandoDelete === t.id;
-              const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;
-              const isDimmed = categoriaFiltro && t.categoria !== categoriaFiltro;
 
               if (isEditando) {
                 return (
@@ -176,21 +182,28 @@ export function HistoricoView({ categoriaFiltro }: Props) {
               return (
                 <div
                   key={t.id}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 group transition-all"
+                  className="flex items-center gap-3 px-4 py-3 group transition-all duration-150"
                   style={{
-                    opacity: isDimmed ? 0.3 : 1,
-                    background: isDestacado && categoriaFiltro ? `${cor}10` : 'transparent',
-                    borderLeft: isDestacado && categoriaFiltro ? `3px solid ${cor}` : '3px solid transparent',
+                    opacity: isDimmed ? 0.25 : 1,
+                    background: isDestacado && categoriaFiltro ? `${cor}12` : 'transparent',
+                    borderLeft: `3px solid ${isDestacado && categoriaFiltro ? cor : 'transparent'}`,
                   }}
                 >
+                  {/* Ponto */}
                   <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: cor }} />
+
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm text-foreground font-medium truncate">{t.descricao}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 font-semibold"
-                        style={{ background: `${cor}20`, color: cor }}>{t.categoria}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0"
+                        style={{ background: `${cor}20`, color: cor }}>
+                        {t.categoria}
+                      </span>
                       {t.total_parcelas > 1 && (
-                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{t.parcela_atual}/{t.total_parcelas}</span>
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                          {t.parcela_atual}/{t.total_parcelas}
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -206,29 +219,39 @@ export function HistoricoView({ categoriaFiltro }: Props) {
                     </div>
                   </div>
 
-                  <span className="text-sm font-bold tabular-nums text-foreground flex-shrink-0">{fmt(t.valor)}</span>
+                  {/* Valor */}
+                  <span className="text-sm font-bold tabular-nums text-foreground flex-shrink-0">
+                    {fmt(t.valor)}
+                  </span>
 
-                  {/* Ações — visíveis no hover desktop, sempre visíveis no mobile */}
-                  <div className="flex gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => iniciarEdicao(t)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-                      <Pencil className="h-3.5 w-3.5" />
+                  {/* Ações: sempre visíveis no mobile, hover no desktop */}
+                  <div className="flex gap-1 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => iniciarEdicao(t)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Pencil className="h-4 w-4" />
                     </button>
                     {isConfirmando ? (
                       <>
                         <button onClick={() => deletar(t.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-                          <Check className="h-3.5 w-3.5" />
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-destructive"
+                          style={{ background: 'rgba(226,75,74,0.12)' }}>
+                          <Check className="h-4 w-4" />
                         </button>
                         <button onClick={() => setConfirmandoDelete(null)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground">
-                          <X className="h-3.5 w-3.5" />
+                          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground">
+                          <X className="h-4 w-4" />
                         </button>
                       </>
                     ) : (
                       <button onClick={() => setConfirmandoDelete(t.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                        <Trash2 className="h-3.5 w-3.5" />
+                        className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                        style={{ ['--hover-bg' as any]: 'rgba(226,75,74,0.1)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,75,74,0.1)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                   </div>
