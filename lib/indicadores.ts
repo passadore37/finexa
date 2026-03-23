@@ -13,21 +13,6 @@ import type {
   Sugestao,
 } from './types';
 
-// Indicadores calculados para cada perfil individual
-interface IndicadoresPerfil {
-  salario: number;
-  proporcaoRenda: number;
-  parteFixas: number;
-  parteParceladas: number;
-  gastosVariaveis: number;
-  saldoLivre: number;
-  comprometimento: number;
-  envelopeSemanal: number;
-  metaEconomia: number;
-  progressoMeta: number;
-  categorias: DespesaPorCategoria[];
-}
-
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 /**
@@ -65,45 +50,9 @@ function calcularTotais(transacoes: Transacao[]) {
 }
 
 /**
- * Calcula totais com rateio proporcional para perfis individuais
- */
-function calcularTotaisComRateio(
-  transacoes: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  proporcao: number
-) {
-  return transacoes.reduce(
-    (acc, t) => {
-      if (t.tipo === 'receita') {
-        // Receita: só conta se for do perfil
-        if (t.responsavel === perfil) acc.receitas += t.valor;
-      } else {
-        // Despesa: aplicar rateio
-        if (t.recorrente) {
-          // Fixa: proporcional ao salário
-          acc.despesas += t.valor * proporcao;
-        } else if (t.responsavel === perfil) {
-          // Gasto próprio: valor total
-          acc.despesas += t.valor;
-        } else if (t.divisao === '50/50' || t.responsavel === 'casal' || !t.responsavel) {
-          // 50/50: metade
-          acc.despesas += t.valor / 2;
-        }
-      }
-      return acc;
-    },
-    { receitas: 0, despesas: 0 }
-  );
-}
-
-/**
  * Calcula evolução mensal dos últimos 6 meses
  */
-export function calcularEvolucaoMensal(
-  transacoesRaw: Transacao[],
-  perfil?: 'leticia' | 'giovanna',
-  proporcao?: number
-): EvolucaoMensal[] {
+function calcularEvolucaoMensal(transacoesRaw: Transacao[]): EvolucaoMensal[] {
   // Normalizar datas para evitar problema de fuso UTC→local
   const transacoes = transacoesRaw.map(t => {
     const raw = t.data as any;
@@ -122,10 +71,7 @@ export function calcularEvolucaoMensal(
     const mes = data.getMonth();
     const ano = data.getFullYear();
     const transacoesMes = filtrarPorMes(transacoes, mes, ano);
-    // Usar rateio proporcional quando chamado para perfil individual
-    const totais = perfil && proporcao !== undefined
-      ? calcularTotaisComRateio(transacoesMes, perfil, proporcao)
-      : calcularTotais(transacoesMes);
+    const totais = calcularTotais(transacoesMes);
 
     resultado.push({
       mes: MESES[mes],
@@ -166,7 +112,7 @@ function calcularDespesasPorCategoria(transacoes: Transacao[]): DespesaPorCatego
 /**
  * Calcula parceladas ativas
  */
-export function calcularParceladas(transacoes: Transacao[], mesAtual: Date, _perfilLegacy?: string, _proporcaoLegacy?: number): Parcelada[] {
+function calcularParceladas(transacoes: Transacao[], mesAtual: Date): Parcelada[] {
   const parceladas = transacoes.filter(
     (t) => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1
   );
@@ -208,14 +154,11 @@ function calcularComprometimentoTotal(parceladas: Parcelada[]): number {
 /**
  * Calcula dados para a barra de projeção (gauge)
  */
-export function calcularProjecaoBar(
+function calcularProjecaoBar(
   transacoes: Transacao[],
   mes: number,
   ano: number,
-  limite: number,
-  _fixasLegacy?: number,
-  _perfilLegacy?: string,
-  _proporcaoLegacy?: number
+  limite: number
 ): DadosProjecaoBar {
   const transacoesMes = filtrarPorMes(transacoes, mes, ano);
   const gastoAtual = transacoesMes
@@ -426,7 +369,7 @@ function calcularProjecao(transacoes: Transacao[], metaMensal: number): Projecao
 /**
  * Gera alertas automáticos baseados nos indicadores
  */
-export function gerarAlertas(
+function gerarAlertas(
   transacoes: Transacao[],
   dados: DadosPlanilha,
   totaisMesAtual: { receitas: number; despesas: number },
@@ -538,7 +481,7 @@ export function gerarAlertas(
 /**
  * Gera sugestões inteligentes baseadas nos dados
  */
-export function gerarSugestoes(
+function gerarSugestoes(
   transacoes: Transacao[],
   dados: DadosPlanilha,
   totaisMesAtual: { receitas: number; despesas: number },
@@ -615,113 +558,6 @@ export function gerarSugestoes(
 }
 
 /**
- * Calcula proporção de renda de cada perfil
- */
-function calcularProporcoes(salLet: number, salGio: number) {
-  const total = salLet + salGio;
-  if (total === 0) return { leticia: 0.5, giovanna: 0.5 };
-  return { leticia: salLet / total, giovanna: salGio / total };
-}
-
-/**
- * Calcula indicadores individuais por perfil
- */
-function calcularPerfilIndicadores(
-  transacoes: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salario: number,
-  salarioLeticia: number,
-  salarioGiovanna: number,
-  contasFixasConfig: Array<{ valor: number; categoria: string; descricao: string }>,
-  parceladas: Parcelada[],
-  percentualInvestimento: number
-): IndicadoresPerfil {
-  const hoje = new Date();
-  const mes = hoje.getMonth();
-  const ano = hoje.getFullYear();
-  const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
-  const proporcaoRenda = prop[perfil];
-
-  // Parte das fixas proporcional ao salário
-  const parteFixas = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor) * proporcaoRenda, 0);
-
-  // Parte das parceladas (50/50)
-  const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela * 0.5, 0);
-
-  // Todos os gastos do mês para este perfil com rateio correto
-  const tsMes = filtrarPorMes(transacoes, mes, ano);
-  const despesasMes = tsMes.filter(t => t.tipo === 'despesa');
-
-  // Fixas reais lançadas no Supabase (recorrente=true) — rateio proporcional
-  const totalFixasReais = despesasMes
-    .filter(t => t.recorrente)
-    .reduce((acc, t) => acc + t.valor * proporcaoRenda, 0);
-
-  // Parceladas — rateio 50/50
-  const totalParceladas = despesasMes
-    .filter(t => !t.recorrente && t.totalParcelas && t.totalParcelas > 1)
-    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
-    .reduce((acc, t) => {
-      if (t.responsavel === perfil) return acc + t.valor;
-      return acc + t.valor / 2;
-    }, 0);
-
-  // Variáveis (nem recorrente nem parcelado)
-  const gastosVariaveis = despesasMes
-    .filter(t => !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
-    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
-    .reduce((acc, t) => {
-      if (t.responsavel === perfil) return acc + t.valor;
-      return acc + t.valor / 2;
-    }, 0);
-
-  // Total de despesas do perfil = fixas reais + parceladas + variáveis
-  const totalDespesasPerfil = totalFixasReais + totalParceladas + gastosVariaveis;
-
-  const investimento = salario * (percentualInvestimento / 100);
-  // saldoLivre usa despesas reais do banco (não contasFixasConfig para evitar dupla contagem)
-  const saldoLivre = salario - investimento - totalDespesasPerfil;
-  const comprometimento = salario > 0 ? ((parteFixas + parteParceladas) / salario) * 100 : 0;
-
-  // Envelope semanal
-  const semanas = calcularSemanasDoMes(ano, mes);
-  const envelopeTotal = Math.max(0, salario - investimento - parteFixas);
-  const envelopeSemanal = semanas.length > 0 ? envelopeTotal / semanas.length : 0;
-
-  // Categorias filtradas por perfil com rateio
-  const porCat: Record<string, number> = {};
-  tsMes
-    .filter(t => t.tipo === 'despesa')
-    .filter(t => t.recorrente || t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
-    .forEach(t => {
-      let val = t.recorrente ? t.valor * proporcaoRenda
-        : t.responsavel === perfil ? t.valor
-        : t.valor / 2;
-      if (val > 0) porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
-    });
-  const totalCat = Object.values(porCat).reduce((a, b) => a + b, 0);
-  const categorias: DespesaPorCategoria[] = Object.entries(porCat)
-    .map(([categoria, valor]) => ({ categoria, valor, percentual: totalCat > 0 ? valor / totalCat * 100 : 0 }))
-    .sort((a, b) => b.valor - a.valor);
-
-  const metaEconomia = salario * 0.2;
-
-  return {
-    salario,
-    proporcaoRenda,
-    parteFixas,         // valor das fixas do planejamento (para metodologia)
-    parteParceladas,
-    gastosVariaveis: totalDespesasPerfil, // total real de despesas do perfil
-    saldoLivre,
-    comprometimento,
-    envelopeSemanal,
-    metaEconomia,
-    progressoMeta: metaEconomia > 0 ? (saldoLivre / metaEconomia) * 100 : 0,
-    categorias,
-  };
-}
-
-/**
  * Calcula todos os indicadores financeiros
  */
 export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinanceiros {
@@ -782,21 +618,6 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
   const alertas = gerarAlertas(transacoes, dados, totaisMesAtual, totaisMesAnterior, despesasPorCategoria, parceladas, limiteMensal);
   const sugestoes = gerarSugestoes(transacoes, dados, totaisMesAtual, despesasPorCategoria);
 
-  // Calcular indicadores por perfil individual
-  const salarioLeticia = dados.salarioLeticia || 0;
-  const salarioGiovanna = dados.salarioGiovanna || 0;
-  const percentualInvestimento = dados.percentualInvestimento || 10;
-  const contasFixasConfig = dados.contasFixasConfig || [];
-
-  const perfilLeticia = calcularPerfilIndicadores(
-    transacoes, 'leticia', salarioLeticia, salarioLeticia, salarioGiovanna,
-    contasFixasConfig, parceladas, percentualInvestimento
-  );
-  const perfilGiovanna = calcularPerfilIndicadores(
-    transacoes, 'giovanna', salarioGiovanna, salarioLeticia, salarioGiovanna,
-    contasFixasConfig, parceladas, percentualInvestimento
-  );
-
   return {
     saldoAtual,
     receitasMes: totaisMesAtual.receitas,
@@ -816,7 +637,5 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     metodologia,
     alertas,
     sugestoes,
-    perfilLeticia,
-    perfilGiovanna,
   };
 }
