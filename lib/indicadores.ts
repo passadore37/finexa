@@ -648,19 +648,39 @@ function calcularPerfilIndicadores(
   // Parte das parceladas (50/50)
   const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela * 0.5, 0);
 
-  // Gastos variáveis do mês para este perfil
+  // Todos os gastos do mês para este perfil com rateio correto
   const tsMes = filtrarPorMes(transacoes, mes, ano);
-  const gastosVariaveis = tsMes
-    .filter(t => t.tipo === 'despesa' && !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
+  const despesasMes = tsMes.filter(t => t.tipo === 'despesa');
+
+  // Fixas reais lançadas no Supabase (recorrente=true) — rateio proporcional
+  const totalFixasReais = despesasMes
+    .filter(t => t.recorrente)
+    .reduce((acc, t) => acc + t.valor * proporcaoRenda, 0);
+
+  // Parceladas — rateio 50/50
+  const totalParceladas = despesasMes
+    .filter(t => !t.recorrente && t.totalParcelas && t.totalParcelas > 1)
     .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
     .reduce((acc, t) => {
-      if (t.recorrente) return acc + t.valor * proporcaoRenda;
       if (t.responsavel === perfil) return acc + t.valor;
       return acc + t.valor / 2;
     }, 0);
 
+  // Variáveis (nem recorrente nem parcelado)
+  const gastosVariaveis = despesasMes
+    .filter(t => !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
+    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
+    .reduce((acc, t) => {
+      if (t.responsavel === perfil) return acc + t.valor;
+      return acc + t.valor / 2;
+    }, 0);
+
+  // Total de despesas do perfil = fixas reais + parceladas + variáveis
+  const totalDespesasPerfil = totalFixasReais + totalParceladas + gastosVariaveis;
+
   const investimento = salario * (percentualInvestimento / 100);
-  const saldoLivre = salario - investimento - parteFixas - gastosVariaveis;
+  // saldoLivre usa despesas reais do banco (não contasFixasConfig para evitar dupla contagem)
+  const saldoLivre = salario - investimento - totalDespesasPerfil;
   const comprometimento = salario > 0 ? ((parteFixas + parteParceladas) / salario) * 100 : 0;
 
   // Envelope semanal
@@ -687,9 +707,16 @@ function calcularPerfilIndicadores(
   const metaEconomia = salario * 0.2;
 
   return {
-    salario, proporcaoRenda, parteFixas, parteParceladas,
-    gastosVariaveis, saldoLivre, comprometimento, envelopeSemanal,
-    metaEconomia, progressoMeta: metaEconomia > 0 ? (saldoLivre / metaEconomia) * 100 : 0,
+    salario,
+    proporcaoRenda,
+    parteFixas,         // valor das fixas do planejamento (para metodologia)
+    parteParceladas,
+    gastosVariaveis: totalDespesasPerfil, // total real de despesas do perfil
+    saldoLivre,
+    comprometimento,
+    envelopeSemanal,
+    metaEconomia,
+    progressoMeta: metaEconomia > 0 ? (saldoLivre / metaEconomia) * 100 : 0,
     categorias,
   };
 }

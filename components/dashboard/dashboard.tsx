@@ -125,8 +125,9 @@ export function Dashboard() {
     ? perfilDados!.salario
     : indicadores.receitasMes;
 
+  // gastosVariaveis já contém o total real de despesas do perfil (fixas + parceladas + variáveis)
   const despesas = isPerfil
-    ? perfilDados!.parteFixas + perfilDados!.gastosVariaveis
+    ? perfilDados!.gastosVariaveis
     : indicadores.despesasMes;
 
   const saldo = receitas - despesas;
