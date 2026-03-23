@@ -13,6 +13,21 @@ import type {
   Sugestao,
 } from './types';
 
+// Indicadores calculados para cada perfil individual
+interface IndicadoresPerfil {
+  salario: number;
+  proporcaoRenda: number;
+  parteFixas: number;
+  parteParceladas: number;
+  gastosVariaveis: number;
+  saldoLivre: number;
+  comprometimento: number;
+  envelopeSemanal: number;
+  metaEconomia: number;
+  progressoMeta: number;
+  categorias: DespesaPorCategoria[];
+}
+
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 /**
@@ -600,6 +615,86 @@ export function gerarSugestoes(
 }
 
 /**
+ * Calcula proporção de renda de cada perfil
+ */
+function calcularProporcoes(salLet: number, salGio: number) {
+  const total = salLet + salGio;
+  if (total === 0) return { leticia: 0.5, giovanna: 0.5 };
+  return { leticia: salLet / total, giovanna: salGio / total };
+}
+
+/**
+ * Calcula indicadores individuais por perfil
+ */
+function calcularPerfilIndicadores(
+  transacoes: Transacao[],
+  perfil: 'leticia' | 'giovanna',
+  salario: number,
+  salarioLeticia: number,
+  salarioGiovanna: number,
+  contasFixasConfig: Array<{ valor: number; categoria: string; descricao: string }>,
+  parceladas: Parcelada[],
+  percentualInvestimento: number
+): IndicadoresPerfil {
+  const hoje = new Date();
+  const mes = hoje.getMonth();
+  const ano = hoje.getFullYear();
+  const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
+  const proporcaoRenda = prop[perfil];
+
+  // Parte das fixas proporcional ao salário
+  const parteFixas = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor) * proporcaoRenda, 0);
+
+  // Parte das parceladas (50/50)
+  const parteParceladas = parceladas.reduce((acc, p) => acc + p.valorParcela * 0.5, 0);
+
+  // Gastos variáveis do mês para este perfil
+  const tsMes = filtrarPorMes(transacoes, mes, ano);
+  const gastosVariaveis = tsMes
+    .filter(t => t.tipo === 'despesa' && !t.recorrente && !(t.totalParcelas && t.totalParcelas > 1))
+    .filter(t => t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
+    .reduce((acc, t) => {
+      if (t.recorrente) return acc + t.valor * proporcaoRenda;
+      if (t.responsavel === perfil) return acc + t.valor;
+      return acc + t.valor / 2;
+    }, 0);
+
+  const investimento = salario * (percentualInvestimento / 100);
+  const saldoLivre = salario - investimento - parteFixas - gastosVariaveis;
+  const comprometimento = salario > 0 ? ((parteFixas + parteParceladas) / salario) * 100 : 0;
+
+  // Envelope semanal
+  const semanas = calcularSemanasDoMes(ano, mes);
+  const envelopeTotal = Math.max(0, salario - investimento - parteFixas);
+  const envelopeSemanal = semanas.length > 0 ? envelopeTotal / semanas.length : 0;
+
+  // Categorias filtradas por perfil com rateio
+  const porCat: Record<string, number> = {};
+  tsMes
+    .filter(t => t.tipo === 'despesa')
+    .filter(t => t.recorrente || t.responsavel === perfil || t.responsavel === 'casal' || !t.responsavel || t.divisao === '50/50')
+    .forEach(t => {
+      let val = t.recorrente ? t.valor * proporcaoRenda
+        : t.responsavel === perfil ? t.valor
+        : t.valor / 2;
+      if (val > 0) porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
+    });
+  const totalCat = Object.values(porCat).reduce((a, b) => a + b, 0);
+  const categorias: DespesaPorCategoria[] = Object.entries(porCat)
+    .map(([categoria, valor]) => ({ categoria, valor, percentual: totalCat > 0 ? valor / totalCat * 100 : 0 }))
+    .sort((a, b) => b.valor - a.valor);
+
+  const metaEconomia = salario * 0.2;
+
+  return {
+    salario, proporcaoRenda, parteFixas, parteParceladas,
+    gastosVariaveis, saldoLivre, comprometimento, envelopeSemanal,
+    metaEconomia, progressoMeta: metaEconomia > 0 ? (saldoLivre / metaEconomia) * 100 : 0,
+    categorias,
+  };
+}
+
+/**
  * Calcula todos os indicadores financeiros
  */
 export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinanceiros {
@@ -660,6 +755,21 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
   const alertas = gerarAlertas(transacoes, dados, totaisMesAtual, totaisMesAnterior, despesasPorCategoria, parceladas, limiteMensal);
   const sugestoes = gerarSugestoes(transacoes, dados, totaisMesAtual, despesasPorCategoria);
 
+  // Calcular indicadores por perfil individual
+  const salarioLeticia = dados.salarioLeticia || 0;
+  const salarioGiovanna = dados.salarioGiovanna || 0;
+  const percentualInvestimento = dados.percentualInvestimento || 10;
+  const contasFixasConfig = dados.contasFixasConfig || [];
+
+  const perfilLeticia = calcularPerfilIndicadores(
+    transacoes, 'leticia', salarioLeticia, salarioLeticia, salarioGiovanna,
+    contasFixasConfig, parceladas, percentualInvestimento
+  );
+  const perfilGiovanna = calcularPerfilIndicadores(
+    transacoes, 'giovanna', salarioGiovanna, salarioLeticia, salarioGiovanna,
+    contasFixasConfig, parceladas, percentualInvestimento
+  );
+
   return {
     saldoAtual,
     receitasMes: totaisMesAtual.receitas,
@@ -679,5 +789,7 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     metodologia,
     alertas,
     sugestoes,
+    perfilLeticia,
+    perfilGiovanna,
   };
 }
