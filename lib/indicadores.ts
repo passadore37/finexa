@@ -1,445 +1,348 @@
 import type {
-  Transacao, DadosPlanilha, IndicadoresFinanceiros, EvolucaoMensal,
-  DespesaPorCategoria, DadosProjecaoBar, Parcelada, MetodologiaOrcamento,
-  DadosSemana, Alerta, Sugestao, IndicadoresPerfil, ProjecaoFinanceira,
+  Transacao,
+  DadosPlanilha,
+  IndicadoresFinanceiros,
+  EvolucaoMensal,
+  DespesaPorCategoria,
+  ProjecaoFinanceira,
+  DadosProjecaoBar,
+  Parcelada,
+  MetodologiaOrcamento,
+  DadosSemana,
+  Alerta,
+  Sugestao,
 } from './types';
 
-import { calcularProporcoes, calcularParteFixa } from './perfil-config';
+const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-function filtrarPorMes(ts: Transacao[], mes: number, ano: number) {
-  return ts.filter(t => {
-    const raw = t.data instanceof Date
-      ? t.data
-      : new Date(typeof t.data === 'string' && t.data.length === 10
-          ? t.data + 'T12:00:00'
-          : t.data);
-    return raw.getMonth() === mes && raw.getFullYear() === ano;
+/**
+ * Filtra transações por mês e ano
+ */
+function filtrarPorMes(transacoes: Transacao[], mes: number, ano: number): Transacao[] {
+  return transacoes.filter((t) => {
+    // Normalizar data para evitar problema de fuso (UTC vs local)
+    // Datas ISO "2026-03-01T00:00:00Z" em UTC-3 viriam como "2026-02-28" localmente
+    const raw = t.data as any;
+    const data = raw instanceof Date
+      ? raw
+      : typeof raw === 'string' && raw.length === 10
+        ? new Date(raw + 'T12:00:00')   // só data "YYYY-MM-DD" → forçar meio-dia local
+        : new Date(raw);
+    return data.getMonth() === mes && data.getFullYear() === ano;
   });
 }
 
-function calcularTotais(ts: Transacao[]) {
-  return ts.reduce(
+/**
+ * Calcula totais de receitas e despesas
+ */
+function calcularTotais(transacoes: Transacao[]) {
+  return transacoes.reduce(
     (acc, t) => {
-      if (t.tipo === 'receita') acc.receitas += t.valor;
-      else acc.despesas += t.valor;
+      if (t.tipo === 'receita') {
+        acc.receitas += t.valor;
+      } else {
+        acc.despesas += t.valor;
+      }
       return acc;
     },
     { receitas: 0, despesas: 0 }
   );
 }
 
-export function calcularEvolucaoMensal(
-  ts: Transacao[],
-  perfil?: 'leticia' | 'giovanna',
-  propPerfil?: number
-): EvolucaoMensal[] {
-  const hoje = new Date();
-
-  return Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
-    const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
-
-    if (perfil && propPerfil !== undefined) {
-      const receitas = tsMes
-        .filter(t => t.tipo === 'receita' && t.responsavel === perfil)
-        .reduce((acc, t) => acc + t.valor, 0);
-      const despesas = tsMes
-        .filter(t => t.tipo === 'despesa')
-        .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, propPerfil), 0);
-      return { mes: MESES[d.getMonth()], receitas, despesas, saldo: receitas - despesas };
-    }
-
-    const tot = calcularTotais(tsMes);
-    return { mes: MESES[d.getMonth()], receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
-  });
+/**
+ * Calcula totais com rateio proporcional para perfis individuais
+ */
+function calcularTotaisComRateio(
+  transacoes: Transacao[],
+  perfil: 'leticia' | 'giovanna',
+  proporcao: number
+) {
+  return transacoes.reduce(
+    (acc, t) => {
+      if (t.tipo === 'receita') {
+        // Receita: só conta se for do perfil
+        if (t.responsavel === perfil) acc.receitas += t.valor;
+      } else {
+        // Despesa: aplicar rateio
+        if (t.recorrente) {
+          // Fixa: proporcional ao salário
+          acc.despesas += t.valor * proporcao;
+        } else if (t.responsavel === perfil) {
+          // Gasto próprio: valor total
+          acc.despesas += t.valor;
+        } else if (t.divisao === '50/50' || t.responsavel === 'casal' || !t.responsavel) {
+          // 50/50: metade
+          acc.despesas += t.valor / 2;
+        }
+      }
+      return acc;
+    },
+    { receitas: 0, despesas: 0 }
+  );
 }
 
-function calcularDespesasPorCategoria(
-  ts: Transacao[],
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
-): DespesaPorCategoria[] {
-
+/**
+ * Calcula evolução mensal dos últimos 6 meses
+ */
+function calcularEvolucaoMensal(
+  transacoesRaw: Transacao[],
+  perfil?: 'leticia' | 'giovanna',
+  proporcao?: number
+): EvolucaoMensal[] {
+  // Normalizar datas para evitar problema de fuso UTC→local
+  const transacoes = transacoesRaw.map(t => {
+    const raw = t.data as any;
+    const data = raw instanceof Date
+      ? raw
+      : typeof raw === 'string' && raw.length === 10
+        ? new Date(raw + 'T12:00:00')
+        : new Date(raw);
+    return { ...t, data };
+  });
   const hoje = new Date();
+  const resultado: EvolucaoMensal[] = [];
 
-  const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
-    .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário');
+  for (let i = 5; i >= 0; i--) {
+    const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const mes = data.getMonth();
+    const ano = data.getFullYear();
+    const transacoesMes = filtrarPorMes(transacoes, mes, ano);
+    // Usar rateio proporcional quando chamado para perfil individual
+    const totais = perfil && proporcao !== undefined
+      ? calcularTotaisComRateio(transacoesMes, perfil, proporcao)
+      : calcularTotais(transacoesMes);
 
-  const porCat: Record<string, number> = {};
+    resultado.push({
+      mes: MESES[mes],
+      receitas: totais.receitas,
+      despesas: totais.despesas,
+      saldo: totais.receitas - totais.despesas,
+    });
+  }
+
+  return resultado;
+}
+
+/**
+ * Calcula despesas por categoria do mês atual
+ */
+function calcularDespesasPorCategoria(transacoes: Transacao[]): DespesaPorCategoria[] {
+  const hoje = new Date();
+  const transacoesMes = filtrarPorMes(transacoes, hoje.getMonth(), hoje.getFullYear());
+  const despesas = transacoesMes.filter((t) => t.tipo === 'despesa');
+
+  const porCategoria: Record<string, number> = {};
   let total = 0;
 
-  despesas.forEach(t => {
-    porCat[t.categoria] = (porCat[t.categoria] || 0) + t.valor;
+  despesas.forEach((t) => {
+    porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + t.valor;
     total += t.valor;
   });
 
-  const totalFixas = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
-
-  if (totalFixas > 0) {
-    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + totalFixas;
-    total += totalFixas;
-  }
-
-  return Object.entries(porCat)
+  return Object.entries(porCategoria)
     .map(([categoria, valor]) => ({
       categoria,
       valor,
-      percentual: total > 0 ? (valor / total) * 100 : 0
+      percentual: total > 0 ? (valor / total) * 100 : 0,
     }))
     .sort((a, b) => b.valor - a.valor);
 }
 
-function parseDivisaoParaPerfil(
-  divisao: string | undefined,
-  perfil: 'leticia' | 'giovanna'
-): number | null {
-
-  if (!divisao) return null;
-
-  if (divisao === '50/50') return 0.5;
-
-  const partes = divisao.split('/');
-
-  if (partes.length === 2) {
-    const a = parseFloat(partes[0]);
-    const b = parseFloat(partes[1]);
-
-    if (!isNaN(a) && !isNaN(b) && (a + b) > 0) {
-      return perfil === 'leticia'
-        ? a / (a + b)
-        : b / (a + b);
-    }
-  }
-
-  return null;
-}
-
-function calcularValorParaPerfil(
-  t: Transacao,
-  perfil: 'leticia' | 'giovanna',
-  propPerfil: number
-): number {
-
-  if (t.recorrente) {
-    const prop = parseDivisaoParaPerfil(t.divisao, perfil);
-    return t.valor * (prop ?? propPerfil);
-  }
-
-  if (t.divisao === '50/50') {
-    return t.valor / 2;
-  }
-
-  if (t.responsavel === perfil) {
-    return t.valor;
-  }
-
-  // transações do casal sem divisão explícita: divide proporcionalmente
-  if (!t.responsavel || t.responsavel === 'casal') {
-    const prop = parseDivisaoParaPerfil(t.divisao, perfil);
-    return t.valor * (prop ?? propPerfil);
-  }
-
-  return 0;
-}
-
-export function calcularDespesasPorCategoriaPerfilMes(
-  ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salarioLeticia: number,
-  salarioGiovanna: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
-  mes: number,
-  ano: number,
-): DespesaPorCategoria[] {
-
-  const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
-  const propPerfil = prop[perfil];
-
-  const despesas = filtrarPorMes(ts, mes, ano)
-    .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
-    .filter(t => {
-      // Inclui: recorrentes, responsável do perfil, 50/50, ou qualquer divisão customizada
-      if (t.recorrente) return true;
-      if (t.responsavel === perfil) return true;
-      if (t.divisao === '50/50') return true;
-      // Inclui divisões customizadas (ex: 70/30, 60/40)
-      if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true;
-      return false;
-    });
-
-  const porCat: Record<string, number> = {};
-  let total = 0;
-
-  despesas.forEach(t => {
-    const val = calcularValorParaPerfil(t, perfil, propPerfil);
-
-    if (val <= 0) return;
-
-    porCat[t.categoria] = (porCat[t.categoria] || 0) + val;
-    total += val;
-  });
-
-  const parteFixas = contasFixasConfig.reduce(
-    (acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna),
-    0
+/**
+ * Calcula parceladas ativas
+ */
+function calcularParceladas(transacoes: Transacao[], mesAtual: Date): Parcelada[] {
+  const parceladas = transacoes.filter(
+    (t) => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1
   );
 
-  if (parteFixas > 0) {
-    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + parteFixas;
-    total += parteFixas;
-  }
-
-  return Object.entries(porCat)
-    .map(([categoria, valor]) => ({
-      categoria,
-      valor,
-      percentual: total > 0 ? (valor / total) * 100 : 0
-    }))
-    .sort((a, b) => b.valor - a.valor);
-}
-
-export function calcularDespesasPorCategoriaPerfil(
-  ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salarioLeticia: number,
-  salarioGiovanna: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
-): DespesaPorCategoria[] {
-
-  const hoje = new Date();
-
-  return calcularDespesasPorCategoriaPerfilMes(
-    ts,
-    perfil,
-    salarioLeticia,
-    salarioGiovanna,
-    contasFixasConfig,
-    hoje.getMonth(),
-    hoje.getFullYear(),
-  );
-}
-
-export function calcularParceladas(
-  ts: Transacao[],
-  mesAtual: Date,
-  perfil?: 'leticia' | 'giovanna',
-  propPerfil?: number,
-): Parcelada[] {
-
-  const transacoes = ts
-    .filter(t => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1)
-    .filter(t => {
-      if (!perfil) return true;
-      // Inclui: responsavel do perfil, 50/50, ou divisoes customizadas
-      if (t.responsavel === perfil) return true;
-      if (t.divisao === '50/50') return true;
-      // Inclui divisoes customizadas (ex: 70/30, 60/40)
-      if (t.divisao) {
-        const prop = parseDivisaoParaPerfil(t.divisao, perfil);
-        if (prop !== null) return true;
-      }
-      return false;
-    });
-
-  return transacoes
-    .map(t => {
-
+  return parceladas
+    .map((t) => {
       const parcelaAtual = t.parcelaAtual || 1;
       const totalParcelas = t.totalParcelas || 1;
       const parcelasRestantes = totalParcelas - parcelaAtual;
+      const comprometimentoFuturo = t.valor * parcelasRestantes;
 
-      const fim = new Date(mesAtual);
-      fim.setMonth(fim.getMonth() + parcelasRestantes);
-
-      const valorParcela = perfil
-        ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5)
-        : t.valor;
-
-      const comprometimentoFuturo = valorParcela * parcelasRestantes;
+      // Calcular mês de término
+      const mesTerminoDate = new Date(mesAtual);
+      mesTerminoDate.setMonth(mesTerminoDate.getMonth() + parcelasRestantes);
+      const mesTermino = MESES[mesTerminoDate.getMonth()] + '/' + mesTerminoDate.getFullYear();
 
       return {
         descricao: t.descricao,
         categoria: t.categoria,
-        valorParcela,
+        valorParcela: t.valor,
         parcelaAtual,
         totalParcelas,
         parcelasRestantes,
         comprometimentoFuturo,
-        mesTermino: `${MESES[fim.getMonth()]}/${fim.getFullYear()}`,
+        mesTermino,
       };
     })
-    .filter(p => p.parcelasRestantes > 0)
+    .filter((p) => p.parcelasRestantes > 0)
     .sort((a, b) => b.comprometimentoFuturo - a.comprometimentoFuturo);
 }
 
-export function calcularProjecaoBar(
-  ts: Transacao[],
+/**
+ * Calcula comprometimento total de parceladas
+ */
+function calcularComprometimentoTotal(parceladas: Parcelada[]): number {
+  return parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0);
+}
+
+/**
+ * Calcula dados para a barra de projeção (gauge)
+ */
+function calcularProjecaoBar(
+  transacoes: Transacao[],
   mes: number,
   ano: number,
-  limite: number,
-  fixas = 0,
-  perfil?: 'leticia' | 'giovanna',
-  propPerfil?: number,
-  gastoAtualOverride?: number,
+  limite: number
 ): DadosProjecaoBar {
+  const transacoesMes = filtrarPorMes(transacoes, mes, ano);
+  const gastoAtual = transacoesMes
+    .filter((t) => t.tipo === 'despesa')
+    .reduce((acc, t) => acc + t.valor, 0);
 
-  // Despesas consideradas: variáveis + parceladas (exclui recorrentes/fixas)
-  const despesasConsideradas = filtrarPorMes(ts, mes, ano)
-    .filter(t =>
-      t.tipo === 'despesa' &&
-      !t.recorrente
-    );
-
-  const gastoAtualCalculado = despesasConsideradas.reduce((acc, t) => {
-
-    const valor = perfil
-      ? calcularValorParaPerfil(t, perfil, propPerfil ?? 0.5)
-      : t.valor;
-
-    return acc + valor;
-
-  }, 0);
-
-  const gastoAtual =
-    typeof gastoAtualOverride === 'number'
-      ? gastoAtualOverride
-      : gastoAtualCalculado + fixas;
-
-  const gastoAtualComFixas = gastoAtual;
-
+  // Projeção linear baseada no dia do mês
   const hoje = new Date();
-
-  const mesAtual = hoje.getMonth();
-  const anoAtual = hoje.getFullYear();
-
-  const diaAtual =
-    mes === mesAtual && ano === anoAtual
-      ? Math.max(hoje.getDate(), 1)
-      : 30;
-
+  const diaAtual = hoje.getDate();
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-
-  // Evita projeções irreais no começo do mês
-  const diasConsiderados = Math.max(diaAtual, 5);
-
-  let projecao =
-  gastoAtual > 0
-    ? (gastoAtual / diasConsiderados) * diasNoMes
-    : 0;
-
-// adiciona fixas na projeção total
-const projecaoComFixas = projecao + fixas;
-
-  // Limita projeção para evitar explosões
-  projecao = Math.min(projecao, gastoAtual * 2);
+  const projecao = (gastoAtual / diaAtual) * diasNoMes;
 
   return {
     gastoAtual,
-    gastoAtualComFixas,
     projecao,
-    projecaoComFixas,
-    limite
+    limite,
   };
 }
 
-function calcularSemanasDoMes(ano: number, mes: number) {
-
+/**
+ * Calcula as semanas do mês atual
+ */
+function calcularSemanasDoMes(ano: number, mes: number): Array<{ inicio: Date; fim: Date }> {
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
-
   const semanas: Array<{ inicio: Date; fim: Date }> = [];
-
-  let inicio = new Date(primeiroDia);
-
-  while (inicio <= ultimoDia) {
-
-    const fim = new Date(inicio);
-    fim.setDate(inicio.getDate() + (6 - inicio.getDay()));
-
-    if (fim > ultimoDia) {
-      fim.setTime(ultimoDia.getTime());
+  
+  let inicioSemana = new Date(primeiroDia);
+  
+  while (inicioSemana <= ultimoDia) {
+    // Encontrar o fim da semana (domingo) ou último dia do mês
+    const fimSemana = new Date(inicioSemana);
+    const diasAteDomingo = 7 - inicioSemana.getDay();
+    fimSemana.setDate(inicioSemana.getDate() + diasAteDomingo - 1);
+    
+    // Se passar do último dia do mês, usar o último dia
+    if (fimSemana > ultimoDia) {
+      fimSemana.setTime(ultimoDia.getTime());
     }
-
+    
     semanas.push({
-      inicio: new Date(inicio),
-      fim: new Date(fim)
+      inicio: new Date(inicioSemana),
+      fim: new Date(fimSemana),
     });
-
-    inicio = new Date(fim);
-    inicio.setDate(inicio.getDate() + 1);
+    
+    // Próxima semana começa no dia seguinte
+    inicioSemana = new Date(fimSemana);
+    inicioSemana.setDate(inicioSemana.getDate() + 1);
   }
-
+  
   return semanas;
 }
 
-function calcularMetodologia(
-  ts: Transacao[],
-  mes: number,
-  ano: number,
-  pctInvestimento: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
-): MetodologiaOrcamento {
-
-  const tsMes = filtrarPorMes(ts, mes, ano);
-
-  const hoje = new Date();
-
-  const salarioMes = tsMes
-    .filter(t => t.tipo === 'receita')
-    .reduce((acc, t) => acc + t.valor, 0);
-
-  const investimento = salarioMes * (pctInvestimento / 100);
-
-  const contasFixasTotal = contasFixasConfig
-    .reduce((acc, c) => acc + Number(c.valor), 0);
-
-  const totalGastosVariaveis =
-    Math.max(0, salarioMes - investimento - contasFixasTotal);
-
-  const semanasDoMes = calcularSemanasDoMes(ano, mes);
-
-  const orcamentoPorSemana =
-    semanasDoMes.length > 0
-      ? totalGastosVariaveis / semanasDoMes.length
-      : 0;
-
-  let semanaAtualNumero = semanasDoMes.length;
-
-  for (let i = 0; i < semanasDoMes.length; i++) {
-    if (hoje >= semanasDoMes[i].inicio && hoje <= semanasDoMes[i].fim) {
-      semanaAtualNumero = i + 1;
-      break;
+/**
+ * Identifica qual semana do mês uma data pertence
+ */
+function identificarSemana(data: Date, semanas: Array<{ inicio: Date; fim: Date }>): number {
+  for (let i = 0; i < semanas.length; i++) {
+    if (data >= semanas[i].inicio && data <= semanas[i].fim) {
+      return i + 1;
     }
   }
+  return 1;
+}
 
-  const gastosVariaveis = tsMes
-    .filter(t =>
-      t.tipo === 'despesa' &&
-      !t.recorrente &&
-      !(t.totalParcelas && t.totalParcelas > 1)
-    );
-
-  const semanas: DadosSemana[] = semanasDoMes.map((semana, i) => {
-
-    const numero = i + 1;
-
-    const gasto = gastosVariaveis
-      .filter(t => {
-        const d = new Date(t.data);
-        return d >= semana.inicio && d <= semana.fim;
-      })
-      .reduce((acc, t) => acc + t.valor, 0);
-
+/**
+ * Calcula a metodologia de orçamento semanal
+ * 1. Salário
+ * 2. Separar 10% para investimento
+ * 3. Pagar contas fixas
+ * 4. Dividir o restante em semanas
+ */
+function calcularMetodologiaOrcamento(
+  transacoes: Transacao[],
+  mes: number,
+  ano: number,
+  percentualInvestimento: number = 10
+): MetodologiaOrcamento {
+  const transacoesMes = filtrarPorMes(transacoes, mes, ano);
+  const hoje = new Date();
+  
+  // 1. Calcular salário do mês (receitas)
+  const receitas = transacoesMes.filter(t => t.tipo === 'receita');
+  const salarioMes = receitas.reduce((acc, t) => acc + t.valor, 0);
+  
+  // 2. Calcular investimento (10% do salário)
+  const investimento = salarioMes * (percentualInvestimento / 100);
+  
+  // 3. Identificar e somar contas fixas
+  // Contas fixas são: recorrentes ou categorias específicas
+  const categoriasFixas = ['Moradia', 'Aluguel', 'Condomínio', 'Água', 'Luz', 'Gás', 'Internet', 'Telefone', 'Streaming', 'Seguros', 'Plano de Saúde', 'Educação'];
+  
+  const despesasMes = transacoesMes.filter(t => t.tipo === 'despesa');
+  
+  const contasFixasLista = despesasMes.filter(t => 
+    t.recorrente || 
+    categoriasFixas.some(cat => t.categoria.toLowerCase().includes(cat.toLowerCase())) ||
+    (t.totalParcelas && t.totalParcelas > 1) // Parceladas também são fixas
+  );
+  
+  const contasFixasTotal = contasFixasLista.reduce((acc, t) => acc + t.valor, 0);
+  
+  // 4. Calcular o dinheiro disponível para gastos variáveis
+  const totalGastosVariaveis = salarioMes - investimento - contasFixasTotal;
+  
+  // Calcular semanas do mês
+  const semanasDoMes = calcularSemanasDoMes(ano, mes);
+  const orcamentoPorSemana = totalGastosVariaveis > 0 
+    ? totalGastosVariaveis / semanasDoMes.length 
+    : 0;
+  
+  // Gastos variáveis (não fixos)
+  const gastosVariaveis = despesasMes.filter(t => 
+    !t.recorrente && 
+    !categoriasFixas.some(cat => t.categoria.toLowerCase().includes(cat.toLowerCase())) &&
+    !(t.totalParcelas && t.totalParcelas > 1)
+  );
+  
+  // Identificar semana atual
+  const semanaAtualNumero = identificarSemana(hoje, semanasDoMes);
+  
+  // Calcular dados de cada semana
+  const semanas: DadosSemana[] = semanasDoMes.map((semana, index) => {
+    const numero = index + 1;
+    
+    // Filtrar gastos variáveis desta semana
+    const gastosSemana = gastosVariaveis.filter(t => {
+      const dataTransacao = new Date(t.data);
+      return dataTransacao >= semana.inicio && dataTransacao <= semana.fim;
+    });
+    
+    const gasto = gastosSemana.reduce((acc, t) => acc + t.valor, 0);
     const disponivel = orcamentoPorSemana - gasto;
-
-    const status: 'futuro' | 'atual' | 'passado' =
-      numero < semanaAtualNumero
-        ? 'passado'
-        : numero === semanaAtualNumero
-          ? 'atual'
-          : 'futuro';
-
+    const percentualGasto = orcamentoPorSemana > 0 ? (gasto / orcamentoPorSemana) * 100 : 0;
+    
+    // Determinar status
+    let status: 'futuro' | 'atual' | 'passado';
+    if (numero < semanaAtualNumero) {
+      status = 'passado';
+    } else if (numero === semanaAtualNumero) {
+      status = 'atual';
+    } else {
+      status = 'futuro';
+    }
+    
     return {
       numero,
       inicio: semana.inicio,
@@ -447,478 +350,323 @@ function calcularMetodologia(
       orcamento: orcamentoPorSemana,
       gasto,
       disponivel,
-      percentualGasto:
-        orcamentoPorSemana > 0
-          ? (gasto / orcamentoPorSemana) * 100
-          : 0,
-      status
+      percentualGasto,
+      status,
     };
   });
-
+  
+  // Calcular saldo livre (o que sobrou de todas as semanas passadas + atual)
   const saldoLivre = semanas
     .filter(s => s.status !== 'futuro')
     .reduce((acc, s) => acc + s.disponivel, 0);
-
+  
   return {
     salarioMes,
     investimento,
-    percentualInvestimento: pctInvestimento,
+    percentualInvestimento,
     contasFixas: contasFixasTotal,
-    listaContasFixas: contasFixasConfig,
-    totalGastosVariaveis,
+    listaContasFixas: contasFixasLista.map(t => ({
+      descricao: t.descricao,
+      valor: t.valor,
+      categoria: t.categoria,
+    })),
+    totalGastosVariaveis: totalGastosVariaveis > 0 ? totalGastosVariaveis : 0,
     semanas,
     semanaAtual: semanaAtualNumero,
-    saldoLivre
-  };
-}
-
-function calcularProjecao(ts: Transacao[]): ProjecaoFinanceira[] {
-
-  const hoje = new Date();
-
-  const evolucao = calcularEvolucaoMensal(ts);
-
-  const media =
-    evolucao.reduce((acc, e) => acc + e.saldo, 0) / evolucao.length;
-
-  let saldo =
-    evolucao.reduce((acc, e) => acc + e.saldo, 0);
-
-  return Array.from({ length: 6 }, (_, i) => {
-
-    const d = new Date(
-      hoje.getFullYear(),
-      hoje.getMonth() + i + 1,
-      1
-    );
-
-    saldo += media;
-
-    return {
-      mes: MESES[d.getMonth()],
-      saldoProjetado: saldo,
-      saldoOtimista: saldo + media * 0.2 * (i + 1),
-      saldoPessimista: saldo - media * 0.3 * (i + 1)
-    };
-  });
-}
-
-function calcularIndicadoresPerfil(
-  ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salario: number,
-  salarioLeticia: number,
-  salarioGiovanna: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
-  parceladas: Parcelada[],
-  pctInvestimento: number
-): IndicadoresPerfil {
-
-  const hoje = new Date();
-  const mes = hoje.getMonth();
-  const ano = hoje.getFullYear();
-
-  const prop = calcularProporcoes(salarioLeticia, salarioGiovanna);
-  const proporcaoRenda = prop[perfil];
-
-  const parteFixas = contasFixasConfig.reduce(
-    (acc, c) =>
-      acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna),
-    0
-  );
-
-  const parceladasPerfil = calcularParceladas(
-    ts,
-    hoje,
-    perfil,
-    proporcaoRenda
-  );
-
-  const parteParceladas = parceladasPerfil
-    .reduce((acc, p) => acc + p.valorParcela, 0);
-
-  const gastosMes = filtrarPorMes(ts, mes, ano)
-  .filter(t =>
-    t.tipo === 'despesa' &&
-    !t.recorrente
-  )
-  .filter(t => {
-    // Inclui: responsavel do perfil, 50/50, divisoes customizadas, ou sem divisao explicita
-    if (t.responsavel === perfil) return true;
-    if (t.divisao === '50/50') return true;
-    if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true;
-    if (!t.responsavel && !t.divisao) return true;
-    return false;
-  })
-  .reduce((acc, t) =>
-    acc + calcularValorParaPerfil(t, perfil, proporcaoRenda), 0);
-
-  const investimento = salario * (pctInvestimento / 100);
-
-  const saldoLivre =
-    salario - investimento - parteFixas - gastosMes;
-
-  const comprometimento =
-    salario > 0
-      ? ((parteFixas + parteParceladas) / salario) * 100
-      : 0;
-
-  const semanasDoMes = calcularSemanasDoMes(ano, mes);
-
-  const envelopeTotal =
-    Math.max(0, salario - investimento - parteFixas);
-
-  const envelopeSemanal =
-    semanasDoMes.length > 0
-      ? envelopeTotal / semanasDoMes.length
-      : 0;
-
-  return {
-    perfil,
-    salario,
-    proporcaoRenda,
-    parteFixas,
-    parteParceladas,
-    gastosVariaveis: gastosMes,
     saldoLivre,
-    comprometimento,
-    envelopeSemanal,
-    metaEconomia: salario * 0.2,
-    progressoMeta:
-      salario > 0
-        ? (saldoLivre / (salario * 0.2)) * 100
-        : 0,
-    categorias: calcularDespesasPorCategoriaPerfil(
-      ts,
-      perfil,
-      salarioLeticia,
-      salarioGiovanna,
-      contasFixasConfig
-    ),
   };
 }
 
-export function gerarAlertas(
-  totaisAtual: { receitas: number; despesas: number },
-  totaisAnterior: { receitas: number; despesas: number },
-  cats: DespesaPorCategoria[],
+/**
+ * Calcula projeção financeira para os próximos 6 meses
+ */
+function calcularProjecao(transacoes: Transacao[], metaMensal: number): ProjecaoFinanceira[] {
+  const evolucao = calcularEvolucaoMensal(transacoes);
+  const mediaReceitas = evolucao.reduce((acc, e) => acc + e.receitas, 0) / evolucao.length;
+  const mediaDespesas = evolucao.reduce((acc, e) => acc + e.despesas, 0) / evolucao.length;
+  const mediaSaldo = mediaReceitas - mediaDespesas;
+
+  const hoje = new Date();
+  const resultado: ProjecaoFinanceira[] = [];
+  let saldoAcumulado = evolucao.reduce((acc, e) => acc + e.saldo, 0);
+
+  for (let i = 1; i <= 6; i++) {
+    const data = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
+    saldoAcumulado += mediaSaldo;
+
+    resultado.push({
+      mes: MESES[data.getMonth()],
+      saldoProjetado: saldoAcumulado,
+      saldoOtimista: saldoAcumulado + mediaSaldo * 0.2 * i,
+      saldoPessimista: saldoAcumulado - mediaSaldo * 0.3 * i,
+    });
+  }
+
+  return resultado;
+}
+
+/**
+ * Gera alertas automáticos baseados nos indicadores
+ */
+function gerarAlertas(
+  transacoes: Transacao[],
+  dados: DadosPlanilha,
+  totaisMesAtual: { receitas: number; despesas: number },
+  totaisMesAnterior: { receitas: number; despesas: number },
+  despesasPorCategoria: DespesaPorCategoria[],
   parceladas: Parcelada[],
-  limite: number,
-  projecao: number
+  limite: number
 ): Alerta[] {
-
   const alertas: Alerta[] = [];
+  const saldo = totaisMesAtual.receitas - totaisMesAtual.despesas;
+  const taxaPoupanca = totaisMesAtual.receitas > 0 
+    ? (saldo / totaisMesAtual.receitas) * 100 
+    : 0;
 
-  const pct =
-    limite > 0
-      ? (totaisAtual.despesas / limite) * 100
-      : 0;
-
-  const varD =
-    totaisAnterior.despesas > 0
-      ? ((totaisAtual.despesas - totaisAnterior.despesas) / totaisAnterior.despesas) * 100
-      : 0;
-
-  if (projecao > limite) {
+  // Alerta de saldo negativo
+  if (saldo < 0) {
     alertas.push({
-      id: 'proj-estouro',
+      id: 'saldo-negativo',
       tipo: 'critico',
-      titulo: 'Projeção ultrapassa o limite',
-      mensagem: `No ritmo atual você vai gastar R$ ${(projecao - limite).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} além do limite.`,
-      acao: 'Reduza gastos variáveis'
+      titulo: 'Saldo Negativo',
+      mensagem: `Suas despesas superaram as receitas em R$ ${Math.abs(saldo).toFixed(2)} este mês.`,
+      acao: 'Revise seus gastos urgentemente',
     });
   }
 
-  if (pct >= 90) {
+  // Alerta de taxa de poupança baixa
+  if (taxaPoupanca < 10 && taxaPoupanca >= 0) {
     alertas.push({
-      id: 'lim-90',
-      tipo: 'critico',
-      titulo: 'Limite quase esgotado',
-      mensagem: `${Math.round(pct)}% do limite utilizado.`
-    });
-  } else if (pct >= 70) {
-    alertas.push({
-      id: 'lim-70',
+      id: 'poupanca-baixa',
       tipo: 'atencao',
-      titulo: 'Atenção ao limite',
-      mensagem: `${Math.round(pct)}% do limite utilizado. Restam R$ ${(limite - totaisAtual.despesas).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.`
+      titulo: 'Taxa de Poupança Baixa',
+      mensagem: `Você está guardando apenas ${taxaPoupanca.toFixed(1)}% da sua renda.`,
+      acao: 'Tente aumentar para pelo menos 20%',
     });
   }
 
-  if (varD > 20) {
+  // Alerta de aumento de despesas
+  const variacaoDespesas = totaisMesAnterior.despesas > 0
+    ? ((totaisMesAtual.despesas - totaisMesAnterior.despesas) / totaisMesAnterior.despesas) * 100
+    : 0;
+
+  if (variacaoDespesas > 20) {
     alertas.push({
-      id: 'aum-desp',
+      id: 'aumento-despesas',
       tipo: 'atencao',
-      titulo: 'Despesas aumentaram',
-      mensagem: `Gastos ${varD.toFixed(0)}% acima do mês anterior.`
+      titulo: 'Aumento de Despesas',
+      mensagem: `Suas despesas aumentaram ${variacaoDespesas.toFixed(0)}% em relação ao mês anterior.`,
+      acao: 'Identifique os principais aumentos',
     });
   }
 
-  const top = cats[0];
-
-  if (top && top.percentual > 30) {
-    alertas.push({
-      id: `cat-${top.categoria}`,
-      tipo: 'atencao',
-      titulo: `${top.categoria} domina os gastos`,
-      mensagem: `${top.percentual.toFixed(0)}% das despesas.`
-    });
-  }
-
-  const totalParcMes = parceladas
-    .reduce((acc, p) => acc + p.valorParcela, 0);
-
-  if (limite > 0 && (totalParcMes / limite) > 0.30) {
-    alertas.push({
-      id: 'parc-altas',
-      tipo: 'atencao',
-      titulo: 'Parcelas comprometem o limite',
-      mensagem: `Parcelas = ${Math.round((totalParcMes / limite) * 100)}% do limite.`
-    });
-  }
-
-  const proxMes =
-    MESES[new Date(
-      new Date().getFullYear(),
-      new Date().getMonth() + 1
-    ).getMonth()];
-
-  parceladas.forEach(p => {
-    if (p.mesTermino.startsWith(proxMes)) {
+  // Alerta de categoria estourada
+  Object.entries(dados.orcamentoCategoria).forEach(([categoria, orcamento]) => {
+    const despesa = despesasPorCategoria.find((d) => d.categoria === categoria);
+    if (despesa && despesa.valor > orcamento) {
       alertas.push({
-        id: `fim-${p.descricao}`,
-        tipo: 'sucesso',
-        titulo: `${p.descricao} termina em ${proxMes}`,
-        mensagem: `R$ ${p.valorParcela.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} liberados no próximo mês.`
+        id: `orcamento-${categoria}`,
+        tipo: 'atencao',
+        titulo: `Orçamento Excedido: ${categoria}`,
+        mensagem: `Você gastou R$ ${(despesa.valor - orcamento).toFixed(2)} além do orçamento de ${categoria}.`,
+        acao: 'Reduza gastos nesta categoria',
       });
     }
   });
 
-  if (alertas.length === 0) {
+  // Alerta de parceladas comprometendo muito do limite
+  const totalParcelasMes = parceladas.reduce((acc, p) => acc + p.valorParcela, 0);
+  const percentualParcelas = limite > 0 ? (totalParcelasMes / limite) * 100 : 0;
+  
+  if (percentualParcelas > 30) {
     alertas.push({
-      id: 'ok',
+      id: 'parcelas-comprometem',
+      tipo: 'atencao',
+      titulo: 'Parcelas Fixas Altas',
+      mensagem: `Parcelas comprometem ${percentualParcelas.toFixed(0)}% do seu limite este mês.`,
+      acao: 'Evite novas compras parceladas',
+    });
+  }
+
+  // Alerta positivo quando parcelada termina no próximo mês
+  const proximoMes = new Date();
+  proximoMes.setMonth(proximoMes.getMonth() + 1);
+  const mesProximo = MESES[proximoMes.getMonth()];
+  
+  parceladas.forEach((p) => {
+    if (p.mesTermino.startsWith(mesProximo)) {
+      alertas.push({
+        id: `parcela-termina-${p.descricao}`,
+        tipo: 'sucesso',
+        titulo: `${p.descricao} Termina em ${mesProximo}`,
+        mensagem: `R$ ${p.valorParcela.toFixed(2)} serão liberados no caixa.`,
+      });
+    }
+  });
+
+  // Alerta positivo se tudo estiver bem
+  if (alertas.length === 0 && taxaPoupanca >= 20) {
+    alertas.push({
+      id: 'otimo-progresso',
       tipo: 'sucesso',
-      titulo: 'Tudo em ordem!',
-      mensagem: 'Nenhum alerta no momento.'
+      titulo: 'Excelente Progresso!',
+      mensagem: `Você está guardando ${taxaPoupanca.toFixed(0)}% da sua renda. Continue assim!`,
     });
   }
 
   return alertas;
 }
 
-export function gerarSugestoes(
-  totaisAtual: { receitas: number; despesas: number },
-  cats: DespesaPorCategoria[],
-  catsAnt: DespesaPorCategoria[]
+/**
+ * Gera sugestões inteligentes baseadas nos dados
+ */
+function gerarSugestoes(
+  transacoes: Transacao[],
+  dados: DadosPlanilha,
+  totaisMesAtual: { receitas: number; despesas: number },
+  despesasPorCategoria: DespesaPorCategoria[]
 ): Sugestao[] {
-
   const sugestoes: Sugestao[] = [];
+  const saldo = totaisMesAtual.receitas - totaisMesAtual.despesas;
+  const taxaPoupanca = totaisMesAtual.receitas > 0 
+    ? (saldo / totaisMesAtual.receitas) * 100 
+    : 0;
 
-  const saldo =
-    totaisAtual.receitas - totaisAtual.despesas;
-
-  if (saldo > 500) {
+  // Sugestão de reserva de emergência
+  const reservaAtual = saldo > 0 ? saldo * 6 : 0; // Estimativa simplificada
+  if (reservaAtual < dados.metaEmergencia) {
+    const falta = dados.metaEmergencia - reservaAtual;
     sugestoes.push({
-      id: 'reserva',
-      titulo: 'Reforce a reserva de emergência',
-      descricao: `Você tem R$ ${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} de saldo. Considere alocar parte na reserva.`,
+      id: 'reserva-emergencia',
+      titulo: 'Construa sua Reserva de Emergência',
+      descricao: `Você ainda precisa de R$ ${falta.toFixed(2)} para atingir 6 meses de despesas.`,
       categoria: 'seguranca',
-      impacto: 'Alto'
+      impacto: 'Alto',
     });
   }
 
-  const top = cats[0];
-
-  if (top && top.percentual > 35) {
+  // Sugestão de categoria com maior gasto
+  const maiorCategoria = despesasPorCategoria[0];
+  if (maiorCategoria && maiorCategoria.percentual > 35) {
     sugestoes.push({
-      id: 'top-cat',
-      titulo: `Revise ${top.categoria}`,
-      descricao: `${top.categoria} representa ${top.percentual.toFixed(0)}% das despesas.`,
+      id: 'maior-categoria',
+      titulo: `Reduza gastos com ${maiorCategoria.categoria}`,
+      descricao: `${maiorCategoria.categoria} representa ${maiorCategoria.percentual.toFixed(0)}% das suas despesas. Considere alternativas mais econômicas.`,
       categoria: 'economia',
-      impacto: 'Médio'
+      impacto: 'Médio',
     });
   }
 
-  cats.forEach(c => {
+  // Sugestão de investimento
+  if (taxaPoupanca >= 20 && saldo >= 500) {
+    sugestoes.push({
+      id: 'investir',
+      titulo: 'Invista seu Excedente',
+      descricao: `Com uma taxa de poupança de ${taxaPoupanca.toFixed(0)}%, considere investir o excedente para fazer seu dinheiro render.`,
+      categoria: 'investimento',
+      impacto: 'Alto',
+    });
+  }
 
-    const ant = catsAnt.find(a => a.categoria === c.categoria);
+  // Sugestão de meta
+  if (saldo > 0 && saldo < dados.metaMensal) {
+    const falta = dados.metaMensal - saldo;
+    sugestoes.push({
+      id: 'atingir-meta',
+      titulo: 'Quase lá!',
+      descricao: `Faltam R$ ${falta.toFixed(2)} para atingir sua meta de poupança mensal.`,
+      categoria: 'meta',
+      impacto: 'Médio',
+    });
+  }
 
-    if (ant && c.valor > ant.valor * 1.3) {
-      sugestoes.push({
-        id: `subiu-${c.categoria}`,
-        titulo: `${c.categoria} subiu muito`,
-        descricao: `+${Math.round((c.valor / ant.valor - 1) * 100)}% vs mês anterior.`,
-        categoria: 'economia',
-        impacto: 'Médio'
-      });
-    }
+  // Sugestão de gastos recorrentes
+  const recorrentes = transacoes.filter((t) => t.recorrente && t.tipo === 'despesa');
+  const totalRecorrente = recorrentes.reduce((acc, t) => acc + t.valor, 0);
+  if (totalRecorrente > totaisMesAtual.despesas * 0.6) {
+    sugestoes.push({
+      id: 'gastos-recorrentes',
+      titulo: 'Revise Gastos Fixos',
+      descricao: `Seus gastos recorrentes representam mais de 60% do total. Renegocie contratos ou cancele serviços não essenciais.`,
+      categoria: 'economia',
+      impacto: 'Alto',
+    });
+  }
 
-    if (ant && c.valor < ant.valor * 0.85) {
-      sugestoes.push({
-        id: `caiu-${c.categoria}`,
-        titulo: `${c.categoria} reduziu`,
-        descricao: `-${Math.round((1 - c.valor / ant.valor) * 100)}% — bom trabalho!`,
-        categoria: 'meta',
-        impacto: 'Positivo'
-      });
-    }
-  });
-
-  return sugestoes.slice(0, 5);
+  return sugestoes;
 }
 
+/**
+ * Calcula todos os indicadores financeiros
+ */
 export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinanceiros {
-
-  const {
-    transacoes,
-    limiteMensal,
-    metaEmergencia,
-    percentualInvestimento,
-    contasFixasConfig,
-    salarioLeticia,
-    salarioGiovanna
-  } = dados;
-
+  const { transacoes, metaMensal } = dados;
   const hoje = new Date();
-  const mes = hoje.getMonth();
-  const ano = hoje.getFullYear();
-
-  const tsMes = filtrarPorMes(transacoes, mes, ano);
-
-  const tsMesAnt = filtrarPorMes(
+  
+  // Limite mensal (usar meta * 2 ou um valor padrão)
+  const limiteMensal = metaMensal > 0 ? metaMensal * 3 : 10000;
+  
+  // Mês atual e anterior
+  const transacoesMesAtual = filtrarPorMes(transacoes, hoje.getMonth(), hoje.getFullYear());
+  const transacoesMesAnterior = filtrarPorMes(
     transacoes,
-    mes === 0 ? 11 : mes - 1,
-    mes === 0 ? ano - 1 : ano
+    hoje.getMonth() - 1 < 0 ? 11 : hoje.getMonth() - 1,
+    hoje.getMonth() - 1 < 0 ? hoje.getFullYear() - 1 : hoje.getFullYear()
   );
 
-  const totaisAtual = calcularTotais(tsMes);
-  const totaisAnterior = calcularTotais(tsMesAnt);
+  const totaisMesAtual = calcularTotais(transacoesMesAtual);
+  const totaisMesAnterior = calcularTotais(transacoesMesAnterior);
 
-  const saldoAtual =
-    totaisAtual.receitas - totaisAtual.despesas;
+  // KPIs principais
+  const saldoAtual = totaisMesAtual.receitas - totaisMesAtual.despesas;
+  const taxaPoupanca = totaisMesAtual.receitas > 0 
+    ? (saldoAtual / totaisMesAtual.receitas) * 100 
+    : 0;
 
-  const saldoAnterior =
-    totaisAnterior.receitas - totaisAnterior.despesas;
+  // Variações
+  const saldoAnterior = totaisMesAnterior.receitas - totaisMesAnterior.despesas;
+  const variacaoSaldo = saldoAnterior !== 0 
+    ? ((saldoAtual - saldoAnterior) / Math.abs(saldoAnterior)) * 100 
+    : 0;
+  const variacaoReceitas = totaisMesAnterior.receitas > 0 
+    ? ((totaisMesAtual.receitas - totaisMesAnterior.receitas) / totaisMesAnterior.receitas) * 100 
+    : 0;
+  const variacaoDespesas = totaisMesAnterior.despesas > 0 
+    ? ((totaisMesAtual.despesas - totaisMesAnterior.despesas) / totaisMesAnterior.despesas) * 100 
+    : 0;
 
-  const taxaPoupanca =
-    totaisAtual.receitas > 0
-      ? (saldoAtual / totaisAtual.receitas) * 100
-      : 0;
+  // Progresso da meta
+  const progressoMeta = metaMensal > 0 ? (saldoAtual / metaMensal) * 100 : 0;
 
-  const variacaoSaldo =
-    saldoAnterior !== 0
-      ? ((saldoAtual - saldoAnterior) / Math.abs(saldoAnterior)) * 100
-      : 0;
-
-  const variacaoReceitas =
-    totaisAnterior.receitas > 0
-      ? ((totaisAtual.receitas - totaisAnterior.receitas) / totaisAnterior.receitas) * 100
-      : 0;
-
-  const variacaoDespesas =
-    totaisAnterior.despesas > 0
-      ? ((totaisAtual.despesas - totaisAnterior.despesas) / totaisAnterior.despesas) * 100
-      : 0;
-
-  const despesasPorCategoria =
-    calcularDespesasPorCategoria(transacoes, contasFixasConfig);
-
-  const catsAnt = (() => {
-
-    const d = tsMesAnt.filter(t => t.tipo === 'despesa');
-
-    const m: Record<string, number> = {};
-    let total = 0;
-
-    d.forEach(t => {
-      m[t.categoria] = (m[t.categoria] || 0) + t.valor;
-      total += t.valor;
-    });
-
-    return Object.entries(m).map(([categoria, valor]) => ({
-      categoria,
-      valor,
-      percentual: total > 0 ? (valor / total) * 100 : 0
-    }));
-  })();
-
+  // Dados para gráficos
   const evolucaoMensal = calcularEvolucaoMensal(transacoes);
-  const projecao = calcularProjecao(transacoes);
-
-  const metodologia = calcularMetodologia(
-    transacoes,
-    mes,
-    ano,
-    percentualInvestimento,
-    contasFixasConfig
-  );
-
-  const contasFixasTotal = contasFixasConfig
-    .reduce((acc, c) => acc + Number(c.valor), 0);
-
-  const projecaoBar = calcularProjecaoBar(
-    transacoes,
-    mes,
-    ano,
-    limiteMensal,
-    contasFixasTotal
-  );
-
+  const despesasPorCategoria = calcularDespesasPorCategoria(transacoes);
+  const projecao = calcularProjecao(transacoes, metaMensal);
+  
+  // Projeção em barra (gauge)
+  const projecaoBar = calcularProjecaoBar(transacoes, hoje.getMonth(), hoje.getFullYear(), limiteMensal);
+  
+  // Parceladas
   const parceladas = calcularParceladas(transacoes, hoje);
+  const comprometimentoTotal = calcularComprometimentoTotal(parceladas);
+  
+  // Metodologia de Orçamento Semanal
+  const metodologia = calcularMetodologiaOrcamento(transacoes, hoje.getMonth(), hoje.getFullYear());
 
-  const comprometimentoTotal =
-    parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0);
-
-  const alertas = gerarAlertas(
-    totaisAtual,
-    totaisAnterior,
-    despesasPorCategoria,
-    parceladas,
-    limiteMensal,
-    projecaoBar.projecao
-  );
-
-  const sugestoes = gerarSugestoes(
-    totaisAtual,
-    despesasPorCategoria,
-    catsAnt
-  );
-
-  const perfilLeticia = calcularIndicadoresPerfil(
-    transacoes,
-    'leticia',
-    salarioLeticia,
-    salarioLeticia,
-    salarioGiovanna,
-    contasFixasConfig,
-    parceladas,
-    percentualInvestimento
-  );
-
-  const perfilGiovanna = calcularIndicadoresPerfil(
-    transacoes,
-    'giovanna',
-    salarioGiovanna,
-    salarioLeticia,
-    salarioGiovanna,
-    contasFixasConfig,
-    parceladas,
-    percentualInvestimento
-  );
+  // Alertas e sugestões
+  const alertas = gerarAlertas(transacoes, dados, totaisMesAtual, totaisMesAnterior, despesasPorCategoria, parceladas, limiteMensal);
+  const sugestoes = gerarSugestoes(transacoes, dados, totaisMesAtual, despesasPorCategoria);
 
   return {
     saldoAtual,
-    receitasMes: totaisAtual.receitas,
-    despesasMes: totaisAtual.despesas,
+    receitasMes: totaisMesAtual.receitas,
+    despesasMes: totaisMesAtual.despesas,
     taxaPoupanca,
     variacaoSaldo,
     variacaoReceitas,
     variacaoDespesas,
-    limiteMensal,
-    progressoMeta:
-      limiteMensal > 0
-        ? (totaisAtual.despesas / limiteMensal) * 100
-        : 0,
+    metaMensal,
+    progressoMeta,
     evolucaoMensal,
     despesasPorCategoria,
     projecao,
@@ -928,8 +676,5 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     metodologia,
     alertas,
     sugestoes,
-    perfilLeticia,
-    perfilGiovanna,
   };
 }
-
