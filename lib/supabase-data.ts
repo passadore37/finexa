@@ -108,7 +108,7 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
   if (salarioLeticia > 0) {
     transacoes.push({
       id: 'sal-let',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
+      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0),
       descricao: 'Salário Letícia',
       categoria: 'Salário',
       tipo: 'receita',
@@ -121,7 +121,7 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
   if (salarioGiovanna > 0) {
     transacoes.push({
       id: 'sal-gio',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
+      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0),
       descricao: 'Salário Giovanna',
       categoria: 'Salário',
       tipo: 'receita',
@@ -151,26 +151,26 @@ export function gerarDadosDemo(): DadosPlanilha {
   const hoje = new Date();
   const mes = hoje.getMonth();
   const ano = hoje.getFullYear();
-  const antData = new Date(ano, mes - 1, 10);
+  const antData = new Date(ano, mes - 1, 10, 12, 0, 0);
 
   const transacoes: Transacao[] = [
-    { id: 'sal-let', data: new Date(ano, mes, 1), descricao: 'Salário Letícia', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'leticia', recorrente: true },
-    { id: 'sal-gio', data: new Date(ano, mes, 1), descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
-    { id: 'aluguel', data: new Date(ano, mes, 5), descricao: 'Aluguel', categoria: 'Moradia', tipo: 'despesa', valor: 2200, recorrente: true },
-    { id: 'condo', data: new Date(ano, mes, 5), descricao: 'Condomínio', categoria: 'Moradia', tipo: 'despesa', valor: 650, recorrente: true },
-    { id: 'internet', data: new Date(ano, mes, 5), descricao: 'Internet', categoria: 'Assinaturas', tipo: 'despesa', valor: 120, recorrente: true },
-    { id: 'streaming', data: new Date(ano, mes, 5), descricao: 'Streaming', categoria: 'Assinaturas', tipo: 'despesa', valor: 69, recorrente: true },
-    { id: 'saude', data: new Date(ano, mes, 5), descricao: 'Plano de Saúde', categoria: 'Saúde', tipo: 'despesa', valor: 890, recorrente: true },
-    { id: 'gas', data: new Date(ano, mes, 5), descricao: 'Gás', categoria: 'Casa', tipo: 'despesa', valor: 80, recorrente: true },
-    { id: 'energia', data: new Date(ano, mes, 5), descricao: 'Energia', categoria: 'Casa', tipo: 'despesa', valor: 180, recorrente: true },
-    { id: 'sofa', data: new Date(ano, mes, 15), descricao: 'Sofá Retrátil', categoria: 'Casa', tipo: 'despesa', valor: 350, parcelaAtual: 3, totalParcelas: 10 },
-    { id: 'cel', data: new Date(ano, mes, 10), descricao: 'iPhone 15', categoria: 'Compras', tipo: 'despesa', valor: 520, parcelaAtual: 5, totalParcelas: 12 },
-    { id: 'alim', data: new Date(ano, mes, 8), descricao: 'Supermercado', categoria: 'Alimentação', tipo: 'despesa', valor: 1050, responsavel: 'casal', divisao: '50/50' },
-    { id: 'transp-let', data: new Date(ano, mes, 9), descricao: 'Uber', categoria: 'Transporte', tipo: 'despesa', valor: 180, responsavel: 'leticia' },
-    { id: 'transp-gio', data: new Date(ano, mes, 9), descricao: 'Combustível', categoria: 'Transporte', tipo: 'despesa', valor: 130, responsavel: 'giovanna' },
-    { id: 'lazer', data: new Date(ano, mes, 11), descricao: 'Cinema + jantar', categoria: 'Lazer', tipo: 'despesa', valor: 320, responsavel: 'casal', divisao: '50/50' },
-    { id: 'gatos', data: new Date(ano, mes, 12), descricao: 'Pet shop + ração', categoria: 'Gatos', tipo: 'despesa', valor: 280, responsavel: 'casal', divisao: '50/50' },
-    { id: 'saude-let', data: new Date(ano, mes, 14), descricao: 'Consulta médica', categoria: 'Saúde', tipo: 'despesa', valor: 250, responsavel: 'leticia' },
+    { id: 'sal-let', data: new Date(ano, mes, 1, 12, 0, 0), descricao: 'Salário Letícia', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'leticia', recorrente: true },
+    { id: 'sal-gio', data: new Date(ano, mes, 1, 12, 0, 0), descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
+    { id: 'aluguel', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Aluguel', categoria: 'Moradia', tipo: 'despesa', valor: 2200, recorrente: true },
+    { id: 'condo', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Condomínio', categoria: 'Moradia', tipo: 'despesa', valor: 650, recorrente: true },
+    { id: 'internet', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Internet', categoria: 'Assinaturas', tipo: 'despesa', valor: 120, recorrente: true },
+    { id: 'streaming', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Streaming', categoria: 'Assinaturas', tipo: 'despesa', valor: 69, recorrente: true },
+    { id: 'saude', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Plano de Saúde', categoria: 'Saúde', tipo: 'despesa', valor: 890, recorrente: true },
+    { id: 'gas', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Gás', categoria: 'Casa', tipo: 'despesa', valor: 80, recorrente: true },
+    { id: 'energia', data: new Date(ano, mes, 5, 12, 0, 0), descricao: 'Energia', categoria: 'Casa', tipo: 'despesa', valor: 180, recorrente: true },
+    { id: 'sofa', data: new Date(ano, mes, 15, 12, 0, 0), descricao: 'Sofá Retrátil', categoria: 'Casa', tipo: 'despesa', valor: 350, parcelaAtual: 3, totalParcelas: 10 },
+    { id: 'cel', data: new Date(ano, mes, 10, 12, 0, 0), descricao: 'iPhone 15', categoria: 'Compras', tipo: 'despesa', valor: 520, parcelaAtual: 5, totalParcelas: 12 },
+    { id: 'alim', data: new Date(ano, mes, 8, 12, 0, 0), descricao: 'Supermercado', categoria: 'Alimentação', tipo: 'despesa', valor: 1050, responsavel: 'casal', divisao: '50/50' },
+    { id: 'transp-let', data: new Date(ano, mes, 9, 12, 0, 0), descricao: 'Uber', categoria: 'Transporte', tipo: 'despesa', valor: 180, responsavel: 'leticia' },
+    { id: 'transp-gio', data: new Date(ano, mes, 9, 12, 0, 0), descricao: 'Combustível', categoria: 'Transporte', tipo: 'despesa', valor: 130, responsavel: 'giovanna' },
+    { id: 'lazer', data: new Date(ano, mes, 11, 12, 0, 0), descricao: 'Cinema + jantar', categoria: 'Lazer', tipo: 'despesa', valor: 320, responsavel: 'casal', divisao: '50/50' },
+    { id: 'gatos', data: new Date(ano, mes, 12, 12, 0, 0), descricao: 'Pet shop + ração', categoria: 'Gatos', tipo: 'despesa', valor: 280, responsavel: 'casal', divisao: '50/50' },
+    { id: 'saude-let', data: new Date(ano, mes, 14, 12, 0, 0), descricao: 'Consulta médica', categoria: 'Saúde', tipo: 'despesa', valor: 250, responsavel: 'leticia' },
     // Mês anterior
     { id: 'ant-sal-let', data: antData, descricao: 'Salário Letícia', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'leticia', recorrente: true },
     { id: 'ant-sal-gio', data: antData, descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
