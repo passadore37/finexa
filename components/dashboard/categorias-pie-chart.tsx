@@ -100,12 +100,6 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
     onCategoriaSelect?.(categoriaAtiva === cat ? null : cat);
   }
 
-  // Categoria em destaque para label central do donut
-  const catDestaque = categoriaAtiva
-    ? dados.find(d => d.categoria === categoriaAtiva)
-    : hoverIndex !== null
-    ? dados[hoverIndex]
-    : null;
 
   return (
     <Card className="border bg-card">
@@ -155,20 +149,6 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }:
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Label central — aparece no hover ou quando há categoria ativa */}
-            {catDestaque && (
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-                style={{ borderRadius: '50%' }}
-              >
-                <span className="text-[10px] text-muted-foreground font-medium text-center leading-tight px-2 truncate max-w-[80px]">
-                  {catDestaque.categoria}
-                </span>
-                <span className="text-sm font-bold text-foreground tabular-nums mt-0.5">
-                  {Math.round(catDestaque.percentual)}%
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Legenda clicável */}
