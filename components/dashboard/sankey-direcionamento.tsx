@@ -160,18 +160,23 @@ export function SankeyDirecionamento({ receitas, fixas, categorias, categoriaAti
   };
 
   const renderLink = (props: any) => {
-    const { source, target, linkWidth, d } = props;
+    const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, payload } = props;
+    const source = payload?.source || props.source;
+    const target = payload?.target || props.target;
     
-    // Tratamento de undefined caso o Recharts renderize as props vazias no mount inicial
+    // Tratamento de segurança
     if (!source || !target) return null;
 
     const isTargetSelected = categoriaAtiva && target?.name === categoriaAtiva;
     const isOutraCat = categoriaAtiva && target?.isCategoria && target?.name !== categoriaAtiva;
     const strokeOpacity = isTargetSelected ? 0.35 : (isOutraCat ? 0.02 : (categoriaAtiva ? 0.05 : 0.1));
 
+    // O Recharts não injeta D3 paths diretamente, nós mesmos traçamos a curva Bezier baseada nos eixos repassados
+    const path = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
+
     return (
       <path
-        d={d || ''}
+        d={path}
         stroke={target?.cor || source?.cor || "currentColor"}
         strokeWidth={Math.max(1, linkWidth || 0)}
         strokeOpacity={strokeOpacity}
