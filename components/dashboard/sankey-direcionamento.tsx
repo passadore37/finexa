@@ -82,12 +82,10 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
 
     // O fluxo esperado: 
     // Receita -> Desp. Fixas
-    // Receita -> Sobra Livre (que é Receitas - Fixas)
-    // Sobra Livre -> Desp. Variáveis
-    // Sobra Livre -> Disponível (o que não foi gasto)
-    // Desp. Variáveis -> Categorias
+    // Receita -> Desp. Variáveis -> Categorias
+    // Receita -> Sobra Livre (O que não foi gasto)
 
-    const valorSaldoLivre = Math.max(0, receitas - fixas);
+    const sobraReal = Math.max(0, receitas - fixas - variaveis);
 
     if (fixas > 0) {
       nodes.push({ name: 'Desp. Fixas', cor: '#378add' });
@@ -95,43 +93,25 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
       links.push({ source: idxReceita, target: idxFixas, value: fixas });
     }
 
-    if (valorSaldoLivre > 0) {
-      nodes.push({ name: 'Sobra Livre', cor: '#01b695' }); 
-      idxSobra = nodeIdx++;
-      links.push({ source: idxReceita, target: idxSobra, value: valorSaldoLivre });
-
-      if (variaveis > 0) {
-        nodes.push({ name: 'Desp. Variáveis', cor: '#EF9F27' }); 
-        idxVar = nodeIdx++;
-        // Conecta Sobra Livre -> Despesas Variáveis
-        links.push({ source: idxSobra, target: idxVar, value: variaveis });
-
-        // Capilaridade das categorias
-        catAtivas.forEach(cat => {
-          nodes.push({ name: cat.nome, cor: CORES_CAT[cat.nome] || '#888' });
-          const idxC = nodeIdx++;
-          links.push({ source: idxVar, target: idxC, value: cat.total });
-        });
-      }
-
-      // O que sobrou sem gastar (visual)
-      const disponivel = Math.max(0, valorSaldoLivre - variaveis);
-      if (disponivel > 0) {
-        nodes.push({ name: 'Disponível', cor: '#a8a29e' }); // Cinza claro/discreto para poupança visual
-        const idxDisp = nodeIdx++;
-        links.push({ source: idxSobra, target: idxDisp, value: disponivel });
-      }
-    } else if (variaveis > 0) {
-      // Fallback caso não haja saldo livre suficiente mas existam variáveis
-      nodes.push({ name: 'Desp. Variáveis', cor: '#EF9F27' });
+    if (variaveis > 0) {
+      nodes.push({ name: 'Desp. Variáveis', cor: '#EF9F27' }); 
       idxVar = nodeIdx++;
+      // A Receita alimenta as despesas variáveis diretamente
       links.push({ source: idxReceita, target: idxVar, value: variaveis });
 
+      // Capilaridade das categorias partindo das variáveis
       catAtivas.forEach(cat => {
         nodes.push({ name: cat.nome, cor: CORES_CAT[cat.nome] || '#888' });
         const idxC = nodeIdx++;
         links.push({ source: idxVar, target: idxC, value: cat.total });
       });
+    }
+
+    if (sobraReal > 0) {
+      nodes.push({ name: 'Sobra Livre', cor: '#01b695' }); 
+      idxSobra = nodeIdx++;
+      // A Receita alimenta a Sobra Livre restante
+      links.push({ source: idxReceita, target: idxSobra, value: sobraReal });
     }
 
     if (receitas === 0 && (fixas > 0 || variaveis > 0)) {
