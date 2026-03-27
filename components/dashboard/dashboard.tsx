@@ -181,6 +181,8 @@ export function Dashboard() {
              receitas={receitas} 
              fixas={fixas} 
              categorias={categorias} 
+             categoriaAtiva={categoriaAtiva}
+             onCategoriaSelect={toggleCategoria}
            />
         </div>
 

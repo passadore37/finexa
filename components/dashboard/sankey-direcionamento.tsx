@@ -11,6 +11,8 @@ interface SankeyProps {
   receitas: number;
   fixas: number;
   categorias: DespesaPorCategoria[];
+  categoriaAtiva?: string | null;
+  onCategoriaSelect?: (cat: string | null) => void;
 }
 
 const CORES_CAT: Record<string, string> = {
@@ -20,29 +22,7 @@ const CORES_CAT: Record<string, string> = {
   Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
 };
 
-// Componente customizado para as barras do Sankey
-const CustomNode = ({ x, y, width, height, index, payload, containerWidth }: any) => {
-  const fill = payload.cor || '#888';
-  // Decide lado do texto dependendo de onde o nó está
-  const textAnchor = x > containerWidth / 2 ? 'end' : 'start';
-  const textX = textAnchor === 'end' ? x - 6 : x + width + 6;
 
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} rx="2" ry="2" className="transition-all hover:opacity-80 cursor-pointer" />
-      <text
-        x={textX}
-        y={y + height / 2}
-        dy={4}
-        textAnchor={textAnchor}
-        fill="currentColor"
-        className="text-[9px] sm:text-[10px] font-bold fill-foreground font-mono transition-opacity"
-      >
-        {payload.name}
-      </text>
-    </g>
-  );
-};
 
 // Componente para exibir os valores do Tooltip apropriadamente
 const CustomTooltip = ({ active, payload }: any) => {
@@ -64,7 +44,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProps) {
+export function SankeyDirecionamento({ receitas, fixas, categorias, categoriaAtiva, onCategoriaSelect }: SankeyProps) {
   const data = useMemo(() => {
     const nodes: any[] = [];
     const links: any[] = [];
@@ -112,7 +92,7 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
 
       // Capilaridade das categorias partindo das variáveis
       catAtivas.forEach(cat => {
-        nodes.push({ name: cat.categoria, cor: CORES_CAT[cat.categoria] || '#888' });
+        nodes.push({ name: cat.categoria, cor: CORES_CAT[cat.categoria] || '#888', isCategoria: true });
         const idxC = nodeIdx++;
         links.push({ source: idxVar, target: idxC, value: cat.valor });
       });
@@ -141,6 +121,62 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
     );
   }
 
+  // Renderizadores In-Line com acesso ao Escopo (Hooks)
+  const renderNode = (props: any) => {
+    const { x, y, width, height, payload, containerWidth } = props;
+    const fill = payload.cor || '#888';
+    const textAnchor = x > containerWidth / 2 ? 'end' : 'start';
+    const textX = textAnchor === 'end' ? x - 6 : x + width + 6;
+
+    const isSelected = categoriaAtiva && categoriaAtiva === payload.name;
+    const isOutraCat = categoriaAtiva && payload.isCategoria && payload.name !== categoriaAtiva;
+    const isVarRoot = categoriaAtiva && payload.name === 'Desp. Variáveis';
+    const opacity = isOutraCat ? 0.15 : (categoriaAtiva && !isSelected && !isVarRoot && payload.name !== 'Receita Total' ? 0.4 : 1);
+    const fw = isSelected ? '900' : 'bold';
+
+    return (
+      <g 
+        opacity={opacity} 
+        onClick={() => {
+          if (payload.isCategoria && onCategoriaSelect) {
+            onCategoriaSelect(categoriaAtiva === payload.name ? null : payload.name);
+          }
+        }} 
+        className={payload.isCategoria ? "cursor-pointer" : ""}
+      >
+        <rect x={x} y={y} width={width} height={height} fill={fill} rx="2" ry="2" className="transition-all duration-300 hover:opacity-80" />
+        <text
+          x={textX}
+          y={y + height / 2 + 3}
+          textAnchor={textAnchor}
+          fill="currentColor"
+          className="text-[9px] sm:text-[10px] fill-foreground font-mono transition-opacity select-none tracking-tighter"
+          style={{ fontWeight: fw }}
+        >
+          {payload.name}
+        </text>
+      </g>
+    );
+  };
+
+  const renderLink = (props: any) => {
+    const { source, target, linkWidth } = props;
+    const isTargetSelected = categoriaAtiva && target.name === categoriaAtiva;
+    const isOutraCat = categoriaAtiva && target.isCategoria && target.name !== categoriaAtiva;
+    const strokeOpacity = isTargetSelected ? 0.35 : (isOutraCat ? 0.02 : (categoriaAtiva ? 0.05 : 0.1));
+
+    return (
+      <path
+        d={props.d || ''}
+        stroke={target.cor || source.cor || "currentColor"}
+        strokeWidth={Math.max(1, linkWidth || 0)}
+        strokeOpacity={strokeOpacity}
+        fill="none"
+        className="transition-all duration-300 pointer-events-none"
+      />
+    );
+  };
+
   return (
     <Card className="border border-border bg-card card-hover h-full flex flex-col w-full relative overflow-hidden">
       <CardHeader className="pb-0 shrink-0 z-10">
@@ -149,6 +185,11 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
             <Network className="h-4 w-4 text-[#01b695]" />
             Fluxo Financeiro
           </CardTitle>
+          {categoriaAtiva && (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+              {categoriaAtiva}
+            </span>
+          )}
         </div>
       </CardHeader>
       
@@ -158,10 +199,10 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
           <ResponsiveContainer width="100%" height="100%">
             <Sankey
               data={data}
-              node={<CustomNode />}
+              node={renderNode}
+              link={renderLink}
               nodePadding={8}
               margin={{ top: 10, right: 60, bottom: 20, left: 10 }} // Espaço pra rótulos
-              link={{ stroke: 'currentColor', strokeOpacity: 0.1, fill: 'none' }}
             >
               <RechartsTooltip content={<CustomTooltip />} />
             </Sankey>
