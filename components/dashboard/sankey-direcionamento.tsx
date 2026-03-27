@@ -148,7 +148,7 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
             <Sankey
               data={data}
               node={<CustomNode />}
-              nodePadding={30}
+              nodePadding={8}
               margin={{ top: 10, right: 60, bottom: 20, left: 10 }} // Espaço pra rótulos
               link={{ stroke: 'currentColor', strokeOpacity: 0.1, fill: 'none' }}
             >
