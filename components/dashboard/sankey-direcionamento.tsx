@@ -71,9 +71,11 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
 
     // Arredondamento para evitar falhas silenciosas do d3-sankey com ponto flutuante
     // É obrigatório que sum(incoming) >= sum(outgoing) de forma precisa e sem decimais infinitos!
+    // Filtramos 'Despesas Fixas' porque o Sankey já possui um nó principal explícito para Fixas,
+    // caso contrário ela apareceria duplicada dentro de Despesas Variáveis.
     const catAtivas = categorias
       .map(c => ({ categoria: c.categoria, valor: Math.round(c.valor) }))
-      .filter(c => c.valor > 0)
+      .filter(c => c.valor > 0 && c.categoria !== 'Despesas Fixas' && c.categoria !== 'Contas Fixas')
       .sort((a, b) => b.valor - a.valor);
 
     const variaveis = catAtivas.reduce((acc, c) => acc + c.valor, 0);
