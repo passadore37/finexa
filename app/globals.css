@@ -228,9 +228,65 @@ body {
 }
 
 /* ============================================
-   LANDING PAGE — Sistema de Design (.lp-*)
-   Dark mode fixo, tema imersivo
+   LANDING PAGE — Neobrutalista (.lp-*)
+   Estilo fiel ao design do Finexa
    ============================================ */
+
+/* Textura granulada */
+.lp-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 150px;
+}
+
+/* Overlay de noise fixo */
+.lp-noise::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  z-index: 9999;
+}
+
+/* Animações de entrada do Hero */
+@keyframes lp-fade-slide-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lp-fade-slide-in-right {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.lp-fade-in {
+  animation: lp-fade-slide-in 0.8s ease both;
+}
+.lp-fade-in-delay {
+  animation: lp-fade-slide-in-right 0.8s 0.2s ease both;
+}
+.lp-fade-in-scroll {
+  animation: lp-fade-slide-in 0.6s ease both;
+}
+
+/* Cards flutuantes animados */
+@keyframes lp-float-up {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(-12px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+@keyframes lp-float-down {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(12px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.lp-float-up  { animation: lp-float-up   4s ease-in-out infinite; }
+.lp-float-down { animation: lp-float-down 5s 1s ease-in-out infinite; }
 
 .lp-root {
   background: #08080e;
