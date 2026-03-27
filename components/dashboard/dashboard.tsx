@@ -8,6 +8,7 @@ import { ProjecaoBar } from './projecao-bar';
 import { CategoriasPieChart } from './categorias-pie-chart';
 import { EvolucaoChart } from './evolucao-chart';
 import { HeatmapGastos } from './heatmap-gastos';
+import { SankeyDirecionamento } from './sankey-direcionamento';
 import { AlertasPanel } from './alertas-panel';
 import { SugestoesPanel } from './sugestoes-panel';
 import { ParceladasPanel } from './parceladas-panel';
@@ -169,12 +170,17 @@ export function Dashboard() {
 
         <div className="section-separator my-6 sm:my-8" />
 
-        {/* Calor do mês (Heatmap) */}
-        <div className="mb-6 sm:mb-8">
+        {/* Calor do mês (Heatmap) + Fluxo de Dinheiro (Sankey) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 min-h-[300px]">
            <HeatmapGastos 
              transacoes={transacoesVisiveis} 
              diaAtivo={diaAtivo} 
              onDiaSelect={(d) => setDiaAtivo(prev => prev === d ? null : d)} 
+           />
+           <SankeyDirecionamento 
+             receitas={receitas} 
+             fixas={fixas} 
+             categorias={categorias} 
            />
         </div>
 
