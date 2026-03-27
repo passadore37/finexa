@@ -160,15 +160,19 @@ export function SankeyDirecionamento({ receitas, fixas, categorias, categoriaAti
   };
 
   const renderLink = (props: any) => {
-    const { source, target, linkWidth } = props;
-    const isTargetSelected = categoriaAtiva && target.name === categoriaAtiva;
-    const isOutraCat = categoriaAtiva && target.isCategoria && target.name !== categoriaAtiva;
+    const { source, target, linkWidth, d } = props;
+    
+    // Tratamento de undefined caso o Recharts renderize as props vazias no mount inicial
+    if (!source || !target) return null;
+
+    const isTargetSelected = categoriaAtiva && target?.name === categoriaAtiva;
+    const isOutraCat = categoriaAtiva && target?.isCategoria && target?.name !== categoriaAtiva;
     const strokeOpacity = isTargetSelected ? 0.35 : (isOutraCat ? 0.02 : (categoriaAtiva ? 0.05 : 0.1));
 
     return (
       <path
-        d={props.d || ''}
-        stroke={target.cor || source.cor || "currentColor"}
+        d={d || ''}
+        stroke={target?.cor || source?.cor || "currentColor"}
         strokeWidth={Math.max(1, linkWidth || 0)}
         strokeOpacity={strokeOpacity}
         fill="none"
