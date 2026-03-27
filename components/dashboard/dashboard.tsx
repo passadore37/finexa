@@ -7,6 +7,7 @@ import { KPICard } from './kpi-card';
 import { ProjecaoBar } from './projecao-bar';
 import { CategoriasPieChart } from './categorias-pie-chart';
 import { EvolucaoChart } from './evolucao-chart';
+import { HeatmapGastos } from './heatmap-gastos';
 import { AlertasPanel } from './alertas-panel';
 import { SugestoesPanel } from './sugestoes-panel';
 import { ParceladasPanel } from './parceladas-panel';
@@ -143,10 +144,6 @@ export function Dashboard() {
                 <span className="text-xs hidden sm:inline">Notificações</span>
               </Button>
             )}
-            <Button onClick={() => mutate()} variant="outline" size="sm" className="border-border hover:bg-secondary">
-              <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="text-xs hidden sm:inline">Atualizar</span>
-            </Button>
           </div>
         </div>
       </div>
@@ -167,6 +164,13 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar dados={{ ...projecaoBar, limite }} onAjustarLimite={async (v) => { await fetch('/api/limite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perfil: usuariaAtiva, limite: v }) }); mutate(); }} perfilGeral={usuariaAtiva === 'casal'} fixas={fixas} />
           <EvolucaoChart dados={evolucaoMensal} />
+        </div>
+
+        <div className="section-separator my-6 sm:my-8" />
+
+        {/* Calor do mês (Heatmap) */}
+        <div className="mb-6 sm:mb-8">
+           <HeatmapGastos transacoes={transacoesVisiveis} />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
