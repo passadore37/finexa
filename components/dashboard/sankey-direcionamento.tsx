@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sankey, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Network } from 'lucide-react';
 
+import type { DespesaPorCategoria } from '@/lib/types';
+
 interface SankeyProps {
   receitas: number;
   fixas: number;
-  categorias: { nome: string; total: number }[];
+  categorias: DespesaPorCategoria[];
 }
 
 const CORES_CAT: Record<string, string> = {
@@ -67,10 +69,19 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
     const nodes: any[] = [];
     const links: any[] = [];
 
-    const catAtivas = categorias.filter(c => c.total > 0).sort((a, b) => b.total - a.total);
-    const variaveis = catAtivas.reduce((acc, c) => acc + c.total, 0);
+    // Arredondamento para evitar falhas silenciosas do d3-sankey com ponto flutuante
+    // É obrigatório que sum(incoming) >= sum(outgoing) de forma precisa e sem decimais infinitos!
+    const catAtivas = categorias
+      .map(c => ({ categoria: c.categoria, valor: Math.round(c.valor) }))
+      .filter(c => c.valor > 0)
+      .sort((a, b) => b.valor - a.valor);
 
-    const sobra = Math.max(0, receitas - fixas - variaveis);
+    const variaveis = catAtivas.reduce((acc, c) => acc + c.valor, 0);
+
+    const intReceitas = Math.round(receitas);
+    const intFixas = Math.round(fixas);
+
+    const sobraReal = Math.max(0, intReceitas - intFixas - variaveis);
 
     let nodeIdx = 0;
     nodes.push({ name: 'Receita Total', cor: '#3B6D11' }); // Verde escuro para raiz
@@ -85,12 +96,10 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
     // Receita -> Desp. Variáveis -> Categorias
     // Receita -> Sobra Livre (O que não foi gasto)
 
-    const sobraReal = Math.max(0, receitas - fixas - variaveis);
-
-    if (fixas > 0) {
+    if (intFixas > 0) {
       nodes.push({ name: 'Desp. Fixas', cor: '#378add' });
       idxFixas = nodeIdx++;
-      links.push({ source: idxReceita, target: idxFixas, value: fixas });
+      links.push({ source: idxReceita, target: idxFixas, value: intFixas });
     }
 
     if (variaveis > 0) {
@@ -101,9 +110,9 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
 
       // Capilaridade das categorias partindo das variáveis
       catAtivas.forEach(cat => {
-        nodes.push({ name: cat.nome, cor: CORES_CAT[cat.nome] || '#888' });
+        nodes.push({ name: cat.categoria, cor: CORES_CAT[cat.categoria] || '#888' });
         const idxC = nodeIdx++;
-        links.push({ source: idxVar, target: idxC, value: cat.total });
+        links.push({ source: idxVar, target: idxC, value: cat.valor });
       });
     }
 
@@ -114,7 +123,7 @@ export function SankeyDirecionamento({ receitas, fixas, categorias }: SankeyProp
       links.push({ source: idxReceita, target: idxSobra, value: sobraReal });
     }
 
-    if (receitas === 0 && (fixas > 0 || variaveis > 0)) {
+    if (intReceitas === 0 && (intFixas > 0 || variaveis > 0)) {
        nodes[0].name = 'Origem Indefinida';
     }
 
