@@ -48,7 +48,7 @@ const Logo = ({ className = '' }: { className?: string }) => (
 const NeobrutalistCard = ({
   children,
   borderColor = 'border-[#08080f] dark:border-white',
-  bgColor = 'bg-white dark:bg-[#08080f]',
+  bgColor = 'bg-white dark:bg-[#111118]',
   className = '',
 }: {
   children: React.ReactNode;
@@ -86,20 +86,22 @@ const NeobrutalistButton = ({
 const AccordionItem = ({ question, answer }: { question: string; answer: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="border-b-2 border-[#08080f] dark:border-white/20 py-4">
+    <div className="border-2 border-[#08080f] dark:border-white shadow-[3px_3px_0px_0px_rgba(8,8,15,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] mb-4 overflow-hidden group">
       <button
-        className="w-full flex justify-between items-center text-left font-bold text-lg md:text-xl py-2 cursor-pointer"
+        className="w-full flex justify-between items-center text-left font-bold text-lg md:text-xl px-6 py-5 cursor-pointer bg-white dark:bg-[#111118] hover:bg-gray-50 dark:hover:bg-[#1a1a26] transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{question}</span>
         <ChevronDown
-          className={`transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-300 flex-shrink-0 ml-4 ${isOpen ? 'rotate-180 text-[#5330ff]' : ''}`}
         />
       </button>
       {isOpen && (
-        <p className="py-4 text-[#08080f]/70 dark:text-white/70 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-          {answer}
-        </p>
+        <div className="px-6 pb-6 bg-[#f8f8ff] dark:bg-[#0d0d15] border-t-2 border-[#08080f] dark:border-white/10">
+          <p className="pt-4 text-[#08080f]/80 dark:text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+            {answer}
+          </p>
+        </div>
       )}
     </div>
   );
@@ -618,9 +620,9 @@ export default function LandingPage() {
             </p>
             <NeobrutalistButton
               href="/cadastro"
-              bgColor="bg-white dark:bg-[#08080f]"
-              textColor="text-[#5330ff]"
-              className="px-12 py-6 text-2xl font-black hover:bg-[#fff245] hover:text-[#08080f] hover:border-[#fff245] transition-colors"
+              bgColor="bg-white dark:bg-white"
+              textColor="text-[#5330ff] dark:text-[#5330ff]"
+              className="px-12 py-6 text-2xl font-black transition-all hover:bg-[#fff245] hover:text-[#08080f] hover:scale-105 active:scale-95"
             >
               Começar agora — É grátis
             </NeobrutalistButton>
