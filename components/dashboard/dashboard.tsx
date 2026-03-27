@@ -37,6 +37,7 @@ export function Dashboard() {
 
   // Estado de filtro por categoria — compartilhado entre gráfico e histórico
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
+  const [diaAtivo, setDiaAtivo] = useState<number | null>(null);
 
   const { data, error, isLoading, mutate } = useSWR<APIResponse>(
     '/api/financeiro', fetcher,
@@ -46,7 +47,7 @@ export function Dashboard() {
   useEffect(() => { aplicarCorPerfil(usuariaAtiva); }, [usuariaAtiva]);
 
   // Limpar filtro ao trocar perfil
-  useEffect(() => { setCategoriaAtiva(null); }, [usuariaAtiva]);
+  useEffect(() => { setCategoriaAtiva(null); setDiaAtivo(null); }, [usuariaAtiva]);
 
   useEffect(() => {
     const handler = () => mutate();
@@ -170,7 +171,11 @@ export function Dashboard() {
 
         {/* Calor do mês (Heatmap) */}
         <div className="mb-6 sm:mb-8">
-           <HeatmapGastos transacoes={transacoesVisiveis} />
+           <HeatmapGastos 
+             transacoes={transacoesVisiveis} 
+             diaAtivo={diaAtivo} 
+             onDiaSelect={(d) => setDiaAtivo(prev => prev === d ? null : d)} 
+           />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
@@ -188,7 +193,7 @@ export function Dashboard() {
         <div className="section-separator my-6 sm:my-8" />
 
         {/* Histórico — recebe filtro da categoria clicada no gráfico */}
-        <HistoricoView categoriaFiltro={categoriaAtiva} />
+        <HistoricoView categoriaFiltro={categoriaAtiva} diaFiltro={diaAtivo} />
 
         <div className="section-separator my-6 sm:my-8" />
 

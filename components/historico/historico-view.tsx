@@ -19,6 +19,7 @@ interface Transacao {
 
 interface Props {
   categoriaFiltro?: string | null;
+  diaFiltro?: number | null;
 }
 
 const CORES_CAT: Record<string, string> = {
@@ -32,7 +33,12 @@ function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-export function HistoricoView({ categoriaFiltro }: Props) {
+function getDataTransacao(dataStr: string) {
+  const d = new Date(dataStr.length === 10 ? dataStr + 'T12:00:00' : dataStr);
+  return d.getDate();
+}
+
+export function HistoricoView({ categoriaFiltro, diaFiltro }: Props) {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -56,13 +62,16 @@ export function HistoricoView({ categoriaFiltro }: Props) {
   }
 
   // Separa destacados e dimmed mas mantém todos visíveis
+  const transacoesFiltradas = transacoes.filter(t => {
+    const matchCat = !categoriaFiltro || t.categoria === categoriaFiltro;
+    const matchDia = !diaFiltro || getDataTransacao(t.data) === diaFiltro;
+    return matchCat && matchDia;
+  });
+
+  const isFiltroAtivo = !!categoriaFiltro || !!diaFiltro;
   const totalGeral = transacoes.reduce((acc, t) => acc + t.valor, 0);
-  const totalFiltrado = categoriaFiltro
-    ? transacoes.filter(t => t.categoria === categoriaFiltro).reduce((acc, t) => acc + t.valor, 0)
-    : totalGeral;
-  const countFiltrado = categoriaFiltro
-    ? transacoes.filter(t => t.categoria === categoriaFiltro).length
-    : transacoes.length;
+  const totalFiltrado = isFiltroAtivo ? transacoesFiltradas.reduce((acc, t) => acc + t.valor, 0) : totalGeral;
+  const countFiltrado = isFiltroAtivo ? transacoesFiltradas.length : transacoes.length;
 
   function iniciarEdicao(t: Transacao) {
     setEditandoId(t.id);
@@ -135,8 +144,10 @@ export function HistoricoView({ categoriaFiltro }: Props) {
           <div className="divide-y divide-border overflow-y-auto max-h-[32rem] custom-scrollbar">
             {transacoes.map(t => {
               const cor = CORES_CAT[t.categoria] || '#888';
-              const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;
-              const isDimmed = !!categoriaFiltro && !isDestacado;
+              const matchCat = !categoriaFiltro || t.categoria === categoriaFiltro;
+              const matchDia = !diaFiltro || getDataTransacao(t.data) === diaFiltro;
+              const isDestacado = matchCat && matchDia;
+              const isDimmed = isFiltroAtivo && !isDestacado;
               const isEditando = editandoId === t.id;
               const isConfirmando = confirmandoDelete === t.id;
 
@@ -185,8 +196,8 @@ export function HistoricoView({ categoriaFiltro }: Props) {
                   className="flex items-center gap-3 px-4 py-3 group transition-all duration-150"
                   style={{
                     opacity: isDimmed ? 0.25 : 1,
-                    background: isDestacado && categoriaFiltro ? `${cor}12` : 'transparent',
-                    borderLeft: `3px solid ${isDestacado && categoriaFiltro ? cor : 'transparent'}`,
+                    background: isDestacado && isFiltroAtivo ? `${cor}12` : 'transparent',
+                    borderLeft: `3px solid ${isDestacado && isFiltroAtivo ? cor : 'transparent'}`,
                   }}
                 >
                   {/* Ponto */}

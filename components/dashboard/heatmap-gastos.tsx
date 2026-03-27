@@ -13,9 +13,11 @@ import {
 
 interface HeatmapGastosProps {
   transacoes: Transacao[];
+  diaAtivo?: number | null;
+  onDiaSelect?: (dia: number) => void;
 }
 
-export function HeatmapGastos({ transacoes }: HeatmapGastosProps) {
+export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGastosProps) {
   const { dias, maxValor, mesAtualNome } = useMemo(() => {
     const hoje = new Date();
     const ano = hoje.getFullYear();
@@ -115,14 +117,18 @@ export function HeatmapGastos({ transacoes }: HeatmapGastosProps) {
                      }
                    }
 
+                   const isActive = diaAtivo === celula.dia;
+
                    return (
                      <Tooltip key={`day-${celula.dia}`}>
                        <TooltipTrigger asChild>
                          <div
-                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform hover:scale-110 cursor-pointer relative ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''}`}
+                           onClick={() => temGasto && onDiaSelect?.(celula.dia)}
+                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform hover:scale-110 cursor-pointer relative ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110 z-10' : ''} ${!temGasto ? 'cursor-default pointer-events-none' : ''}`}
                            style={{
                              backgroundColor: temGasto ? corBg : 'var(--secondary)',
                              color: temGasto ? corTexto : 'var(--muted-foreground)',
+                             opacity: (diaAtivo && !isActive) ? 0.4 : 1,
                            }}
                          >
                            <span className={temGasto && pct > 0.66 ? 'font-bold' : 'font-medium'}>
@@ -130,16 +136,16 @@ export function HeatmapGastos({ transacoes }: HeatmapGastosProps) {
                            </span>
                          </div>
                        </TooltipTrigger>
-                       <TooltipContent className="bg-popover border border-border shadow-lg">
+                       <TooltipContent sideOffset={6} className="bg-foreground text-background border-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] p-3 rounded-lg dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]">
                          <div className="text-center">
-                           <p className="font-semibold text-foreground text-sm">
+                           <p className="font-semibold text-background text-sm">
                              Dia {celula.dia}
                            </p>
-                           <p className="text-muted-foreground text-xs mt-1">
+                           <p className="text-muted-foreground/80 text-xs mt-1">
                              {celula.total > 0 ? fmt(celula.total) : 'Sem gastos registrados'}
                            </p>
                            {temGasto && (
-                             <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
+                             <p className="text-[10px] text-muted-foreground/70 mt-1 uppercase tracking-widest font-bold">
                                {pct <= 0.33 ? 'Gasto Baixo' : pct <= 0.66 ? 'Gasto Médio' : 'Gasto Alto'}
                              </p>
                            )}
