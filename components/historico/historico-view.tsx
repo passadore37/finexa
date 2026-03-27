@@ -132,7 +132,7 @@ export function HistoricoView({ categoriaFiltro }: Props) {
             Nenhum lançamento ainda
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border overflow-y-auto max-h-[32rem] custom-scrollbar">
             {transacoes.map(t => {
               const cor = CORES_CAT[t.categoria] || '#888';
               const isDestacado = !categoriaFiltro || t.categoria === categoriaFiltro;

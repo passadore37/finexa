@@ -14,7 +14,7 @@ import { UsuarioSelector } from './usuario-selector';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Bell } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
 import { HistoricoView } from '@/components/historico/historico-view';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
@@ -32,7 +32,7 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
-  usePushNotifications(usuariaAtiva);
+  const { isSupported, isSubscribed, verificando, registrar } = usePushNotifications(usuariaAtiva);
 
   // Estado de filtro por categoria — compartilhado entre gráfico e histórico
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
@@ -136,10 +136,18 @@ export function Dashboard() {
       <div className="border-b border-border bg-card/50 sticky top-[113px] z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3">
           <UsuarioSelector usuarioAtivo={usuariaAtiva} onChangeUsuario={setUsuariaAtiva} />
-          <Button onClick={() => mutate()} variant="outline" size="sm" className="border-border hover:bg-secondary">
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-            <span className="text-xs">Atualizar</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {!verificando && isSupported && !isSubscribed && (
+              <Button onClick={() => registrar('geral')} variant="outline" size="sm" className="border-border hover:bg-secondary text-primary">
+                <Bell className="h-3.5 w-3.5 sm:mr-1.5" />
+                <span className="text-xs hidden sm:inline">Notificações</span>
+              </Button>
+            )}
+            <Button onClick={() => mutate()} variant="outline" size="sm" className="border-border hover:bg-secondary">
+              <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="text-xs hidden sm:inline">Atualizar</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -188,9 +196,9 @@ export function Dashboard() {
       </main>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 mt-4 border-t border-border pb-safe">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[10px] text-muted-foreground uppercase tracking-widest">
-          <p>Finexa · {new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
-          <p>
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest">
+          <p>passadore</p>
+          <p className="hidden sm:block">
             {semRestantes} {semRestantes === 1 ? 'semana restante' : 'semanas restantes'}
             {sobraAcumulada !== 0 ? ` · ${sobraAcumulada > 0 ? 'Sobra' : 'Déficit'}: ${fmt(Math.abs(sobraAcumulada))}` : ''}
           </p>
