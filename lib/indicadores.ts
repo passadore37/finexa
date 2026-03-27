@@ -77,7 +77,7 @@ function calcularDespesasPorCategoria(
   const totalFixas = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
 
   if (totalFixas > 0) {
-    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + totalFixas;
+    porCat['Despesas Fixas'] = (porCat['Despesas Fixas'] || 0) + totalFixas;
     total += totalFixas;
   }
 
@@ -186,7 +186,7 @@ export function calcularDespesasPorCategoriaPerfilMes(
   );
 
   if (parteFixas > 0) {
-    porCat['Contas Fixas'] = (porCat['Contas Fixas'] || 0) + parteFixas;
+    porCat['Despesas Fixas'] = (porCat['Despesas Fixas'] || 0) + parteFixas;
     total += parteFixas;
   }
 

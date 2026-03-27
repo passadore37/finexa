@@ -170,7 +170,7 @@ export function OrcamentoSemanal({ metodologia }: OrcamentoSemanalProps) {
           Metodologia de Orçamento Mensal
         </CardTitle>
         <p className="text-[10px] text-muted-foreground label-uppercase mt-1">
-          Salário - Investimento - Contas Fixas = Gastos Semanais
+          Salário - Investimento - Despesas Fixas = Gastos Semanais
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -200,11 +200,11 @@ export function OrcamentoSemanal({ metodologia }: OrcamentoSemanalProps) {
             </p>
           </div>
           
-          {/* Contas Fixas */}
+          {/* Despesas Fixas */}
           <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-[#A32D2D]">
             <div className="flex items-center gap-2 mb-1">
               <Receipt className="h-4 w-4 text-[#E24B4A]" />
-              <span className="text-[10px] text-muted-foreground label-uppercase">Contas Fixas</span>
+              <span className="text-[10px] text-muted-foreground label-uppercase">Despesas Fixas</span>
             </div>
             <p className="text-lg font-semibold text-[#E24B4A] tabular-nums">
               {formatarMoeda(metodologia.contasFixas)}

@@ -8,7 +8,7 @@ const tabs = [
   { label: 'Gastos', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Lançar', href: '/lancar', icon: PlusCircle },
   { label: 'Metas', href: '/metas', icon: Target },
-  { label: 'Contas Fixas', href: '/planejamento', icon: CalendarDays },
+  { label: 'Despesas Fixas', href: '/planejamento', icon: CalendarDays },
 ];
 
 export function TabNav() {

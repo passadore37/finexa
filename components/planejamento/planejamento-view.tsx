@@ -205,8 +205,8 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Planejamento</p>
-          <h2 className="text-xl font-medium text-foreground">Contas Fixas</h2>
-          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → contas fixas → envelope semanal</p>
+          <h2 className="text-xl font-medium text-foreground">Despesas Fixas</h2>
+          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → despesas fixas → envelope semanal</p>
         </div>
 
         {/* Botão salvar */}
@@ -302,13 +302,13 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
         </CardContent>
       </Card>
 
-      {/* Etapa 3 — Contas Fixas */}
+      {/* Etapa 3 — Despesas Fixas */}
       <Card className="border-border bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-[#A32D2D]/30 text-[#E24B4A] text-[10px] font-semibold flex items-center justify-center">3</span>
             <Receipt className="h-4 w-4 text-[#E24B4A]" />
-            Contas fixas
+            Despesas fixas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -373,7 +373,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
             </div>
           ) : (
             <button onClick={() => setAdicionando(true)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              + Adicionar conta fixa
+              + Adicionar despesa fixa
             </button>
           )}
 
@@ -398,7 +398,7 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
             {[
               { label: 'Salário total', val: fmt(salarioTotal), cor: '' },
               { label: `− Investimento (${pctInvestimento}%)`, val: `− ${fmt(investimento)}`, cor: 'text-[#4ADE80]' },
-              { label: '− Contas fixas', val: `− ${fmt(totalFixas)}`, cor: 'text-[#E24B4A]' },
+              { label: '− Despesas fixas', val: `− ${fmt(totalFixas)}`, cor: 'text-[#E24B4A]' },
             ].map(item => (
               <div key={item.label} className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{item.label}</span>

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       .single();
 
     if (!planejamento?.contas_fixas?.length) {
-      return NextResponse.json({ success: true, message: 'Nenhuma conta fixa configurada', inseridas: 0 });
+      return NextResponse.json({ success: true, message: 'Nenhuma despesa fixa configurada', inseridas: 0 });
     }
 
     // Calcular proporção real baseada nos salários
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       }));
 
     if (novas.length === 0) {
-      return NextResponse.json({ success: true, message: 'Contas fixas já existem este mês', inseridas: 0 });
+      return NextResponse.json({ success: true, message: 'Despesas fixas já existem este mês', inseridas: 0 });
     }
 
     const { error } = await supabase.from('transacoes').insert(novas);
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Erro ao inserir fixas mensais:', error);
-    return NextResponse.json({ success: false, error: 'Erro ao inserir contas fixas' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Erro ao inserir despesas fixas' }, { status: 500 });
   }
 }
 
