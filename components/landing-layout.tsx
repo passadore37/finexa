@@ -39,8 +39,8 @@ export function Navbar() {
               <Button variant="ghost" className="text-sm font-semibold">Entrar</Button>
             </Link>
             <Link href="/dashboard">
-              <Button className="bg-primary hover:bg-primary/90 text-white font-bold px-6 shadow-[4px_4px_0px_0px_rgba(130,161,253,0.4)] border-2 border-primary-foreground/10">
-                Começar Grátis
+              <Button className="bg-indigo hover:bg-indigo/90 text-white font-black px-6 shadow-[4px_4px_0px_0px_var(--indigo-light)] border-2 border-white/10 uppercase tracking-tight transition-all hover:-translate-y-1">
+                Começar Agora
               </Button>
             </Link>
           </div>
@@ -52,18 +52,18 @@ export function Navbar() {
       
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-background border-b border-border p-4 flex flex-col gap-4 animate-in slide-in-from-top duration-300">
-          <a href="/#missao" onClick={() => setIsMenuOpen(false)}>Nossa Missão</a>
-          <a href="/#como-funciona" onClick={() => setIsMenuOpen(false)}>Como Funciona</a>
-          <a href="/#diferenciais" onClick={() => setIsMenuOpen(false)}>Diferenciais</a>
-          <a href="/#planos" onClick={() => setIsMenuOpen(false)}>Planos</a>
+        <div className="md:hidden bg-background border-b-4 border-indigo p-6 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
+          <a href="/#missao" className="font-black uppercase tracking-widest text-sm" onClick={() => setIsMenuOpen(false)}>Nossa Missão</a>
+          <a href="/#como-funciona" className="font-black uppercase tracking-widest text-sm" onClick={() => setIsMenuOpen(false)}>Como Funciona</a>
+          <a href="/#diferenciais" className="font-black uppercase tracking-widest text-sm" onClick={() => setIsMenuOpen(false)}>Diferenciais</a>
+          <a href="/#planos" className="font-black uppercase tracking-widest text-sm" onClick={() => setIsMenuOpen(false)}>Planos</a>
           <hr className="border-border" />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
-              <Button variant="ghost" className="w-full justify-center">Entrar</Button>
+              <Button variant="ghost" className="w-full justify-center font-black uppercase">Entrar</Button>
             </Link>
             <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
-              <Button className="w-full bg-primary text-white font-bold">Começar Grátis</Button>
+              <Button className="w-full bg-indigo text-white font-black uppercase shadow-[6px_6px_0px_0px_var(--indigo-light)]">Começar Agora</Button>
             </Link>
           </div>
         </div>
