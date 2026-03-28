@@ -20,7 +20,7 @@ export function Navbar() {
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-md border-b border-border py-2' : 'bg-transparent py-4'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 text-foreground">
           <Logo />
           <span className="text-xl font-bold tracking-tight">Finexa</span>
         </Link>
@@ -77,10 +77,10 @@ export function Footer() {
     <footer className="border-t border-border bg-card py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-12 text-left">
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 text-foreground">
             <Logo />
             <span className="text-xl font-bold tracking-tight">Finexa</span>
-          </div>
+          </Link>
           <p className="text-sm text-muted-foreground">O controle financeiro que traz clareza para o seu futuro.</p>
         </div>
         

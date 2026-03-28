@@ -40,7 +40,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen selection:bg-indigo selection:text-white overflow-hidden bg-background">
+    <div className="flex flex-col min-h-screen selection:bg-indigo selection:text-white overflow-hidden bg-background text-foreground">
       <Navbar />
 
       <main className="flex-grow pt-24 relative">
@@ -295,9 +295,9 @@ export default function LandingPage() {
                  { title: "Despesas Fixas", color: "border-teal", icon: <Calendar className="w-8 h-8 text-teal" />, desc: "Nunca mais esqueçam de pagar contas importantes." },
                  { title: "Foco em Privacidade", color: "border-yellow-p", icon: <Lock className="w-8 h-8 text-yellow-p" />, desc: "Seus dados criptografados e controle total de acesso." }
                ].map((item, idx) => (
-                 <div key={idx} className={`p-8 bg-white dark:bg-zinc-900 border-[4px] ${item.color} rounded-[2.5rem] shadow-[10px_10px_0px_0px_var(--indigo-light)] flex flex-col items-start transition-all hover:-translate-y-4`}>
+                 <div key={idx} className={`p-8 bg-white dark:bg-zinc-900 border-[4px] ${item.color} rounded-[2.5rem] shadow-[10px_10px_0px_0px_var(--indigo-light)] flex flex-col items-start transition-all hover:-translate-y-4 text-foreground`}>
                    <div className="mb-6 p-4 bg-background border-2 border-border rounded-xl shadow-sm">{item.icon}</div>
-                   <h3 className="text-xl font-black mb-4 uppercase leading-none tracking-tight text-foreground">{item.title}</h3>
+                   <h3 className="text-xl font-black mb-4 uppercase leading-none tracking-tight">{item.title}</h3>
                    <p className="text-muted-foreground font-black text-xs leading-relaxed">{item.desc}</p>
                  </div>
                ))}
@@ -411,7 +411,7 @@ export default function LandingPage() {
 
 function PlanCard({ title, price, label, color, features, featured = false, footer = "", btnColor = "" }) {
   return (
-    <div className={`p-8 bg-background border-[4px] ${color} ${featured ? 'md:scale-105 md:-translate-y-4 shadow-[12px_12px_0px_0px_var(--indigo-light)] z-20' : 'shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)]'} rounded-[3rem] flex flex-col relative transition-all hover:shadow-xl overflow-hidden group`}>
+    <div className={`p-8 bg-background border-[4px] ${color} ${featured ? 'md:scale-105 md:-translate-y-4 shadow-[12px_12px_0px_0px_var(--indigo-light)] z-20' : 'shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)]'} rounded-[3rem] flex flex-col relative transition-all hover:shadow-xl overflow-hidden group text-foreground`}>
       {featured && (
         <div className={`absolute -top-0 left-1/2 -translate-x-1/2 ${color.replace('border-', 'bg-')} text-white px-6 py-1 rounded-b-2xl text-[10px] font-black uppercase tracking-widest border-x-2 border-b-2 border-indigo/20`}>
           RECOMENDADO
