@@ -26,7 +26,7 @@ export function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-foreground/80">
-          <a href="/#problema" className="hover:text-primary transition-colors">O Problema</a>
+          <a href="/#missao" className="hover:text-primary transition-colors">Nossa Missão</a>
           <a href="/#como-funciona" className="hover:text-primary transition-colors">Como Funciona</a>
           <a href="/#diferenciais" className="hover:text-primary transition-colors">Diferenciais</a>
           <a href="/#planos" className="hover:text-primary transition-colors">Planos</a>
@@ -53,7 +53,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-background border-b border-border p-4 flex flex-col gap-4 animate-in slide-in-from-top duration-300">
-          <a href="/#problema" onClick={() => setIsMenuOpen(false)}>O Problema</a>
+          <a href="/#missao" onClick={() => setIsMenuOpen(false)}>Nossa Missão</a>
           <a href="/#como-funciona" onClick={() => setIsMenuOpen(false)}>Como Funciona</a>
           <a href="/#diferenciais" onClick={() => setIsMenuOpen(false)}>Diferenciais</a>
           <a href="/#planos" onClick={() => setIsMenuOpen(false)}>Planos</a>
