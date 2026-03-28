@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Users, UserCircle, CheckCircle2 } from 'lucide-react';
+import { NeobrutalistButton, NeobrutalistCard } from '@/components/neobrutalist';
+import { Logo } from '@/components/logo';
 
 const planos = [
   {
@@ -45,53 +47,54 @@ export default function CadastroPage() {
   };
 
   return (
-    <div className="min-h-screen lp-root flex items-center justify-center px-4 py-20">
-      {/* Background orbs */}
-      <div className="lp-orb lp-orb-1" style={{ opacity: 0.5 }} />
-      <div className="lp-orb lp-orb-2" style={{ opacity: 0.3 }} />
-
-      <div className="relative z-10 w-full max-w-md">
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-2xl">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-12 lp-noise">
+      <div className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <NeobrutalistCard className="!p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-900/50 mb-5">
-              <span className="text-white font-black text-xl">F</span>
+            <div className="inline-flex mb-4">
+              <Logo showText={false} className="scale-125" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Crie sua conta</h1>
-            <p className="text-white/50 text-sm mt-2">7 dias grátis · Sem cartão de crédito</p>
+            <h1 className="text-3xl font-black text-[#08080f] dark:text-white tracking-tighter">
+              Crie sua conta
+            </h1>
+            <p className="text-[#08080f]/60 dark:text-white/60 font-bold mt-2 italic">
+              7 dias grátis · Sem cartão de crédito
+            </p>
           </div>
 
-          {/* Seleção de plano */}
-          <div className="mb-6">
-            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
+          {/* Seleção de plano - Neobrutalist Style */}
+          <div className="mb-10">
+            <label className="block text-xs font-black text-[#08080f] dark:text-white uppercase tracking-widest mb-4">
               Escolha seu plano
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {planos.map((p) => {
                 const Icon = p.icone;
                 const selecionado = planoSelecionado === p.id;
                 return (
                   <button
                     key={p.id}
-                    id={`plano-${p.id}`}
                     type="button"
                     onClick={() => setPlanoSelecionado(p.id)}
-                    className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-center transition-all ${
+                    className={`relative flex flex-col items-center gap-2.5 py-5 px-3 border-2 transition-all cursor-pointer ${
                       selecionado
-                        ? 'bg-indigo-600/30 border-indigo-500 text-white'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:border-white/20 hover:text-white/80'
+                        ? 'bg-[#fff245] border-[#08080f] shadow-[4px_4px_0px_0px_rgba(8,8,15,1)] -translate-x-1 -translate-y-1'
+                        : 'bg-white dark:bg-[#111118] border-[#08080f]/10 dark:border-white/10 hover:border-[#08080f] dark:hover:border-white opacity-60 hover:opacity-100'
                     }`}
                   >
                     {p.popular && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-black bg-amber-400 text-[#0a0a1a] px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-black bg-[#ff64ca] text-white px-2 py-0.5 border-2 border-[#08080f] shadow-[2px_2px_0px_0px_rgba(8,8,15,1)] whitespace-nowrap z-10">
                         POPULAR
                       </span>
                     )}
-                    <Icon size={16} />
-                    <span className="text-xs font-bold leading-none mt-1">{p.nome}</span>
-                    <span className="text-[10px] leading-none opacity-70">{p.preco}</span>
+                    <Icon size={20} className={selecionado ? 'text-[#08080f]' : 'text-[#08080f]/40 dark:text-white/40'} />
+                    <span className={`text-sm font-black text-[#08080f] ${selecionado ? 'opacity-100' : 'opacity-40 dark:text-white'}`}>{p.nome}</span>
+                    <span className={`text-[11px] font-bold ${selecionado ? 'text-[#08080f]/70' : 'text-[#08080f]/30 dark:text-white/30'}`}>{p.preco}</span>
                     {selecionado && (
-                      <CheckCircle2 size={12} className="text-indigo-400 absolute top-2 right-2" />
+                      <div className="absolute top-2 right-2">
+                        <CheckCircle2 size={16} className="text-[#08080f]" />
+                      </div>
                     )}
                   </button>
                 );
@@ -100,112 +103,123 @@ export default function CadastroPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="nome" className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
-                Seu nome
-              </label>
-              <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  id="nome"
-                  type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Letícia Passadore"
-                  required
-                  className="lp-input pl-10"
-                />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="nome" className="block text-xs font-black text-[#08080f] dark:text-white uppercase tracking-widest mb-2">
+                  Seu nome
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#08080f]/40 dark:text-white/40 group-focus-within:text-[#5330ff] transition-colors">
+                    <User size={18} />
+                  </div>
+                  <input
+                    id="nome"
+                    type="text"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Leticia Passadore"
+                    required
+                    className="w-full pl-12 pr-4 py-3.5 border-2 border-[#08080f] dark:border-white bg-white dark:bg-[#111118] font-bold focus:outline-none focus:ring-2 focus:ring-[#5330ff] transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-xs font-black text-[#08080f] dark:text-white uppercase tracking-widest mb-2">
+                  E-mail
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#08080f]/40 dark:text-white/40 group-focus-within:text-[#5330ff] transition-colors">
+                    <Mail size={18} />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="leticia@exemplo.com"
+                    required
+                    className="w-full pl-12 pr-4 py-3.5 border-2 border-[#08080f] dark:border-white bg-white dark:bg-[#111118] font-bold focus:outline-none focus:ring-2 focus:ring-[#5330ff] transition-all"
+                  />
+                </div>
               </div>
             </div>
 
             <div>
-              <label htmlFor="email-cadastro" className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
-                E-mail
-              </label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  id="email-cadastro"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="leticia@exemplo.com"
-                  required
-                  className="lp-input pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password-cadastro" className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label htmlFor="password" className="block text-xs font-black text-[#08080f] dark:text-white uppercase tracking-widest mb-2">
                 Escolha uma senha
               </label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#08080f]/40 dark:text-white/40 group-focus-within:text-[#5330ff] transition-colors">
+                  <Lock size={18} />
+                </div>
                 <input
-                  id="password-cadastro"
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres"
                   minLength={8}
                   required
-                  className="lp-input pl-10 pr-10"
+                  className="w-full pl-12 pr-12 py-3.5 border-2 border-[#08080f] dark:border-white bg-white dark:bg-[#111118] font-bold focus:outline-none focus:ring-2 focus:ring-[#5330ff] transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#08080f]/40 hover:text-[#08080f] dark:text-white/40 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <button
-              id="btn-cadastro"
-              type="submit"
+            <NeobrutalistButton 
+              type="submit" 
+              className="w-full py-4 text-lg mt-4" 
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-900/50 mt-2"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  Criar minha conta <ArrowRight size={16} />
+                  Criar minha conta <ArrowRight size={20} />
                 </>
               )}
-            </button>
+            </NeobrutalistButton>
           </form>
 
-          <p className="text-center text-white/25 text-xs mt-5 leading-relaxed">
-            Ao criar sua conta, você concorda com nossos{' '}
-            <a href="#" className="underline hover:text-white/50 transition-colors">Termos de Uso</a>
+          <p className="text-center font-bold text-[#08080f]/30 dark:text-white/30 text-[10px] mt-8 leading-relaxed uppercase tracking-widest">
+            Ao clicar, você concorda com nossos{' '}
+            <a href="#" className="underline hover:text-[#08080f] dark:hover:text-white">Termos</a>
             {' '}e{' '}
-            <a href="#" className="underline hover:text-white/50 transition-colors">Política de Privacidade</a>.
+            <a href="#" className="underline hover:text-[#08080f] dark:hover:text-white">Privacidade</a>.
           </p>
 
-          <div className="relative my-6">
+          {/* Divider */}
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t-2 border-[#08080f]/10 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-[#0d0d20] px-3 text-white/30 text-xs">ou</span>
+              <span className="bg-white dark:bg-[#111118] px-4 font-black text-[#08080f]/30 dark:text-white/30 text-xs tracking-widest">
+                OU
+              </span>
             </div>
           </div>
 
-          <p className="text-center text-sm text-white/40">
+          <p className="text-center font-bold text-[#08080f]/60 dark:text-white/60">
             Já tem conta?{' '}
-            <Link href="/login" className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
-              Entrar
+            <Link href="/login" className="text-[#ff64ca] hover:underline">
+              Entrar agora
             </Link>
           </p>
-        </div>
+        </NeobrutalistCard>
 
-        <p className="text-center mt-6">
-          <Link href="/" className="text-white/30 text-xs hover:text-white/60 transition-colors">
-            ← Voltar para o site
+        {/* Back to home */}
+        <p className="text-center mt-8">
+          <Link href="/" className="font-bold text-[#08080f]/40 dark:text-white/40 hover:text-[#08080f] dark:hover:text-white transition-colors inline-flex items-center gap-2">
+            ← Voltar para o início
           </Link>
         </p>
       </div>
