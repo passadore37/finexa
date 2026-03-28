@@ -199,324 +199,310 @@ export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
       {/* Header com botão salvar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 mb-2 leading-none">Planejamento</p>
-          <h2 className="text-4xl font-black text-[#08080f] tracking-tighter">Despesas Fixas</h2>
-          <p className="text-xs font-bold text-[#08080f]/40 mt-2 uppercase tracking-widest">Salário → investimento → fixas → envelope semanal</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Planejamento</p>
+          <h2 className="text-xl font-medium text-foreground">Despesas Fixas</h2>
+          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → despesas fixas → envelope semanal</p>
         </div>
 
+        {/* Botão salvar */}
         <button
           onClick={salvar}
           disabled={saveStatus === 'saving' || !alterado}
-          className={`flex items-center justify-center gap-3 px-8 py-4 rounded-3xl text-sm font-black uppercase tracking-widest transition-all shadow-xl ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
             saveStatus === 'saved'
-              ? 'bg-[#37cc94] text-white shadow-[#37cc94]/20'
+              ? 'bg-[#3B6D11]/20 text-[#4ADE80] border border-[#3B6D11]/30'
               : saveStatus === 'error'
-              ? 'bg-[#ff64ca] text-white shadow-[#ff64ca]/20'
+              ? 'bg-[#A32D2D]/20 text-[#E24B4A] border border-[#A32D2D]/30'
               : alterado
-              ? 'bg-[#5330ff] text-white hover:scale-105 active:scale-95 shadow-[#5330ff]/20'
-              : 'bg-black/5 text-[#08080f]/20 cursor-not-allowed shadow-none border border-black/5'
+              ? 'bg-primary text-white hover:bg-primary/90'
+              : 'bg-secondary text-muted-foreground border border-border cursor-not-allowed'
           }`}
         >
           {saveStatus === 'saving' ? (
-            <><Loader2 className="h-4 w-4 animate-spin" />SALVANDO...</>
+            <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
           ) : saveStatus === 'saved' ? (
-            <><Check className="h-5 w-5 stroke-[3px]" />SALVO</>
+            <><Check className="h-4 w-4" />Salvo</>
           ) : saveStatus === 'error' ? (
-            <><XIcon className="h-5 w-5" />ERRO</>
+            <><XIcon className="h-4 w-4" />Erro</>
           ) : (
-            <><Save className="h-5 w-5" />{alterado ? 'SALVAR' : 'SEM ALTERAÇÕES'}</>
+            <><Save className="h-4 w-4" />{alterado ? 'Salvar' : 'Salvo'}</>
           )}
         </button>
       </div>
 
       {alterado && (
-        <div className="p-4 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold text-center animate-pulse">
-          VOCÊ TEM ALTERAÇÕES NÃO SALVAS
+        <div className="p-3 rounded-lg bg-[#854F0B]/10 border border-[#854F0B]/30">
+          <p className="text-xs text-[#EF9F27]">Você tem alterações não salvas. Clique em <strong>Salvar</strong> para persistir.</p>
         </div>
       )}
 
       {/* Etapa 1 — Salários */}
-      <Card className="border-white/50 bg-white/40 shadow-xl shadow-black/5 p-6 space-y-8 rounded-[2.5rem]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-[1.25rem] bg-[#5330ff]/10 text-[#5330ff] flex items-center justify-center font-black text-lg">1</div>
-          <div className="flex items-center gap-2">
-            <Wallet className="h-6 w-6 text-[#5330ff]/40" />
-            <h3 className="text-xl font-black text-[#08080f] tracking-tighter">Salários Combinados</h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-          {[
-            { label: '🌸 Letícia', val: salLet, set: (v: number) => { setSalLet(v); marcarAlterado(); } },
-            { label: '💜 Giovanna', val: salGio, set: (v: number) => { setSalGio(v); marcarAlterado(); } },
-          ].map(s => (
-            <div key={s.label} className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-2">{s.label}</label>
-              <div className="relative group">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/30">R$</span>
-                <input
-                  type="number"
-                  value={s.val}
-                  onChange={e => s.set(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-black/[0.03] border border-black/5 rounded-2xl pl-12 pr-6 py-5 text-2xl font-black text-[#08080f] focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#5330ff]/10 transition-all tabular-nums"
-                />
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center">1</span>
+            <Wallet className="h-4 w-4 text-primary" />
+            Salário do mês
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { label: 'Letícia', val: salLet, set: (v: number) => { setSalLet(v); marcarAlterado(); } },
+              { label: 'Giovanna', val: salGio, set: (v: number) => { setSalGio(v); marcarAlterado(); } },
+            ].map(s => (
+              <div key={s.label}>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">{s.label}</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">R$</span>
+                  <input
+                    type="number"
+                    value={s.val}
+                    onChange={e => s.set(parseFloat(e.target.value) || 0)}
+                    className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-8 rounded-[2rem] bg-[#5330ff] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-[#5330ff]/20">
-          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-60">Total bruto mensal</span>
-          <span className="text-4xl font-black tabular-nums">{fmt(salarioTotal)}</span>
-        </div>
+            ))}
+          </div>
+          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-primary flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Total combinado</span>
+            <span className="text-xl font-medium tabular-nums text-foreground">{fmt(salarioTotal)}</span>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Etapa 2 — Investimento */}
-      <Card className="border-white/50 bg-white/40 shadow-xl shadow-black/5 p-6 space-y-8 rounded-[2.5rem]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-[1.25rem] bg-[#37cc94]/10 text-[#37cc94] flex items-center justify-center font-black text-lg">2</div>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-[#37cc94]/40" />
-            <h3 className="text-xl font-black text-[#08080f] tracking-tighter">Investimento Primeiro</h3>
-          </div>
-        </div>
-
-        <div className="space-y-12 py-4">
-          <div className="relative px-2">
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#3B6D11]/30 text-[#4ADE80] text-[10px] font-semibold flex items-center justify-center">2</span>
+            <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
+            Investimento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
             <input
               type="range" min={0} max={30} step={1} value={pctInvestimento}
               onChange={e => { setPctInvestimento(parseInt(e.target.value)); marcarAlterado(); }}
-              className="w-full h-3 bg-black/5 rounded-full appearance-none cursor-pointer accent-[#37cc94]"
+              className="flex-1 accent-primary"
             />
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#37cc94] text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
-              {pctInvestimento}%
-            </div>
+            <span className="text-lg font-medium tabular-nums text-[#4ADE80] min-w-[40px]">{pctInvestimento}%</span>
           </div>
-          <div className="p-8 rounded-[2rem] bg-[#37cc94] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-[#37cc94]/20">
-            <div className="text-center sm:text-left">
-              <span className="text-xs font-black uppercase tracking-[0.2em] opacity-60 block mb-1">Separar para o futuro</span>
-              <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Antes de pagar qualquer conta</p>
-            </div>
-            <span className="text-4xl font-black tabular-nums">{fmt(investimento)}</span>
+          <div className="p-3 rounded-lg bg-[#3B6D11]/10 border-l-2 border-[#3B6D11] flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Separar antes de qualquer gasto</p>
+            <span className="text-xl font-medium tabular-nums text-[#4ADE80]">{fmt(investimento)}</span>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* Etapa 3 — Despesas Fixas */}
-      <Card className="border-white/50 bg-white/40 shadow-xl shadow-black/5 p-6 space-y-8 rounded-[2.5rem]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-[1.25rem] bg-[#ff64ca]/10 text-[#ff64ca] flex items-center justify-center font-black text-lg">3</div>
-            <div className="flex items-center gap-2">
-              <Receipt className="h-6 w-6 text-[#ff64ca]/40" />
-              <h3 className="text-xl font-black text-[#08080f] tracking-tighter">Despesas Fixas</h3>
-            </div>
-          </div>
-          <div className="hidden sm:block text-right">
-             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20">Comprometido</p>
-             <p className="text-xl font-black text-[#ff64ca] tabular-nums">{fmt(totalFixas)}</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#A32D2D]/30 text-[#E24B4A] text-[10px] font-semibold flex items-center justify-center">3</span>
+            <Receipt className="h-4 w-4 text-[#E24B4A]" />
+            Despesas fixas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           {contasFixas.map(conta => (
-            <div key={conta.id} className="flex items-center justify-between p-5 rounded-3xl bg-white border border-black/5 shadow-sm group hover:shadow-md transition-all">
-              <span className="text-sm font-bold text-[#08080f] flex-1">{conta.descricao}</span>
+            <div key={conta.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
+              <span className="text-sm text-foreground flex-1">{conta.descricao}</span>
               {editandoId === conta.id ? (
-                <div className="flex items-center gap-3 animate-in fade-in zoom-in-95 duration-300">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#08080f]/30">R$</span>
-                    <input
-                      type="number" value={editValor}
-                      onChange={e => setEditValor(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && salvarEdicao(conta.id)}
-                      autoFocus
-                      className="w-28 bg-black/[0.03] border border-[#5330ff]/40 rounded-xl pl-8 pr-3 py-2 text-sm font-bold text-[#08080f] focus:outline-none focus:bg-white transition-all"
-                    />
-                  </div>
-                  <button onClick={() => salvarEdicao(conta.id)} className="w-10 h-10 rounded-xl bg-[#37cc94]/10 text-[#37cc94] flex items-center justify-center hover:bg-[#37cc94] hover:text-white transition-all">
-                    <Check className="h-5 w-5 stroke-[3px]" />
-                  </button>
-                  <button onClick={() => setEditandoId(null)} className="w-10 h-10 rounded-xl bg-black/5 text-[#08080f]/20 flex items-center justify-center hover:bg-black/10 transition-all">
-                    <XIcon className="h-5 w-5" />
-                  </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">R$</span>
+                  <input
+                    type="number" value={editValor}
+                    onChange={e => setEditValor(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && salvarEdicao(conta.id)}
+                    autoFocus
+                    className="w-24 bg-secondary border border-primary rounded px-2 py-1 text-sm text-foreground focus:outline-none"
+                  />
+                  <button onClick={() => salvarEdicao(conta.id)} className="text-[#3B6D11]"><Check className="h-4 w-4" /></button>
+                  <button onClick={() => setEditandoId(null)} className="text-muted-foreground"><XIcon className="h-4 w-4" /></button>
                 </div>
               ) : (
-                <div className="flex items-center gap-6">
-                  <span className="text-lg font-black tabular-nums text-[#ff64ca]">{fmt(conta.valor)}</span>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
-                    <button onClick={() => iniciarEdicao(conta)} className="w-9 h-9 rounded-xl bg-black/[0.03] text-[#08080f]/30 flex items-center justify-center hover:bg-[#5330ff]/10 hover:text-[#5330ff] transition-all">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => removerConta(conta.id)} className="w-9 h-9 rounded-xl bg-red-500/5 text-red-500/30 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm tabular-nums text-[#E24B4A]">{fmt(conta.valor)}</span>
+                  <button onClick={() => iniciarEdicao(conta)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => removerConta(conta.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-[#E24B4A] text-xs">✕</button>
                 </div>
               )}
             </div>
           ))}
 
-          {/* Ferramentas de importação e adição */}
-          <div className="pt-4 flex flex-col gap-6">
+          {/* Botão importar fixas do mês */}
+          <div className="flex items-center gap-3 py-1">
             <button
               onClick={importarFixasMes}
               disabled={importandoFixas}
-              className="group flex items-center gap-3 self-start text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20 hover:text-[#5330ff] transition-all"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
             >
-              <div className={`p-2 rounded-lg bg-black/[0.02] group-hover:bg-[#5330ff]/10 transition-all ${importandoFixas ? 'animate-spin' : ''}`}>
-                <RefreshCw className="h-4 w-4" />
-              </div>
-              {importMsg || 'Sincronizar com lançamentos do mês'}
+              {importandoFixas
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <RefreshCw className="h-3 w-3" />
+              }
+              Lançar fixas deste mês no dashboard
             </button>
-
-            {adicionando ? (
-              <div className="flex flex-col sm:flex-row gap-4 p-6 rounded-[2rem] bg-black/[0.02] border border-black/5 animate-in slide-in-from-top-4 duration-500">
-                <input type="text" placeholder="Ex: Novo Streaming" value={novaDescricao}
-                  onChange={e => setNovaDescricao(e.target.value)}
-                  className="flex-1 bg-white border border-black/5 rounded-2xl px-5 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
-                <div className="relative sm:w-40">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/30">R$</span>
-                  <input type="number" placeholder="0" value={novoValor}
-                    onChange={e => setNovoValor(e.target.value)}
-                    className="w-full bg-white border border-black/5 rounded-2xl pl-10 pr-4 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={adicionarConta} className="flex-1 sm:flex-none px-6 py-4 rounded-2xl bg-[#5330ff] text-white text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[#5330ff]/20">ADICIONAR</button>
-                  <button onClick={() => setAdicionando(false)} className="px-6 py-4 rounded-2xl bg-black/5 text-[#08080f]/40 hover:bg-black/10 transition-all"><XIcon className="h-5 w-5" /></button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => setAdicionando(true)} className="w-full py-5 rounded-[2rem] border-2 border-dashed border-black/5 text-[10px] font-black uppercase tracking-[0.3em] text-[#08080f]/20 hover:text-[#5330ff] hover:border-[#5330ff]/20 hover:bg-[#5330ff]/5 transition-all">
-                + ADICIONAR DESPESA FIXA
-              </button>
+            {importMsg && (
+              <span className={`text-xs ${importMsg.includes('Erro') ? 'text-[#E24B4A]' : 'text-[#3B6D11]'}`}>
+                {importMsg}
+              </span>
             )}
           </div>
-        </div>
 
-        <div className="p-8 rounded-[2rem] bg-[#ff64ca] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-[#ff64ca]/20">
-          <div className="text-center sm:text-left">
-             <span className="text-xs font-black uppercase tracking-[0.2em] opacity-60 block mb-1">Total comprometido</span>
-             <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{Math.round(pctFixas)}% dos salários combinados</p>
+          {adicionando ? (
+            <div className="flex gap-2 pt-1">
+              <input type="text" placeholder="Descrição" value={novaDescricao}
+                onChange={e => setNovaDescricao(e.target.value)}
+                className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+              <input type="text" placeholder="Valor" value={novoValor}
+                onChange={e => setNovoValor(e.target.value)}
+                className="w-28 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+              <button onClick={adicionarConta} className="px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">+</button>
+              <button onClick={() => setAdicionando(false)} className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary"><XIcon className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <button onClick={() => setAdicionando(true)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              + Adicionar despesa fixa
+            </button>
+          )}
+
+          <div className="p-3 rounded-lg bg-[#A32D2D]/10 border-l-2 border-[#A32D2D] flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{Math.round(pctFixas)}% do salário comprometido</span>
+            <span className="text-xl font-medium tabular-nums text-[#E24B4A]">{fmt(totalFixas)}</span>
           </div>
-          <span className="text-4xl font-black tabular-nums">{fmt(totalFixas)}</span>
-        </div>
+        </CardContent>
       </Card>
 
       {/* Etapa 4 — Gastos Semanais */}
-      <Card className="border-white/50 bg-white/40 shadow-xl shadow-black/5 p-6 space-y-10 rounded-[2.5rem]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-[1.25rem] bg-[#EF9F27]/10 text-[#EF9F27] flex items-center justify-center font-black text-lg">4</div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-[#EF9F27]/40" />
-            <h3 className="text-xl font-black text-[#08080f] tracking-tighter">Budget Semanal</h3>
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#854F0B]/30 text-[#EF9F27] text-[10px] font-semibold flex items-center justify-center">4</span>
+            <CalendarDays className="h-4 w-4 text-[#EF9F27]" />
+            Orçamento semanal
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 rounded-lg bg-secondary/30 border border-border space-y-3">
+            {[
+              { label: 'Salário total', val: fmt(salarioTotal), cor: '' },
+              { label: `− Investimento (${pctInvestimento}%)`, val: `− ${fmt(investimento)}`, cor: 'text-[#4ADE80]' },
+              { label: '− Despesas fixas', val: `− ${fmt(totalFixas)}`, cor: 'text-[#E24B4A]' },
+            ].map(item => (
+              <div key={item.label} className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className={`tabular-nums ${item.cor || 'text-foreground'}`}>{item.val}</span>
+              </div>
+            ))}
+            <div className="h-px bg-border" />
+            <div className="flex justify-between">
+              <span className="text-sm font-medium text-foreground">Para gastos variáveis</span>
+              <span className="text-lg font-medium tabular-nums text-[#EF9F27]">{fmt(disponivelGastos)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Dividido em {semanas.length} semanas</span>
+              <span className="text-sm font-medium tabular-nums text-primary">{fmt(porSemana)}/semana</span>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Coluna resumo visual */}
-          <div className="lg:col-span-5 space-y-8">
-            <div className="p-8 rounded-[2.5rem] bg-white border border-black/5 shadow-xl space-y-6">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20 mb-2 leading-none">Disponível para o mês</p>
-                <p className="text-5xl font-black text-[#EF9F27] tabular-nums tracking-tighter">{fmt(disponivelGastos)}</p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { label: 'Salário total', val: fmt(salarioTotal), cor: 'text-[#08080f]/60' },
-                  { label: `Investimento`, val: `− ${fmt(investimento)}`, cor: 'text-[#37cc94]' },
-                  { label: 'Despesas fixas', val: `− ${fmt(totalFixas)}`, cor: 'text-[#ff64ca]' },
-                ].map(item => (
-                  <div key={item.label} className="flex justify-between text-xs font-bold uppercase tracking-widest">
-                    <span className="text-[#08080f]/20">{item.label}</span>
-                    <span className={`tabular-nums ${item.cor}`}>{item.val}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-6 border-t border-black/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20 leading-none mb-1">Por semana</span>
-                    <p className="text-xs font-bold text-[#08080f]/40 uppercase tracking-widest">Em {semanas.length} semanas</p>
-                  </div>
-                  <p className="text-3xl font-black text-[#5330ff] tabular-nums tracking-tighter">{fmt(porSemana)}</p>
+          {/* Barra de distribuição */}
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Distribuição do salário</p>
+            <div className="h-8 rounded-full overflow-hidden flex">
+              {[
+                { w: pctInvestimento, bg: '#3B6D11', label: `${pctInvestimento}%` },
+                { w: pctFixas, bg: '#A32D2D', label: `${Math.round(pctFixas)}%` },
+                { w: pctGastos, bg: '#854F0B', label: `${Math.round(pctGastos)}%` },
+              ].map((seg, i) => (
+                <div key={i} className="h-full flex items-center justify-center text-[10px] font-medium text-white transition-all duration-500"
+                  style={{ width: `${seg.w}%`, background: seg.bg }}>
+                  {seg.w > 8 ? seg.label : ''}
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Barra de distribuição */}
-            <div className="px-2 space-y-6">
-              <div className="h-8 rounded-full overflow-hidden flex shadow-inner bg-black/5 p-1">
-                {[
-                  { w: pctInvestimento, bg: '#37cc94', label: 'INV' },
-                  { w: pctFixas, bg: '#ff64ca', label: 'FIX' },
-                  { w: pctGastos, bg: '#EF9F27', label: 'GAS' },
-                ].map((seg, i) => (
-                  <div key={i} className="h-full flex items-center justify-center text-[8px] font-black text-white transition-all duration-1000 rounded-full"
-                    style={{ width: `${seg.w}%`, background: seg.bg, margin: '0 1px' }}>
-                    {seg.w > 12 ? seg.label : ''}
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-6 justify-center">
-                {[{ cor: '#37cc94', label: 'INVESTIMENTO' }, { cor: '#ff64ca', label: 'FIXAS' }, { cor: '#EF9F27', label: 'GASTOS' }].map(item => (
-                  <span key={item.label} className="flex items-center gap-2 text-[8px] font-black tracking-[0.2em] text-[#08080f]/30">
-                    <span className="w-2 h-2 rounded-full" style={{ background: item.cor }} />
-                    {item.label}
-                  </span>
-                ))}
-              </div>
+            <div className="flex gap-4 mt-2">
+              {[{ cor: '#3B6D11', label: 'Investimento' }, { cor: '#A32D2D', label: 'Fixas' }, { cor: '#854F0B', label: 'Gastos' }].map(item => (
+                <span key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: item.cor }} />
+                  {item.label}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* Coluna Semanas */}
-          <div className="lg:col-span-7 space-y-4">
+          {/* Cards de semanas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {semanas.map(semana => {
               const isAtual = semana.numero === semanaAtual;
               const isPast = semana.numero < semanaAtual;
               return (
-                <div key={semana.numero} className={`p-6 rounded-[2rem] border transition-all duration-500 relative overflow-hidden ${
-                  isAtual 
-                  ? 'border-[#5330ff]/20 bg-white shadow-xl shadow-[#5330ff]/5 scale-[1.02] z-10' 
-                  : 'border-black/5 bg-black/[0.02] opacity-60'
-                }`}>
-                  {isAtual && <div className="absolute top-0 right-0 h-1 w-20 bg-[#5330ff] rounded-bl-xl" />}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-black text-[#08080f] tracking-tighter">Semana {semana.numero}</span>
-                        {isAtual && <span className="text-[8px] font-black uppercase tracking-widest bg-[#5330ff] text-white px-3 py-1 rounded-full">Atual</span>}
-                      </div>
-                      <p className="text-[10px] font-bold text-[#08080f]/30 uppercase tracking-[0.1em]">{semana.label.split('—')[1]?.trim()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black text-[#08080f]/20 uppercase tracking-widest mb-1">Envelope</p>
-                      <p className={`text-2xl font-black tabular-nums tracking-tighter ${isAtual ? 'text-[#5330ff]' : 'text-[#08080f]/60'}`}>
-                        {fmt(porSemana)}
-                      </p>
-                    </div>
+                <div key={semana.numero} className={`p-4 rounded-lg border transition-all ${isAtual ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-secondary/30'} ${isPast ? 'opacity-60' : ''}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-foreground">Semana {semana.numero}</span>
+                    {isAtual && <span className="text-[9px] uppercase tracking-wider bg-primary text-white px-2 py-0.5 rounded-full">atual</span>}
+                    {isPast && <span className="text-[9px] uppercase tracking-wider text-muted-foreground">encerrada</span>}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mb-2">{semana.label.split('—')[1]?.trim()}</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-medium tabular-nums text-primary">{fmt(porSemana)}</span>
+                    <span className="text-xs text-muted-foreground">disponível</span>
                   </div>
                 </div>
               );
             })}
-
-            <div className="p-6 rounded-[1.5rem] bg-black/5 flex items-start gap-4">
-              <div className="p-2 rounded-xl bg-white shadow-sm">
-                <Info className="h-4 w-4 text-[#5330ff]" />
-              </div>
-              <p className="text-[10px] font-bold text-[#08080f]/40 leading-relaxed uppercase tracking-[0.05em]">
-                Planeje para não ultrapassar o envelope. O saldo restante pode ser acumulado para a semana seguinte ou poupado para metas futuras.
-              </p>
-            </div>
           </div>
-        </div>
+
+          <div className="flex gap-3 p-3 rounded-lg bg-secondary/50 border border-border">
+            <Info className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              O que sobrar de uma semana pode ser usado na seguinte ou poupado. O acompanhamento real aparece na aba <strong className="text-foreground">Gastos</strong>.
+            </p>
+          </div>
+        </CardContent>
       </Card>
+
+      {/* Resumo final */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { corBg: '#3B6D11', corTexto: '#4ADE80', icon: TrendingUp, label: 'Investimento mensal', val: fmt(investimento), sub: `${pctInvestimento}% do salário total` },
+          { corBg: '#A32D2D', corTexto: '#E24B4A', icon: Receipt, label: 'Comprometido em fixas', val: fmt(totalFixas), sub: `${Math.round(pctFixas)}% do salário total` },
+          { corBg: 'D4537E', corTexto: '#D4537E', icon: PiggyBank, label: 'Envelope semanal', val: fmt(porSemana), sub: `${Math.round(pctGastos)}% do salário · ${semanas.length} semanas` },
+        ].map((card, i) => (
+          <div key={i} className="p-4 rounded-xl border" style={{ background: `${card.corBg}1A`, borderColor: `${card.corBg}33` }}>
+            <div className="flex items-center gap-2 mb-2">
+              <card.icon className="h-4 w-4" style={{ color: card.corTexto }} />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{card.label}</span>
+            </div>
+            <p className="text-2xl font-medium tabular-nums" style={{ color: card.corTexto }}>{card.val}</p>
+            <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Botão salvar fixo no rodapé mobile */}
+      {alterado && (
+        <div className="fixed bottom-4 right-4 z-50 sm:hidden">
+          <button
+            onClick={salvar}
+            disabled={saveStatus === 'saving'}
+            className="flex items-center gap-2 px-5 py-3 rounded-full bg-primary text-white text-sm font-medium shadow-lg hover:bg-primary/90 transition-all"
+          >
+            {saveStatus === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar alterações
+          </button>
+        </div>
+      )}
     </div>
   );
 }

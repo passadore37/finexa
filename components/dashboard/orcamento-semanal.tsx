@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  ArrowRight,
 } from 'lucide-react';
 import type { MetodologiaOrcamento, DadosSemana } from '@/lib/types';
 
@@ -38,145 +37,203 @@ function formatarData(data: Date): string {
 function SemanaCard({ semana, isAtual }: { semana: DadosSemana; isAtual: boolean }) {
   const percentual = Math.min(semana.percentualGasto, 100);
   const excedeu = semana.percentualGasto > 100;
+  const percentualExcedido = semana.percentualGasto - 100;
   
-  let corBarra = '#37cc94'; 
-  if (semana.percentualGasto > 80 && semana.percentualGasto <= 100) corBarra = '#EF9F27';
-  if (excedeu) corBarra = '#ff64ca';
-  if (semana.status === 'futuro') corBarra = '#08080f/10';
+  // Cores baseadas no status e gasto
+  let corBarra = '#3B6D11'; // Verde - ok
+  let corFundo = 'rgba(59, 109, 17, 0.2)';
+  
+  if (semana.percentualGasto > 80 && semana.percentualGasto <= 100) {
+    corBarra = '#D4A017'; // Âmbar - atenção
+    corFundo = 'rgba(212, 160, 23, 0.2)';
+  } else if (excedeu) {
+    corBarra = '#A32D2D'; // Vermelho - excedeu
+    corFundo = 'rgba(163, 45, 45, 0.2)';
+  }
+  
+  if (semana.status === 'futuro') {
+    corBarra = '#4B5563'; // Cinza para futuro
+    corFundo = 'rgba(75, 85, 99, 0.2)';
+  }
 
   return (
     <div
       className={cn(
-        'relative p-6 rounded-[2rem] border transition-all duration-500 overflow-hidden',
+        'relative p-4 rounded-lg border transition-all',
         isAtual
-          ? 'border-[#5330ff]/20 bg-white shadow-xl shadow-[#5330ff]/5 scale-[1.02] z-10'
-          : 'border-black/5 bg-black/[0.02]',
+          ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+          : 'border-border bg-card/50',
         semana.status === 'futuro' && 'opacity-60'
       )}
     >
+      {/* Badge de semana atual */}
       {isAtual && (
-        <div className="absolute top-0 right-0 h-1 w-20 bg-[#5330ff] rounded-bl-xl shadow-[0_0_12px_rgba(83,48,255,0.3)]" />
+        <div className="absolute -top-2 left-4 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full">
+          ATUAL
+        </div>
       )}
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-             <span className="text-xl font-black text-[#08080f] tracking-tighter">Semana {semana.numero}</span>
-             {isAtual && <span className="text-[8px] font-black uppercase tracking-widest bg-[#5330ff] text-white px-3 py-1 rounded-full">Atual</span>}
-          </div>
-          <p className="text-[10px] font-bold text-[#08080f]/30 uppercase tracking-[0.1em]">{formatarData(semana.inicio)} — {formatarData(semana.fim)}</p>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground">
+            Semana {semana.numero}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {formatarData(semana.inicio)} - {formatarData(semana.fim)}
+          </span>
         </div>
-        <div className={`p-2 rounded-xl ${isAtual ? 'bg-[#5330ff]/10' : 'bg-black/5'}`}>
-          {semana.status === 'passado' && <CheckCircle2 className="h-4 w-4 text-[#37cc94]" />}
-          {semana.status === 'atual' && <Clock className="h-4 w-4 text-[#5330ff] animate-pulse" />}
-          {semana.status === 'futuro' && <CalendarDays className="h-4 w-4 text-[#08080f]/20" />}
-        </div>
+        {semana.status === 'passado' && (
+          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+        )}
+        {semana.status === 'atual' && (
+          <Clock className="h-4 w-4 text-primary" />
+        )}
+        {semana.status === 'futuro' && (
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        )}
       </div>
       
       {/* Valores */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-3 rounded-2xl bg-white/50 border border-black/[0.03]">
-          <p className="text-[9px] font-black text-[#08080f]/20 uppercase tracking-widest mb-1">Gasto</p>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div>
+          <p className="text-[10px] text-muted-foreground label-uppercase">Orçamento</p>
+          <p className="text-sm font-medium text-foreground tabular-nums">
+            {formatarMoeda(semana.orcamento)}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground label-uppercase">Gasto</p>
           <p className={cn(
-            'text-2xl font-black tabular-nums tracking-tighter',
-            excedeu ? 'text-[#ff64ca]' : 'text-[#08080f]'
+            'text-sm font-medium tabular-nums',
+            excedeu ? 'text-[#E24B4A]' : 'text-foreground'
           )}>
             {formatarMoeda(semana.gasto)}
           </p>
         </div>
-        <div className="p-3 rounded-2xl bg-white/50 border border-black/[0.03]">
-          <p className="text-[9px] font-black text-[#08080f]/20 uppercase tracking-widest mb-1">Disponível</p>
+        <div>
+          <p className="text-[10px] text-muted-foreground label-uppercase">Disponível</p>
           <p className={cn(
-            'text-2xl font-black tabular-nums tracking-tighter',
-            semana.disponivel < 0 ? 'text-[#ff64ca]' : 'text-[#37cc94]'
+            'text-sm font-medium tabular-nums',
+            semana.disponivel < 0 ? 'text-[#E24B4A]' : 'text-[#4ADE80]'
           )}>
             {formatarMoeda(semana.disponivel)}
           </p>
         </div>
       </div>
       
-      {/* Barra de progresso premium */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-end">
-           <p className="text-[10px] font-black text-[#08080f]/40 uppercase tracking-widest leading-none">Status do Envelope</p>
-           <p className="text-sm font-black text-[#08080f] tracking-tighter leading-none">{semana.percentualGasto.toFixed(0)}%</p>
-        </div>
-        <div className="h-4 rounded-full bg-black/5 p-1 flex">
+      {/* Barra de progresso */}
+      <div className="relative h-2 rounded-full overflow-hidden" style={{ backgroundColor: corFundo }}>
+        <div
+          className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${percentual}%`,
+            backgroundColor: corBarra,
+          }}
+        />
+        {/* Indicador de excesso */}
+        {excedeu && (
           <div
-            className="h-full rounded-full transition-all duration-1000 shadow-sm"
+            className="absolute top-0 h-full rounded-r-full"
             style={{
-              width: `${percentual}%`,
-              backgroundColor: corBarra,
+              left: '100%',
+              width: `${Math.min(percentualExcedido, 30)}%`,
+              backgroundColor: '#E24B4A',
+              marginLeft: '-2px',
             }}
           />
-        </div>
+        )}
       </div>
       
-      {excedeu && (
-        <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#ff64ca]/10 border border-[#ff64ca]/10 animate-in slide-in-from-top-2 duration-500">
-           <AlertTriangle className="h-3 w-3 text-[#ff64ca]" />
-           <p className="text-[10px] font-black text-[#ff64ca] uppercase tracking-widest">Excedido em {formatarMoeda(semana.gasto - semana.orcamento)}</p>
-        </div>
-      )}
+      {/* Percentual */}
+      <div className="flex justify-between items-center mt-2">
+        <span className="text-[10px] text-muted-foreground">
+          {semana.status === 'futuro' ? 'Aguardando' : `${semana.percentualGasto.toFixed(0)}% utilizado`}
+        </span>
+        {excedeu && (
+          <span className="text-[10px] text-[#E24B4A] flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            Excedeu {percentualExcedido.toFixed(0)}%
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
 export function OrcamentoSemanal({ metodologia }: OrcamentoSemanalProps) {
   return (
-    <Card className="h-full flex flex-col w-full relative overflow-hidden group">
-      <CardHeader className="pb-6 relative z-10 flex flex-row items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#5330ff]/10 flex items-center justify-center">
-            <CalendarDays className="h-5 w-5 text-[#5330ff]" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 leading-none mb-1">Planejamento</p>
-            <CardTitle className="text-2xl font-black text-[#08080f] tracking-tighter">Envelope Semanal</CardTitle>
-          </div>
-        </div>
-        <div className="px-4 py-2 rounded-2xl bg-black/[0.03] border border-black/[0.05]">
-           <p className="text-[8px] font-black text-[#08080f]/40 uppercase tracking-[0.2em] mb-0.5">Metodologia</p>
-           <p className="text-[11px] font-black text-[#08080f] tracking-tight">SALÁRIO — INV — FIXAS</p>
-        </div>
+    <Card className="bg-card border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-primary" />
+          Metodologia de Orçamento Mensal
+        </CardTitle>
+        <p className="text-[10px] text-muted-foreground label-uppercase mt-1">
+          Salário - Investimento - Despesas Fixas = Gastos Semanais
+        </p>
       </CardHeader>
-      
-      <CardContent className="space-y-8">
-        {/* Resumo da metodologia boxes prêmio */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'SALÁRIO', val: metodologia.salarioMes, icon: Wallet, cor: '#5330ff' },
-            { label: `INV (${metodologia.percentualInvestimento}%)`, val: metodologia.investimento, icon: TrendingUp, cor: '#37cc94' },
-            { label: 'FIXAS', val: metodologia.contasFixas, icon: Receipt, cor: '#ff64ca' },
-            { label: 'ENVELOPE', val: metodologia.totalGastosVariaveis, icon: PiggyBank, cor: '#EF9F27' },
-          ].map((item, i) => (
-            <div key={i} className="p-4 rounded-3xl bg-white/40 border border-white/60 shadow-sm transition-all hover:bg-white hover:shadow-md group/box">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 rounded-lg transition-transform group-hover/box:scale-110" style={{ background: `${item.cor}10` }}>
-                  <item.icon className="h-3 w-3" style={{ color: item.cor }} />
-                </div>
-                <span className="text-[9px] font-black text-[#08080f]/30 uppercase tracking-[0.15em]">{item.label}</span>
-              </div>
-              <p className="text-xl font-black text-[#08080f] tracking-tighter tabular-nums leading-none">
-                {formatarMoeda(item.val)}
-              </p>
+      <CardContent className="space-y-6">
+        {/* Resumo da metodologia */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Salário */}
+          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-primary">
+            <div className="flex items-center gap-2 mb-1">
+              <Wallet className="h-4 w-4 text-primary" />
+              <span className="text-[10px] text-muted-foreground label-uppercase">Salário</span>
             </div>
-          ))}
+            <p className="text-lg font-semibold text-foreground tabular-nums">
+              {formatarMoeda(metodologia.salarioMes)}
+            </p>
+          </div>
+          
+          {/* Investimento */}
+          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-[#3B6D11]">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
+              <span className="text-[10px] text-muted-foreground label-uppercase">
+                Investir ({metodologia.percentualInvestimento}%)
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-[#4ADE80] tabular-nums">
+              {formatarMoeda(metodologia.investimento)}
+            </p>
+          </div>
+          
+          {/* Despesas Fixas */}
+          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-[#A32D2D]">
+            <div className="flex items-center gap-2 mb-1">
+              <Receipt className="h-4 w-4 text-[#E24B4A]" />
+              <span className="text-[10px] text-muted-foreground label-uppercase">Despesas Fixas</span>
+            </div>
+            <p className="text-lg font-semibold text-[#E24B4A] tabular-nums">
+              {formatarMoeda(metodologia.contasFixas)}
+            </p>
+          </div>
+          
+          {/* Para Gastar */}
+          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-[#D4A017]">
+            <div className="flex items-center gap-2 mb-1">
+              <PiggyBank className="h-4 w-4 text-[#F59E0B]" />
+              <span className="text-[10px] text-muted-foreground label-uppercase">Para Gastar</span>
+            </div>
+            <p className="text-lg font-semibold text-[#F59E0B] tabular-nums">
+              {formatarMoeda(metodologia.totalGastosVariaveis)}
+            </p>
+          </div>
         </div>
         
-        {/* Divisor Visual Premium */}
-        <div className="flex items-center gap-6 px-4">
-          <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-black/[0.05] to-transparent" />
-          <div className="flex items-center gap-2 text-[9px] font-black text-[#08080f]/20 uppercase tracking-[0.3em]">
-             DISTRIBUÍDO EM {metodologia.semanas.length} SEMANAS
-             <ArrowRight className="h-3 w-3 ml-1" />
-          </div>
-          <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-black/[0.05] to-transparent" />
+        {/* Divisor visual */}
+        <div className="flex items-center gap-4">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+          <span className="text-[10px] text-muted-foreground label-uppercase">
+            Dividido em {metodologia.semanas.length} semanas
+          </span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
         
         {/* Cards de semanas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {metodologia.semanas.map((semana) => (
             <SemanaCard
               key={semana.numero}
@@ -186,42 +243,32 @@ export function OrcamentoSemanal({ metodologia }: OrcamentoSemanalProps) {
           ))}
         </div>
         
-        {/* Saldo livre acumulado luxo */}
+        {/* Saldo livre acumulado */}
         {metodologia.saldoLivre !== 0 && (
           <div className={cn(
-            'p-8 rounded-[2.5rem] border relative overflow-hidden transition-all duration-700 hover:scale-[1.01]',
+            'p-4 rounded-lg border',
             metodologia.saldoLivre > 0 
-              ? 'bg-[#37cc94]/5 border-[#37cc94]/20 shadow-xl shadow-[#37cc94]/5'
-              : 'bg-[#ff64ca]/5 border-[#ff64ca]/20 shadow-xl shadow-[#ff64ca]/5'
+              ? 'bg-[#3B6D11]/10 border-[#3B6D11]/30'
+              : 'bg-[#A32D2D]/10 border-[#A32D2D]/30'
           )}>
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-              <div className="space-y-2 max-w-md">
-                <div className="flex items-center justify-center md:justify-start gap-3">
-                   <div className={`p-2 rounded-xl ${metodologia.saldoLivre > 0 ? 'bg-[#37cc94]/20' : 'bg-[#ff64ca]/20'}`}>
-                      <PiggyBank className={cn('h-5 w-5', metodologia.saldoLivre > 0 ? 'text-[#37cc94]' : 'text-[#ff64ca]')} />
-                   </div>
-                   <p className="text-[10px] font-black text-[#08080f]/40 uppercase tracking-[0.2em]">
-                      {metodologia.saldoLivre > 0 ? 'Reserva Acumulada' : 'Ajuste Necessário'}
-                   </p>
-                </div>
-                <p className="text-sm font-bold text-[#08080f]/60 leading-relaxed">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-muted-foreground label-uppercase">
+                  {metodologia.saldoLivre > 0 ? 'Saldo Livre Acumulado' : 'Déficit Acumulado'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
                   {metodologia.saldoLivre > 0 
-                    ? 'Excelente! Você economizou nas semanas anteriores. Use este saldo com sabedoria ou guarde para o futuro.'
-                    : 'Atenção! Seu gasto acumulado superou o planejamento. Tente economizar nas próximas semanas.'}
+                    ? 'Sobra das semanas anteriores que pode ser usada ou poupada'
+                    : 'Você gastou mais do que o orçamento permitia'}
                 </p>
               </div>
-              <div className="text-center md:text-right">
-                <p className={cn(
-                  'text-5xl font-black tabular-nums tracking-tighter leading-none',
-                  metodologia.saldoLivre > 0 ? 'text-[#37cc94]' : 'text-[#ff64ca]'
-                )}>
-                  {formatarMoeda(Math.abs(metodologia.saldoLivre))}
-                </p>
-                <p className="text-[9px] font-black text-[#08080f]/30 uppercase tracking-[0.2em] mt-3">SALDO ACUMULADO</p>
-              </div>
+              <p className={cn(
+                'text-2xl font-semibold tabular-nums',
+                metodologia.saldoLivre > 0 ? 'text-[#4ADE80]' : 'text-[#E24B4A]'
+              )}>
+                {formatarMoeda(Math.abs(metodologia.saldoLivre))}
+              </p>
             </div>
-            {/* Efeito de fundo sutil */}
-            <div className={`absolute top-0 right-0 w-64 h-64 blur-3xl opacity-20 translate-x-1/2 -translate-y-1/2 pointer-events-none ${metodologia.saldoLivre > 0 ? 'bg-[#37cc94]' : 'bg-[#ff64ca]'}`} />
           </div>
         )}
       </CardContent>
