@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BarChart3, Settings2, Zap } from 'lucide-react';
 import type { DadosProjecaoBar } from '@/lib/types';
 
 interface ProjecaoBarProps {
@@ -25,10 +25,10 @@ interface ProjecaoBarProps {
 
 export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0 }: ProjecaoBarProps) {
   const router = useRouter();
-const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteRaw } = dados;
-const limite = typeof limiteRaw === 'number' && !isNaN(limiteRaw) ? limiteRaw : 0;
-const valorFixas = fixas > 0 ? fixas : Math.max(0, (gastoAtualComFixas ?? gastoAtual) - gastoAtual);
-const projecaoComFixas = projecao + valorFixas;
+  const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteRaw } = dados;
+  const limite = typeof limiteRaw === 'number' && !isNaN(limiteRaw) ? limiteRaw : 1000;
+  const valorFixas = fixas > 0 ? fixas : Math.max(0, (gastoAtualComFixas ?? gastoAtual) - gastoAtual);
+  const projecaoComFixas = projecao + valorFixas;
 
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
@@ -53,214 +53,185 @@ const projecaoComFixas = projecao + valorFixas;
   };
 
   const limiteSafe = limite > 0 ? limite : 1;
-  const pctGasto = Math.min(((gastoAtualComFixas ?? gastoAtual) / limiteSafe) * 100, 100);
+  const totalGastoRelativo = (gastoAtualComFixas ?? gastoAtual);
+  const pctGasto = Math.min((totalGastoRelativo / limiteSafe) * 100, 100);
   const pctProjecao = Math.min((projecaoComFixas / limiteSafe) * 100, 110);
-  const overflow = projecao > limiteSafe;
+  const overflow = projecaoComFixas > limiteSafe;
 
   const getCorGasto = () => {
-    if (pctGasto >= 90) return '#E24B4A';
+    if (pctGasto >= 90) return '#ff64ca';
     if (pctGasto >= 70) return '#EF9F27';
-    return '#D4537E';
+    return '#5330ff';
   };
 
   const corGasto = getCorGasto();
 
   return (
-    <Card className="border border-border bg-card card-hover">
-      <CardHeader className="pb-2 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-3">
+    <Card className="h-full flex flex-col w-full relative overflow-hidden group">
+      <CardHeader className="pb-4 shrink-0 z-10 flex flex-row items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-[#5330ff]/10 flex items-center justify-center">
+            <BarChart3 className="h-4 w-4 text-[#5330ff]" />
+          </div>
           <div>
-            <CardTitle className="label-uppercase text-muted-foreground">
-              Projeção de Gastos do Mês
-            </CardTitle>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Ritmo diário × dias restantes — projeção linear
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 leading-none mb-1">Expectativa</p>
+            <CardTitle className="text-lg font-black text-[#08080f] tracking-tighter">Projeção Mensal</CardTitle>
           </div>
-          {!perfilGeral && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAjustarLimiteClick}
-              className="whitespace-nowrap"
-            >
-              Ajustar limite
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
         </div>
+        {!perfilGeral && (
+          <button
+            onClick={handleAjustarLimiteClick}
+            className="p-2 rounded-xl bg-black/[0.03] text-[#08080f]/20 hover:text-[#08080f]/40 transition-all duration-300"
+          >
+            <Settings2 className="h-4 w-4" />
+          </button>
+        )}
       </CardHeader>
-
-      <CardContent className="space-y-5">
-        {/* Barra principal */}
-        <div className="space-y-2">
-          <div className="relative h-5">
-            <span
-              className="absolute text-[10px] text-muted-foreground"
-              style={{
-                left: `${Math.min(pctGasto, 88)}%`,
-                transform: 'translateX(-50%)',
-              }}
-            >
-              Hoje
-            </span>
-
-            {pctProjecao > pctGasto + 8 && (
-              <span
-                className="absolute text-[10px] text-muted-foreground"
-                style={{
-                  left: `${Math.min(pctProjecao, 95)}%`,
-                  transform: 'translateX(-50%)',
-                }}
-              >
-                Projeção
-              </span>
-            )}
+      
+      <CardContent className="space-y-8 pb-8">
+        {/* Barra de Projeção Premium */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-end px-1">
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-[#08080f] uppercase tracking-widest">Ritmo Atual</span>
+                <div className="h-1 w-8 rounded-full bg-black/5 overflow-hidden">
+                   <div className="h-full bg-black/20 animate-pulse" style={{ width: '40%' }} />
+                </div>
+             </div>
+             <p className="text-[10px] font-black text-[#08080f]/20 uppercase tracking-widest">Limite: {fmt(limite)}</p>
           </div>
 
-          <div className="relative h-10 rounded-xl overflow-visible">
-            <div className="absolute inset-0 rounded-xl bg-secondary border border-border" />
-
-            {projecaoComFixas > (gastoAtualComFixas ?? gastoAtual) && (
+          <div className="relative h-12 w-full">
+            {/* Background da barra */}
+            <div className="absolute inset-0 rounded-2xl bg-black/[0.03] border border-black/[0.05]" />
+            
+            {/* Camada de Projeção (Pontilhada/Transparente) */}
+            {projecaoComFixas > totalGastoRelativo && (
               <div
-                className="absolute top-0 bottom-0 left-0 rounded-xl transition-all duration-700"
+                className="absolute top-0 bottom-0 left-0 rounded-2xl transition-all duration-1000 shadow-inner"
                 style={{
                   width: `${Math.min(pctProjecao, 100)}%`,
                   background: overflow
-                    ? 'repeating-linear-gradient(45deg, rgba(226,75,74,0.15), rgba(226,75,74,0.15) 4px, transparent 4px, transparent 8px)'
-                    : `${corGasto}22`,
-                  borderRight: `2px dashed ${overflow ? '#E24B4A' : corGasto}88`,
+                    ? 'repeating-linear-gradient(45deg, rgba(255,100,202,0.1), rgba(255,100,202,0.1) 8px, transparent 8px, transparent 16px)'
+                    : `${corGasto}15`,
+                  borderRight: `2px dashed ${overflow ? '#ff64ca' : corGasto}40`,
                 }}
               />
             )}
 
+            {/* Barra de Gasto Real */}
             <div
-              className="absolute top-0 bottom-0 left-0 rounded-xl transition-all duration-700 flex items-center justify-end pr-2"
+              className="absolute top-0 bottom-0 left-0 rounded-2xl transition-all duration-1000 flex items-center justify-end pr-4 shadow-xl"
               style={{
                 width: `${pctGasto}%`,
-                background: corGasto,
-                minWidth: pctGasto > 0 ? '8px' : '0',
+                background: `linear-gradient(90deg, ${corGasto}, ${corGasto}dd)`,
+                minWidth: pctGasto > 5 ? '20px' : '0',
+                boxShadow: `0 8px 24px -6px ${corGasto}40`,
               }}
             >
-              {pctGasto > 15 && (
-                <span className="text-[10px] font-medium text-white tabular-nums">
+              {pctGasto > 10 && (
+                <span className="text-[10px] font-black text-white tabular-nums tracking-tighter">
                   {Math.round(pctGasto)}%
                 </span>
               )}
             </div>
 
+            {/* Marcador de Projeção */}
             <div
-              className="absolute top-[-4px] bottom-[-4px] w-0.5 rounded-full"
-              style={{ left: `${pctGasto}%`, background: corGasto }}
-            />
+              className="absolute top-[-8px] flex flex-col items-center transition-all duration-1000 z-10"
+              style={{ left: `${Math.min(pctProjecao, 100)}%` }}
+            >
+               <div className={`w-1 h-28 ${overflow ? 'bg-[#ff64ca]' : 'bg-[#08080f]/10'} rounded-full blur-[0.5px]`} />
+               <div className={`px-2 py-1 rounded-lg ${overflow ? 'bg-[#ff64ca]' : 'bg-[#08080f]'} text-white text-[8px] font-black uppercase tracking-widest shadow-xl -mt-2 transition-transform hover:scale-110 cursor-default`}>
+                 PROJEÇÃO
+               </div>
+            </div>
           </div>
 
-          {/* Labels do eixo X — só mostra se limite > 0 */}
-          <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-  <span>R$ 0</span>
-  {limite > 0 ? (
-    <>
-      <span>{fmtCompact(limite * 0.25)}</span>
-      <span>{fmtCompact(limite * 0.5)}</span>
-      <span>{fmtCompact(limite * 0.75)}</span>
-      <span className={overflow ? 'text-[#E24B4A]' : ''}>{fmtCompact(limite)}</span>
-    </>
-  ) : (
-    <span className="text-muted-foreground/50">Limite não definido</span>
-  )}
-</div>
+          <div className="flex justify-between text-[8px] font-black text-[#08080f]/20 px-1 tracking-[0.2em]">
+            <span>INÍCIO</span>
+            <span>25%</span>
+            <span>MEIO</span>
+            <span>75%</span>
+            <span className={overflow ? 'text-[#ff64ca]' : ''}>LIMITE</span>
+          </div>
         </div>
 
-        {/* Valores */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-            <p className="label-uppercase text-muted-foreground mb-1">
-              Gasto atual
-            </p>
-
-            <p
-              className="text-xl font-medium tabular-nums"
-              style={{ color: corGasto }}
-            >
+        {/* Resumo Boxes Premium */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-3xl bg-black/[0.02] border border-black/[0.05] transition-all hover:bg-white hover:shadow-xl hover:shadow-[#08080f]/5">
+            <p className="text-[9px] font-black text-[#08080f]/20 uppercase tracking-[0.2em] mb-2">Já Gasto</p>
+            <p className="text-2xl font-black tabular-nums tracking-tighter" style={{ color: corGasto }}>
               {fmt(gastoAtual)}
             </p>
-
             {valorFixas > 0 && (
-  <p className="text-[10px] text-muted-foreground mt-1">
-    + Fixas: {fmt(valorFixas)}
-  </p>
-)}
-
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {limite > 0 ? `${Math.round(pctGasto)}% do limite` : 'Limite não definido'}
-            </p>
+              <p className="text-[10px] font-bold text-[#08080f]/40 mt-1 uppercase tracking-tight">+ {fmt(valorFixas)} Fixas</p>
+            )}
           </div>
 
-          <div
-            className={`p-3 rounded-lg border ${
-              overflow
-                ? 'bg-[#A32D2D]/10 border-[#A32D2D]/30'
-                : 'bg-secondary/50 border-border'
-            }`}
-          >
-            <p className="label-uppercase text-muted-foreground mb-1">
-              Projeção
-            </p>
-
-            <p
-              className={`text-xl font-medium tabular-nums ${
-                overflow ? 'text-[#E24B4A]' : 'text-muted-foreground'
-              }`}
-            >
+          <div className={cn(
+            'p-4 rounded-3xl border transition-all hover:shadow-xl hover:shadow-[#08080f]/5',
+            overflow ? 'bg-[#ff64ca]/5 border-[#ff64ca]/20' : 'bg-black/[0.02] border-black/[0.05] hover:bg-white'
+          )}>
+            <p className="text-[9px] font-black text-[#08080f]/20 uppercase tracking-[0.2em] mb-2">Expectativa</p>
+            <p className={cn(
+              'text-2xl font-black tabular-nums tracking-tighter',
+              overflow ? 'text-[#ff64ca]' : 'text-[#08080f]'
+            )}>
               {fmt(projecaoComFixas)}
             </p>
-
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-[10px] font-bold text-[#08080f]/40 mt-1 uppercase tracking-tight">
               {limite > 0
                 ? overflow
-                  ? `+${fmt(projecao - limite)} acima do limite`
-                  : `${fmt(limite - projecao)} abaixo do limite`
-                : 'Defina um limite'}
+                  ? `${fmt(projecaoComFixas - limite)} EXCEDIDO`
+                  : `${fmt(limite - projecaoComFixas)} MARGEM`
+                : 'PONTO DE EQUILÍBRIO'}
             </p>
           </div>
         </div>
 
         {overflow && (
-          <div className="p-3 rounded-lg bg-[#A32D2D]/10 border border-[#A32D2D]/30 flex items-center gap-2">
-            <span className="text-[#E24B4A] text-sm">⚠</span>
-            <p className="text-xs text-[#E24B4A]">
-              No ritmo atual você vai ultrapassar o limite em{' '}
-              <strong>{fmt(projecao - limite)}</strong>
+          <div className="p-4 rounded-2xl bg-[#ff64ca]/10 border border-[#ff64ca]/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="w-8 h-8 rounded-xl bg-[#ff64ca] flex items-center justify-center shadow-lg shadow-[#ff64ca]/20">
+               <Zap className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-[11px] font-bold text-[#ff64ca] leading-tight">
+              Atenção! No ritmo atual, você ultrapassará o limite em <span className="font-black underline decoration-2">{fmt(projecaoComFixas - limite)}</span>.
             </p>
           </div>
         )}
       </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajustar limite</DialogTitle>
-            <DialogDescription>
-              Defina o limite mensal usado para calcular o progresso e a projeção.
+        <DialogContent className="rounded-[2.5rem] p-8 border-none bg-white/95 backdrop-blur-2xl shadow-2xl">
+          <DialogHeader className="mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#5330ff]/10 flex items-center justify-center mb-4">
+               <Settings2 className="h-6 w-6 text-[#5330ff]" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-[#08080f] tracking-tighter">CONFIGURAR LIMITE</DialogTitle>
+            <DialogDescription className="text-sm font-bold text-[#08080f]/40 uppercase tracking-widest mt-2">
+              Defina sua meta de gastos para este mês.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Limite mensal</label>
-            <Input
-              type="number"
-              value={inputValue}
-              onChange={(e) => setInputValue(Number(e.target.value))}
-              min={1}
-              step={50}
-            />
+          <div className="space-y-4 mb-8">
+            <div className="p-6 rounded-3xl bg-black/[0.03] border border-black/[0.05]">
+               <p className="text-[10px] font-black text-[#08080f]/30 uppercase tracking-[0.2em] mb-3">Valor Mensal (BRL)</p>
+               <Input
+                  type="number"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(Number(e.target.value))}
+                  min={1}
+                  step={100}
+                  className="bg-transparent border-none text-4xl font-black tracking-tighter tabular-nums h-auto p-0 focus-visible:ring-0"
+                />
+            </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+          <DialogFooter className="flex gap-3">
+            <Button variant="ghost" onClick={() => setOpen(false)} className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-12 px-6">
               Cancelar
             </Button>
-
             <Button
               onClick={() => {
                 const val = Number(inputValue);
@@ -269,8 +240,9 @@ const projecaoComFixas = projecao + valorFixas;
                 }
                 setOpen(false);
               }}
+              className="bg-[#5330ff] hover:bg-[#5330ff]/90 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] h-12 px-8 shadow-xl shadow-[#5330ff]/20"
             >
-              Salvar
+              Aplicar Limite
             </Button>
           </DialogFooter>
         </DialogContent>

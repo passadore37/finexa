@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { CreditCard, TrendingDown } from 'lucide-react';
+import { CreditCard, TrendingDown, CalendarClock, ChevronRight } from 'lucide-react';
 import type { Parcelada } from '@/lib/types';
 
 interface ParceladasPanelProps {
@@ -13,14 +13,14 @@ interface ParceladasPanelProps {
 }
 
 const CORES_CATEGORIA: Record<string, string> = {
-  Alimentação: '#D4537E',
-  Moradia: '#4A90A4',
-  Transporte: '#7B5EA7',
-  Saúde: '#3B6D11',
-  Lazer: '#854F0B',
-  Educação: '#2D6B9A',
-  Casa: '#4A90A4',
-  Outros: '#666666',
+  Alimentação: '#ff64ca',
+  Moradia: '#5330ff',
+  Transporte: '#82a1fd',
+  Saúde: '#e24b4a',
+  Lazer: '#ffa857',
+  Educação: '#378add',
+  Casa: '#01b695',
+  Outros: '#888780',
 };
 
 export function ParceladasPanel({ parceladas, comprometimentoTotal }: ParceladasPanelProps) {
@@ -28,59 +28,59 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
+      maximumFractionDigits: 0,
     }).format(valor);
   };
 
   if (parceladas.length === 0) {
     return (
-      <Card className="border border-border bg-card card-hover">
-        <CardHeader className="pb-2">
-          <CardTitle className="label-uppercase text-muted-foreground">
-            Parceladas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="max-h-[32rem] overflow-y-auto">
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-            <CreditCard className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-            <p className="text-sm text-muted-foreground">
-              Nenhuma compra parcelada ativa.
-            </p>
-          </div>
-        </CardContent>
+      <Card className="flex flex-col justify-center items-center h-full min-h-[350px] bg-white/40 border-white/50">
+        <CreditCard className="h-10 w-10 text-black/5 mb-4" />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20">Sem parcelamentos ativos</span>
       </Card>
     );
   }
 
   return (
-    <Card className="border border-border bg-card card-hover">
-      <CardHeader className="pb-2">
-        <CardTitle className="label-uppercase text-muted-foreground">
-          Parceladas Ativas
-        </CardTitle>
+    <Card className="h-full flex flex-col w-full relative overflow-hidden group">
+      <CardHeader className="pb-4 shrink-0 z-10 flex flex-row items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-[#5330ff]/10 flex items-center justify-center">
+            <CreditCard className="h-4 w-4 text-[#5330ff]" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 leading-none mb-1">Dívidas</p>
+            <CardTitle className="text-lg font-black text-[#08080f] tracking-tighter">Parcelamentos</CardTitle>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {/* KPI de Dívida Futura (fixed) */}
-        <div className="p-4 rounded-lg bg-secondary/50">
-          <div className="flex items-start justify-between gap-4">
+      
+      <CardContent className="flex flex-col gap-6 pb-8">
+        {/* KPI de Dívida Futura Premium */}
+        <div className="p-6 rounded-[2rem] bg-black/[0.03] border border-black/[0.05] relative overflow-hidden transition-all duration-500 hover:bg-black/[0.05]">
+          <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="label-uppercase text-muted-foreground mb-1">
-                Dívida Futura Comprometida
+              <p className="text-[10px] font-black text-[#08080f]/30 uppercase tracking-[0.2em] mb-2">
+                Comprometimento Total
               </p>
-              <p className="text-3xl font-medium tabular-nums text-foreground animate-number">
+              <p className="text-4xl font-black tabular-nums text-[#08080f] tracking-tighter leading-none pulse-subtle">
                 {formatarMoeda(comprometimentoTotal)}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total em parcelas futuras
-              </p>
+              <div className="flex items-center gap-2 mt-3">
+                 <div className="w-1.5 h-1.5 rounded-full bg-[#ff64ca] animate-pulse" />
+                 <p className="text-[10px] font-bold text-[#08080f]/40 uppercase tracking-widest">
+                   Total em parcelas remanescentes
+                 </p>
+              </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-muted/50">
-              <TrendingDown className="h-5 w-5 text-primary" />
+            <div className="p-3 rounded-2xl bg-[#5330ff] shadow-lg shadow-[#5330ff]/20">
+              <TrendingDown className="h-5 w-5 text-white" />
             </div>
           </div>
         </div>
 
-        {/* Lista de Parceladas (scroll dentro do card) */}
-        <div className="flex-1 overflow-y-auto max-h-[22rem] space-y-3 custom-scrollbar pr-1">
+        {/* Lista de Parceladas Premium */}
+        <div className="flex-1 space-y-3 pr-1 custom-scrollbar">
           {parceladas.map((parcelada, index) => {
             const cor = CORES_CATEGORIA[parcelada.categoria] || CORES_CATEGORIA.Outros;
             const progressPercent = (parcelada.parcelaAtual / parcelada.totalParcelas) * 100;
@@ -88,67 +88,67 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
             return (
               <div
                 key={`${parcelada.descricao}-${index}`}
-                className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border card-hover"
+                className="group/item flex items-center gap-4 p-4 rounded-2xl bg-black/[0.02] border border-transparent transition-all duration-300 hover:bg-white hover:border-[#08080f]/5 hover:shadow-xl hover:shadow-[#08080f]/5"
               >
-                {/* Barra de cor da categoria */}
                 <div 
-                  className="category-bar self-stretch" 
-                  style={{ backgroundColor: cor }}
-                />
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover/item:scale-110" 
+                  style={{ backgroundColor: `${cor}15` }}
+                >
+                  <CalendarClock className="h-5 w-5" style={{ color: cor }} strokeWidth={2.5} />
+                </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-3 mb-2">
                     <div>
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p className="text-sm font-black text-[#08080f] tracking-tighter truncate leading-tight">
                         {parcelada.descricao}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] font-bold text-[#08080f]/30 uppercase tracking-widest mt-0.5">
                         {parcelada.categoria}
                       </p>
                     </div>
                     <Badge 
                       variant="outline" 
-                      className="text-[10px] shrink-0 border-muted-foreground/30"
+                      className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-black/5 border-none text-black/40"
                     >
-                      Termina {parcelada.mesTermino}
+                      Até {parcelada.mesTermino}
                     </Badge>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="mb-2">
-                    <Progress 
-                      value={progressPercent} 
-                      className="h-2"
-                      style={{ 
-                        '--progress-background': cor,
-                      } as React.CSSProperties}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {parcelada.parcelaAtual}/{parcelada.totalParcelas} parcelas
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-foreground font-medium tabular-nums">
-                        {formatarMoeda(parcelada.valorParcela)}/mês
+                  {/* Progress bar premium */}
+                  <div className="space-y-1.5">
+                    <div className="h-2 rounded-full bg-black/5 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{ 
+                          width: `${progressPercent}%`,
+                          backgroundColor: cor,
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black text-[#08080f]/40 uppercase tracking-widest">
+                        {parcelada.parcelaAtual} / {parcelada.totalParcelas} PARCELAS
                       </span>
-                      <span className="text-muted-foreground">
-                        (Restam {formatarMoeda(parcelada.comprometimentoFuturo)})
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-[#08080f] tracking-tighter tabular-nums">
+                          {formatarMoeda(parcelada.valorParcela)}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#08080f]/20 uppercase tracking-tighter">
+                          /mês
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </div>
+                
+                <div className="self-center opacity-0 group-hover/item:opacity-100 transition-all duration-300 translate-x-2 group-hover/item:translate-x-0">
+                   <ChevronRight className="h-4 w-4 text-[#5330ff]" />
                 </div>
               </div>
             );
           })}
         </div>
-
-        {parceladas.length > 10 && (
-          <p className="text-xs text-muted-foreground text-center pt-3 mt-3 border-t border-border">
-            +{parceladas.length - 10} parceladas adicionais
-          </p>
-        )}
       </CardContent>
     </Card>
   );

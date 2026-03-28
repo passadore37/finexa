@@ -187,35 +187,34 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Imagem Hero Reformulada */}
-          <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 mt-12 lg:mt-0 flex justify-center lg:justify-end">
-            <div className="relative scale-90 sm:scale-100 lg:scale-110">
+          {/* Imagem Hero */}
+          <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 flex justify-center">
+            <div className="relative z-10 scale-110">
               <MockupApp />
-              
-              {/* Cards decorativos flutuando (visíveis em mobile e desktop agora) */}
-              <div className="absolute -top-6 -right-6 sm:-right-12 p-5 bg-white/60 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl animate-bounce duration-[3000ms] z-20">
-                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#01b695] rounded-full flex items-center justify-center text-white shadow-lg">
-                       <TrendingUp size={20} />
-                    </div>
-                    <div>
-                       <p className="text-[10px] font-bold text-black/40 uppercase leading-none">Evolução</p>
-                       <p className="text-lg font-black text-[#08080f]">+R$ 2.400</p>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="absolute -bottom-6 -left-6 sm:-left-12 p-5 bg-white/60 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl animate-pulse duration-[4000ms] z-20">
-                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#ff64ca] rounded-full flex items-center justify-center text-white shadow-lg">
-                       <Target size={20} />
-                    </div>
-                    <div>
-                       <p className="text-[10px] font-bold text-black/40 uppercase leading-none">Meta</p>
-                       <p className="text-lg font-black text-[#08080f]">85%</p>
-                    </div>
-                 </div>
-              </div>
+            </div>
+            {/* Decoração flutuante com glassmorphism */}
+            <div className="absolute top-1/4 -right-10 p-5 bg-white/40 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl animate-bounce duration-[3000ms] hidden md:block">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-[#01b695] rounded-full flex items-center justify-center text-white shadow-lg">
+                     <TrendingUp size={20} />
+                  </div>
+                  <div>
+                     <p className="text-[10px] font-bold text-black/40 uppercase">Evolução</p>
+                     <p className="text-lg font-black text-[#08080f]">+R$ 2.400</p>
+                  </div>
+               </div>
+            </div>
+            
+            <div className="absolute bottom-10 -left-10 p-5 bg-white/40 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl animate-pulse duration-[4000ms] hidden md:block">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-[#ff64ca] rounded-full flex items-center justify-center text-white shadow-lg">
+                     <Target size={20} />
+                  </div>
+                  <div>
+                     <p className="text-[10px] font-bold text-black/40 uppercase">Meta</p>
+                     <p className="text-lg font-black text-[#08080f]">85%</p>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
@@ -225,7 +224,7 @@ export default function LandingPage() {
       <section id="como-funciona" className="py-24 px-4 bg-gray-50/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 italic tracking-tight uppercase">Simplicidade em foco</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Em apenas 3 passos</h2>
             <p className="text-lg text-[#08080f]/60 leading-relaxed">Desenvolvido para ser o controle financeiro que você realmente usa no dia a dia.</p>
           </div>
 
@@ -239,7 +238,7 @@ export default function LandingPage() {
                 <div className={`w-14 h-14 ${step.color} shadow-lg rounded-2xl flex items-center justify-center text-white mb-8`}>
                   {step.icon}
                 </div>
-                <h3 className="text-2xl font-black mb-4">{step.title}</h3>
+                <h3 className="text-2xl font-black mb-4">Na palma da mão</h3>
                 <p className="text-[#08080f]/60 leading-relaxed">{step.desc}</p>
               </div>
             ))}
@@ -252,18 +251,18 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
            {/* Individual */}
            <div className="grid lg:grid-cols-2 gap-20 items-center mb-32">
-              <div className="order-2 lg:order-1 relative px-4">
-                 <div className="relative z-10 bg-white/70 backdrop-blur-xl border border-white p-10 rounded-[3rem] shadow-2xl">
+              <div className="order-2 lg:order-1 relative px-4 text-center lg:text-left">
+                 <div className="relative z-10 bg-white/70 backdrop-blur-xl border border-white p-10 rounded-[3rem] shadow-2xl inline-block w-full max-w-xl">
                     <div className="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl mb-6">
                        <User size={32} />
                     </div>
-                    <h3 className="text-3xl font-black mb-6 tracking-tight">Perfeito para você</h3>
-                    <div className="space-y-5">
+                    <h3 className="text-3xl font-black mb-6 tracking-tight">Perfeito para o controle individual</h3>
+                    <div className="space-y-5 text-left">
                        {[
-                         'Gestão minimalista e ultra rápida',
+                         'Controle total na palma da mão',
                          'Categorização inteligente e flexível',
                          'Previsão de saldo para o fim do mês',
-                         'Lembretes de contas a pagar'
+                         'Insights claros sobre seus gastos'
                        ].map((t, i) => (
                          <div key={i} className="flex items-center gap-4 text-lg font-medium text-[#08080f]/80">
                            <Check className="text-blue-500 flex-shrink-0" size={24} /> {t}
@@ -273,7 +272,7 @@ export default function LandingPage() {
                  </div>
                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/10 rounded-full blur-[80px]" />
               </div>
-              <div className="order-1 lg:order-2">
+              <div className="order-1 lg:order-2 text-center lg:text-left">
                  <h2 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] tracking-tighter uppercase">
                    Seu sucesso <br />
                    <span className="text-blue-600">pessoal.</span>
@@ -281,7 +280,7 @@ export default function LandingPage() {
                  <p className="text-xl text-[#08080f]/60 mb-8 leading-relaxed">
                    Independência e clareza total. Cada registro é um passo em direção à sua liberdade financeira individual.
                  </p>
-                 <Link href="/cadastro" className="font-bold text-blue-600 flex items-center gap-2 hover:gap-4 transition-all group">
+                 <Link href="/cadastro" className="font-bold text-blue-600 inline-flex items-center gap-2 hover:gap-4 transition-all group">
                     Começar teste individual <ArrowRight size={20} />
                  </Link>
               </div>
@@ -289,18 +288,18 @@ export default function LandingPage() {
 
            {/* Casal e Família */}
            <div className="grid lg:grid-cols-2 gap-20 items-center">
-              <div className="relative order-1 lg:order-2 px-4">
-                 <div className="relative z-10 bg-white/70 backdrop-blur-xl border border-white p-10 rounded-[3rem] shadow-2xl">
+              <div className="relative order-1 lg:order-2 px-4 text-center lg:text-left">
+                 <div className="relative z-10 bg-white/70 backdrop-blur-xl border border-white p-10 rounded-[3rem] shadow-2xl inline-block w-full max-w-xl">
                     <div className="inline-flex p-3 bg-pink-50 text-pink-500 rounded-2xl mb-6">
                        <Users size={32} />
                     </div>
-                    <h3 className="text-3xl font-black mb-6 tracking-tight">Gestão em Conjunto</h3>
-                    <div className="space-y-5">
+                    <h3 className="text-3xl font-black mb-6 tracking-tight">Perfeito para casais e famílias</h3>
+                    <div className="space-y-5 text-left">
                        {[
-                         'Sincronização entre membros da família',
-                         'Divisão de gastos de forma equilibrada',
+                         'Sincronização instantânea entre membros',
+                         'Divisão de gastos justa e automática',
                          'Metas compartilhadas (ex: reserva)',
-                         'Diferenciação clara entre gastos'
+                         'Diferenciação clara entre gasto individual e conjunto'
                        ].map((t, i) => (
                          <div key={i} className="flex items-center gap-4 text-lg font-medium text-[#08080f]/80">
                            <Check className="text-pink-500 flex-shrink-0" size={24} /> {t}
@@ -310,7 +309,7 @@ export default function LandingPage() {
                  </div>
                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-pink-400/10 rounded-full blur-[80px]" />
               </div>
-              <div className="order-2 lg:order-1">
+              <div className="order-2 lg:order-1 text-center lg:text-left">
                  <h2 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] tracking-tighter uppercase">
                    Casais e <br />
                    <span className="text-pink-500">famílias.</span>
@@ -318,7 +317,7 @@ export default function LandingPage() {
                  <p className="text-xl text-[#08080f]/60 mb-8 leading-relaxed">
                    Planejamento compartilhado com transparência. Alcancem objetivos juntos sem complicações ou planilhas difíceis.
                  </p>
-                 <Link href="/cadastro" className="font-bold text-pink-500 flex items-center gap-2 hover:gap-4 transition-all">
+                 <Link href="/cadastro" className="font-bold text-pink-500 inline-flex items-center gap-2 hover:gap-4 transition-all">
                     Ver planos familiares <ArrowRight size={20} />
                  </Link>
               </div>
@@ -330,7 +329,7 @@ export default function LandingPage() {
       <section id="planos" className="py-24 px-4 bg-[#08080f] text-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20 text-center">
-            <h2 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tighter italic">Planos pensados em você</h2>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">Planos para todos os tamanhos</h2>
             <p className="text-xl text-white/40 mb-10">Escolha o plano ideal e teste por 14 dias sem compromisso.</p>
             
             <div className="flex items-center justify-center gap-4 p-1.5 bg-white/5 w-fit mx-auto rounded-full border border-white/10">
@@ -373,7 +372,7 @@ export default function LandingPage() {
       {/* ── FAQ ── */}
       <section id="faq" className="py-24 px-4 max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter italic">Dúvidas comuns</h2>
+          <h2 className="text-4xl font-black mb-4 tracking-tighter">Ainda com dúvidas?</h2>
         </div>
         <div>
           <AccordionItem question="Como funciona o período de teste?" answer="Você tem 14 dias de acesso total para explorar todas as funcionalidades sem compromisso." />
@@ -386,9 +385,9 @@ export default function LandingPage() {
       {/* ── CTA FINAL ── */}
       <section className="py-24 px-4 relative bg-[#5330ff] overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10">
-           <h2 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter uppercase leading-none italic">Sua organização financeira hoje.</h2>
+           <h2 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-none">Sua organização financeira hoje.</h2>
            <Link href="/cadastro" className="inline-block px-12 py-6 bg-white text-[#5330ff] text-2xl font-black rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all">Começar agora</Link>
-           <p className="mt-8 text-white/40 font-bold text-sm tracking-widest uppercase italic">Comece seu teste sem compromisso</p>
+           <p className="mt-8 text-white/40 font-bold text-sm tracking-widest uppercase">Comece seu teste sem compromisso</p>
         </div>
       </section>
 
@@ -400,9 +399,9 @@ export default function LandingPage() {
           <div className="flex flex-wrap justify-center gap-x-12 gap-y-4 font-bold text-sm text-[#08080f]/60">
             <Link href="/termos" className="hover:text-[#5330ff] transition-colors">Termos de Uso</Link>
             <Link href="/privacidade" className="hover:text-[#5330ff] transition-colors">Privacidade</Link>
-            <a href="mailto:contato@finexa.com.br" className="hover:text-[#5330ff] transition-colors">Suporte por e-mail</a>
+            <a href="mailto:leticia@passadore.com" className="hover:text-[#5330ff] transition-colors">Suporte</a>
           </div>
-          <p className="text-[11px] font-bold text-[#08080f]/30 uppercase tracking-[0.2em] italic">
+          <p className="text-[11px] font-bold text-[#08080f]/30 uppercase tracking-[0.2em]">
             © 2026 FINEXA by passadore. TODOS OS DIREITOS RESERVADOS.
           </p>
         </div>

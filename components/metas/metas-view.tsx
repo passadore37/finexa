@@ -146,163 +146,158 @@ export function MetasView() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="max-w-xl mx-auto px-4 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Objetivos</p>
-        <h2 className="text-xl font-medium text-foreground">Metas financeiras</h2>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/40 mb-2 leading-none">Objetivos</p>
+        <h2 className="text-3xl font-black text-[#08080f] tracking-tighter">Metas financeiras</h2>
       </div>
 
       {/* Reserva de emergência */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <PiggyBank className="h-4 w-4 text-[#EF9F27]" />
+      <Card className="border-white/50 bg-white/40 shadow-xl shadow-[#EF9F27]/5 overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-[#08080f]/40 flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-[#EF9F27]/10">
+              <PiggyBank className="h-4 w-4 text-[#EF9F27]" />
+            </div>
             Reserva de emergência
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Valor atual guardado</label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">R$</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Valor atual guardado</label>
+              <div className="relative group">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/30">R$</span>
                 <input type="number" value={reservaAtual} onChange={e => setReservaAtual(e.target.value)}
                   placeholder="0"
-                  className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full bg-black/[0.03] border border-black/5 rounded-2xl pl-10 pr-4 py-4 text-xl font-black text-[#08080f] focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#EF9F27]/10 transition-all tabular-nums" />
               </div>
             </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Meta (6 meses de despesas)</label>
-              <p className="text-sm font-medium text-foreground px-3 py-2 bg-secondary/50 rounded-lg">{fmt(metaEmergencia)}</p>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Meta (6 meses)</label>
+              <div className="w-full bg-black/[0.02] border border-black/5 rounded-2xl px-5 py-4 flex items-center h-[58px]">
+                <p className="text-xl font-black text-[#08080f]/60 tabular-nums">{fmt(metaEmergencia)}</p>
+              </div>
             </div>
           </div>
 
-          {/* Barra de progresso */}
-          <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-2">
-              <span>{Math.round(pctReserva)}% da meta</span>
-              <span>Falta {fmt(Math.max(0, metaEmergencia - parseFloat(reservaAtual || '0')))}</span>
+          <div className="space-y-4">
+            <div className="flex justify-between items-baseline mb-1">
+              <p className="text-2xl font-black text-[#08080f] tabular-nums">{Math.round(pctReserva)}% <span className="text-[10px] uppercase font-bold tracking-widest text-[#08080f]/30">da meta conquistada</span></p>
+              <p className="text-[10px] font-bold text-[#08080f]/40 uppercase tracking-wider">Falta {fmt(Math.max(0, metaEmergencia - parseFloat(reservaAtual || '0')))}</p>
             </div>
-            <div className="h-3 rounded-full bg-secondary overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pctReserva}%`, background: pctReserva >= 100 ? '#3B6D11' : pctReserva >= 50 ? '#EF9F27' : '#E24B4A' }} />
+            <div className="h-4 rounded-full bg-black/5 p-1">
+              <div className="h-full rounded-full transition-all duration-1000 shadow-sm"
+                style={{ width: `${pctReserva}%`, background: pctReserva >= 100 ? '#37cc94' : pctReserva >= 50 ? '#EF9F27' : '#ff64ca' }} />
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Metas de economia individuais */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
-            Meta de economia mensal
+      <Card className="border-white/50 bg-white/40 shadow-xl shadow-[#4ADE80]/5">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-[#08080f]/40 flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-[#4ADE80]/10">
+              <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
+            </div>
+            Metas de economia mensal
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { label: '🌸 Letícia', val: metaLeticia, set: setMetaLeticia, salario: planejamento?.salario_leticia || 0 },
-              { label: '💜 Giovanna', val: metaGiovanna, set: setMetaGiovanna, salario: planejamento?.salario_giovanna || 0 },
+              { label: '🌸 Letícia', val: metaLeticia, set: setMetaLeticia, salario: planejamento?.salario_leticia || 0, cor: '#5330ff' },
+              { label: '💜 Giovanna', val: metaGiovanna, set: setMetaGiovanna, salario: planejamento?.salario_giovanna || 0, cor: '#ff64ca' },
             ].map(p => {
               const pct = p.salario > 0 ? Math.round((parseFloat(p.val || '0') / p.salario) * 100) : 0;
               return (
-                <div key={p.label} className="p-3 rounded-lg bg-secondary/50 border border-border">
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">{p.label}</label>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm text-muted-foreground">R$</span>
+                <div key={p.label} className="p-5 rounded-[2rem] bg-white border border-black/5 shadow-sm space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block">{p.label}</label>
+                  <div className="relative group">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/30">R$</span>
                     <input type="number" value={p.val} onChange={e => p.set(e.target.value)}
                       placeholder="ex: 1000"
-                      className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                      className="w-full bg-black/[0.03] border border-black/5 rounded-2xl pl-10 pr-4 py-4 text-xl font-black text-[#08080f] focus:outline-none focus:bg-white focus:ring-4 transition-all tabular-nums" 
+                      style={{ '--tw-ring-color': `${p.cor}10` } as any} />
                   </div>
-                  {p.salario > 0 && <p className="text-[10px] text-muted-foreground">{pct}% do salário</p>}
+                  {p.salario > 0 && <p className="text-[10px] font-bold text-[#08080f]/30 uppercase tracking-widest">{pct}% do salário</p>}
                 </div>
               );
             })}
           </div>
           <button onClick={salvarPlanejamento} disabled={salvandoPlano}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all disabled:opacity-50">
-            {salvandoPlano ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Salvar metas de economia + reserva
+            className="w-full flex items-center justify-center gap-3 px-6 py-5 rounded-3xl bg-[#5330ff] text-white text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 shadow-xl shadow-[#5330ff]/20">
+            {salvandoPlano ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
+            Salvar metas
           </button>
         </CardContent>
       </Card>
 
       {/* Metas conjuntas */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Objetivos do casal</p>
-            <h3 className="text-base font-medium text-foreground">Metas conjuntas</h3>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/40 mb-2 leading-none">Objetivos do casal</p>
+            <h3 className="text-2xl font-black text-[#08080f] tracking-tighter">Metas conjuntas</h3>
           </div>
           <button onClick={() => setCriando(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all">
-            <Plus className="h-4 w-4" />Nova meta
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#5330ff] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#5330ff]/20">
+            <Plus className="h-4 w-4 stroke-[3px]" />Nova meta
           </button>
         </div>
 
         {/* Form nova meta */}
         {criando && (
-          <Card className="border-primary/40 bg-primary/5 mb-4">
-            <CardContent className="pt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Título</label>
+          <Card className="border-[#5330ff]/20 bg-[#5330ff]/5 mb-8 rounded-[2.5rem] p-4 animate-in zoom-in-95 duration-500">
+            <CardContent className="pt-4 space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Título</label>
                   <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Viagem para Europa"
-                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                    className="w-full bg-white border border-black/5 rounded-2xl px-5 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Valor alvo</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">R$</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Valor alvo</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/20">R$</span>
                     <input type="number" value={valorAlvo} onChange={e => setValorAlvo(e.target.value)} placeholder="0"
-                      className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                      className="w-full bg-white border border-black/5 rounded-2xl pl-10 pr-4 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
                   </div>
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Já guardado</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">R$</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Já guardado</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#08080f]/20">R$</span>
                     <input type="number" value={valorAtual} onChange={e => setValorAtual(e.target.value)} placeholder="0"
-                      className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                      className="w-full bg-white border border-black/5 rounded-2xl pl-10 pr-4 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
                   </div>
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Data alvo (opcional)</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block px-1">Data alvo (opcional)</label>
                   <input type="date" value={dataAlvo} onChange={e => setDataAlvo(e.target.value)}
-                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                    className="w-full bg-white border border-black/5 rounded-2xl px-5 py-4 text-sm font-bold text-[#08080f] focus:outline-none focus:ring-4 focus:ring-[#5330ff]/10 transition-all" />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Emoji</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30 block mb-4 px-1">Escolha um ícone</label>
                 <div className="flex flex-wrap gap-2">
                   {EMOJIS.map(e => (
                     <button key={e} onClick={() => setEmoji(e)}
-                      className={`w-9 h-9 rounded-lg text-lg transition-all ${emoji === e ? 'bg-primary/20 ring-1 ring-primary' : 'bg-secondary hover:bg-secondary/80'}`}>
+                      className={`w-11 h-11 rounded-xl text-xl transition-all ${emoji === e ? 'bg-white shadow-lg ring-2 ring-[#5330ff] scale-110' : 'bg-black/5 hover:bg-black/10 hover:scale-105'}`}>
                       {e}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Cor</label>
-                <div className="flex gap-2">
-                  {CORES.map(c => (
-                    <button key={c} onClick={() => setCor(c)}
-                      className={`w-8 h-8 rounded-full transition-all ${cor === c ? 'ring-2 ring-offset-2 ring-offset-background' : ''}`}
-                      style={{ background: c, ringColor: c }} />
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button onClick={criarMeta} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">
-                  <Check className="h-4 w-4" />Criar meta
+              <div className="flex gap-4">
+                <button onClick={criarMeta} className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-[#5330ff] text-white text-xs font-black uppercase tracking-widest hover:scale-[1.02] shadow-xl shadow-[#5330ff]/20">
+                  <Check className="h-4 w-4 stroke-[3px]" />CRIAR META
                 </button>
-                <button onClick={() => setCriando(false)} className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary">
-                  <XIcon className="h-4 w-4" />
+                <button onClick={() => setCriando(false)} className="px-6 py-4 rounded-2xl bg-black/5 text-[#08080f]/40 hover:bg-black/10 transition-all">
+                  <XIcon className="h-5 w-5" />
                 </button>
               </div>
             </CardContent>
@@ -318,49 +313,63 @@ export function MetasView() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {metasAtivas.map(meta => {
             const pct = meta.valor_alvo > 0 ? Math.min((meta.valor_atual / meta.valor_alvo) * 100, 100) : 0;
             const falta = Math.max(0, meta.valor_alvo - meta.valor_atual);
             const isEditando = editandoId === meta.id;
             return (
-              <Card key={meta.id} className="border-border bg-card group">
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{meta.emoji}</span>
+              <Card key={meta.id} className="border-white/50 bg-white/40 shadow-xl shadow-black/5 group overflow-hidden animate-in fade-in duration-500 rounded-[2rem]">
+                <CardContent className="p-8">
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-white shadow-sm flex items-center justify-center text-3xl transition-transform group-hover:scale-110 duration-500">
+                        {meta.emoji}
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{meta.titulo}</p>
+                        <h3 className="text-xl font-black text-[#08080f] tracking-tighter leading-tight">{meta.titulo}</h3>
                         {meta.data_alvo && (
-                          <p className="text-[10px] text-muted-foreground">
-                            até {new Date(meta.data_alvo).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
-                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <CalendarDays className="h-3 w-3 text-[#08080f]/20" />
+                            <p className="text-[10px] font-bold text-[#08080f]/30 uppercase tracking-widest">
+                              até {new Date(meta.data_alvo).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => concluirMeta(meta.id)} className="p-1.5 rounded-lg hover:bg-[#3B6D11]/20 text-muted-foreground hover:text-[#3B6D11]" title="Concluir">
-                        <Check className="h-3.5 w-3.5" />
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
+                      <button onClick={() => concluirMeta(meta.id)} className="w-10 h-10 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
+                        <Check className="h-5 w-5 stroke-[3px]" />
                       </button>
-                      <button onClick={() => deletarMeta(meta.id)} className="p-1.5 rounded-lg hover:bg-[#A32D2D]/20 text-muted-foreground hover:text-[#E24B4A]" title="Excluir">
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <button onClick={() => deletarMeta(meta.id)} className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                        <Trash2 className="h-5 w-5 stroke-[2.5px]" />
                       </button>
                     </div>
                   </div>
 
                   {/* Progresso */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-foreground font-medium tabular-nums">{fmt(meta.valor_atual)}</span>
-                      <span className="text-muted-foreground tabular-nums">{fmt(meta.valor_alvo)}</span>
+                  <div className="space-y-4 mb-8">
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20 leading-none">Conquistado</p>
+                        <p className="text-2xl font-black text-[#08080f] tabular-nums leading-none">{fmt(meta.valor_atual)}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/20 leading-none">Objetivo</p>
+                        <p className="text-xl font-black text-[#08080f]/40 tabular-nums leading-none">{fmt(meta.valor_alvo)}</p>
+                      </div>
                     </div>
-                    <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: meta.cor }} />
+                    <div className="h-5 rounded-full bg-black/5 p-1 relative overflow-hidden">
+                       {/* Efeito de brilho na barra */}
+                      <div className="h-full rounded-full transition-all duration-1000 relative shadow-inner overflow-hidden"
+                        style={{ width: `${pct}%`, background: meta.cor }}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+                      </div>
                     </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>{Math.round(pct)}% concluído</span>
-                      <span>Falta {fmt(falta)}</span>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/30">
+                      <span>{Math.round(pct)}% CONCLUÍDO</span>
+                      <span>FALTA {fmt(falta)}</span>
                     </div>
                   </div>
 
@@ -373,7 +382,7 @@ export function MetasView() {
                     />
                   ) : (
                     <button onClick={() => setEditandoId(meta.id)}
-                      className="mt-3 w-full py-2 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center justify-center gap-1">
+                      className="w-full py-4 rounded-2xl bg-black/[0.03] border border-black/5 text-[10px] font-black uppercase tracking-[0.2em] text-[#08080f]/40 hover:text-[#5330ff] hover:bg-[#5330ff]/5 hover:border-[#5330ff]/20 transition-all flex items-center justify-center gap-2">
                       <Pencil className="h-3 w-3" />Atualizar valor guardado
                     </button>
                   )}
@@ -409,14 +418,14 @@ export function MetasView() {
 function DepositarForm({ valorAtual, onSalvar, onCancelar }: { valorAtual: number; onSalvar: (v: number) => void; onCancelar: () => void }) {
   const [novo, setNovo] = useState(String(valorAtual));
   return (
-    <div className="mt-3 flex gap-2">
-      <div className="flex items-center gap-1 flex-1 bg-secondary border border-primary rounded-lg px-2">
-        <span className="text-xs text-muted-foreground">R$</span>
+    <div className="mt-4 flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="flex items-center gap-2 flex-1 bg-white border-2 border-[#5330ff]/30 rounded-2xl px-4 shadow-inner">
+        <span className="text-xs font-black text-[#5330ff]/40">R$</span>
         <input type="number" value={novo} onChange={e => setNovo(e.target.value)} autoFocus
-          className="flex-1 bg-transparent py-1.5 text-sm text-foreground focus:outline-none" />
+          className="flex-1 bg-transparent py-3 text-sm font-black text-[#08080f] focus:outline-none tabular-nums" />
       </div>
-      <button onClick={() => onSalvar(parseFloat(novo) || 0)} className="px-2 py-1.5 rounded-lg bg-primary text-white text-xs"><Check className="h-3.5 w-3.5" /></button>
-      <button onClick={onCancelar} className="px-2 py-1.5 rounded-lg border border-border text-xs text-muted-foreground"><XIcon className="h-3.5 w-3.5" /></button>
+      <button onClick={() => onSalvar(parseFloat(novo) || 0)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#5330ff] text-white shadow-lg shadow-[#5330ff]/20 hover:scale-105 transition-all"><Check className="h-5 w-5 stroke-[3px]" /></button>
+      <button onClick={onCancelar} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-black/5 text-[#08080f]/40 hover:bg-black/10 transition-all"><XIcon className="h-5 w-5" /></button>
     </div>
   );
 }

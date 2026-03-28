@@ -1,122 +1,122 @@
-'use client';
+'use client'
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function KPISkeleton() {
   return (
-    <Card className="border border-border bg-card">
-      <CardContent className="p-10">
-        <Skeleton className="h-2.5 w-24 mb-3 bg-secondary" />
-        <Skeleton className="h-10 w-36 mb-2 bg-secondary" />
-        <Skeleton className="h-2.5 w-16 bg-secondary" />
+    <Card className="bg-white/40 border-white/50 rounded-[2rem]">
+      <CardContent className="p-8">
+        <div className="flex items-center gap-3 mb-6">
+           <Skeleton className="h-10 w-10 rounded-2xl bg-black/[0.03]" />
+           <Skeleton className="h-2 w-20 bg-black/[0.03]" />
+        </div>
+        <Skeleton className="h-12 w-32 mb-4 bg-black/[0.03]" />
+        <Skeleton className="h-2 w-16 bg-black/[0.03]" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
-function ChartSkeleton({ height = 280 }: { height?: number }) {
+function ChartSkeleton({ height = 350 }: { height?: number }) {
   return (
-    <Card className="border border-border bg-card">
-      <CardHeader className="pb-2">
-        <Skeleton className="h-2.5 w-32 bg-secondary" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="w-full bg-secondary" style={{ height }} />
+    <Card className="bg-white/40 border-white/50 rounded-[2.5rem]">
+      <CardContent className="p-8">
+        <div className="flex items-center gap-4 mb-8">
+           <Skeleton className="h-10 w-10 rounded-2xl bg-black/[0.03]" />
+           <div className="space-y-2">
+              <Skeleton className="h-2 w-24 bg-black/[0.03]" />
+              <Skeleton className="h-4 w-40 bg-black/[0.03]" />
+           </div>
+        </div>
+        <Skeleton className="w-full bg-black/[0.02] rounded-[2rem]" style={{ height }} />
       </CardContent>
     </Card>
-  );
-}
-
-function BarSkeleton() {
-  return (
-    <Card className="border border-border bg-card">
-      <CardHeader className="pb-2">
-        <Skeleton className="h-2.5 w-40 bg-secondary" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-6 w-full mb-2 bg-secondary" />
-        <Skeleton className="h-14 w-full mb-2 bg-secondary rounded-lg" />
-        <Skeleton className="h-6 w-full bg-secondary" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function ListSkeleton({ items = 3 }: { items?: number }) {
-  return (
-    <Card className="border border-border bg-card">
-      <CardHeader className="pb-2">
-        <Skeleton className="h-2.5 w-24 bg-secondary" />
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {Array.from({ length: items }).map((_, i) => (
-          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-            <Skeleton className="h-8 w-8 rounded bg-secondary" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-3/4 mb-2 bg-secondary" />
-              <Skeleton className="h-3 w-1/2 bg-secondary" />
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
+  )
 }
 
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Skeleton className="h-8 w-32 mb-2 bg-secondary" />
-              <Skeleton className="h-3 w-36 bg-secondary" />
-            </div>
-            <Skeleton className="h-9 w-28 bg-secondary" />
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* Sub Header Skeleton */}
+      <div className="fixed top-16 left-0 right-0 z-30 h-16 bg-white/40 backdrop-blur-xl border-b border-black/[0.03]">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
+           <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-2xl bg-black/[0.05]" />
+              <div className="space-y-1">
+                 <Skeleton className="h-2 w-20 bg-black/[0.05]" />
+                 <Skeleton className="h-4 w-24 bg-black/[0.05]" />
+              </div>
+           </div>
+           <Skeleton className="h-10 w-32 rounded-xl bg-black/[0.05]" />
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-12 mt-32 space-y-12 animate-pulse">
+        {/* Header Hero Skeleton */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-black/[0.03]">
+           <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                 <Skeleton className="h-10 w-10 rounded-2xl bg-black/[0.03]" />
+                 <Skeleton className="h-10 w-64 bg-black/[0.03]" />
+              </div>
+              <Skeleton className="h-3 w-48 bg-black/[0.02]" />
+           </div>
+           <div className="space-y-3 md:text-right">
+              <Skeleton className="h-2 w-32 bg-black/[0.02] ml-auto" />
+              <Skeleton className="h-8 w-48 bg-black/[0.03] ml-auto" />
+           </div>
+        </div>
+
         {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <KPISkeleton key={i} />
           ))}
         </div>
 
-        {/* Separador */}
-        <div className="section-separator my-8" />
-
-        {/* Projeção + Evolução */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <BarSkeleton />
-          <ChartSkeleton />
+        {/* Charts Grid Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          <ChartSkeleton height={200} />
+          <ChartSkeleton height={200} />
         </div>
 
-        {/* Separador */}
-        <div className="section-separator my-8" />
+        {/* Charts Grid Row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+           <ChartSkeleton height={250} />
+           <ChartSkeleton height={250} />
+        </div>
 
-        {/* Categorias + Parceladas */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-  <ChartSkeleton height={200} />
-  {/* Container com scroll */}
-  <div className="relative max-h-[400px] flex flex-col bg-card border border-border rounded-xl shadow-md overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-primary scrollbar-track-transparent">
-    <ListSkeleton items={3} />
-  </div>
-</div>
+        {/* Categories Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+           <ChartSkeleton height={300} />
+           <ChartSkeleton height={300} />
+        </div>
 
-        {/* Separador */}
-        <div className="section-separator my-8" />
-
-        {/* Alerts and Suggestions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ListSkeleton items={3} />
-          <ListSkeleton items={3} />
+        {/* History Area */}
+        <div className="space-y-6">
+           <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-48 bg-black/[0.03]" />
+              <Skeleton className="h-10 w-32 rounded-xl bg-black/[0.03]" />
+           </div>
+           <Card className="bg-white/40 border-white/50 rounded-[2.5rem]">
+             <CardContent className="p-8 space-y-6">
+               {Array.from({ length: 4 }).map((_, i) => (
+                 <div key={i} className="flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <Skeleton className="h-12 w-12 rounded-2xl bg-black/[0.03]" />
+                     <div className="space-y-2">
+                       <Skeleton className="h-4 w-32 bg-black/[0.03]" />
+                       <Skeleton className="h-2 w-20 bg-black/[0.03]" />
+                     </div>
+                   </div>
+                   <Skeleton className="h-6 w-24 bg-black/[0.03]" />
+                 </div>
+               ))}
+             </CardContent>
+           </Card>
         </div>
       </main>
     </div>
-  );
+  )
 }

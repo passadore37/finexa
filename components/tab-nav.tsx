@@ -1,42 +1,58 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PlusCircle, Target, CalendarDays } from 'lucide-react';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { LayoutDashboard, Receipt, Target, PieChart } from 'lucide-react'
 
-const tabs = [
-  { label: 'Gastos', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Lançar', href: '/lancar', icon: PlusCircle },
-  { label: 'Metas', href: '/metas', icon: Target },
-  { label: 'Despesas Fixas', href: '/planejamento', icon: CalendarDays },
-];
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/lancar', label: 'Lançar', icon: Receipt },
+  { href: '/metas', label: 'Metas', icon: Target },
+  { href: '/planejamento', label: 'Planos', icon: PieChart },
+]
 
 export function TabNav() {
-  const pathname = usePathname();
+  const pathname = usePathname()
+
   return (
-    <div className="border-b border-border bg-card sticky top-[61px] z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-1 py-1.5 overflow-x-auto scrollbar-none">
-          {tabs.map(tab => {
-            const active = pathname.startsWith(tab.href);
-            const Icon = tab.icon;
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap"
-                style={active
-                  ? { background: 'var(--indigo)', color: '#fff', border: '1.5px solid rgba(130,161,253,0.4)' }
-                  : { color: 'var(--muted-foreground)', border: '1.5px solid transparent' }
-                }
-              >
-                <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                {tab.label}
-              </Link>
-            );
-          })}
-        </div>
+    <nav className="tab-nav-glass animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out">
+      <div className="flex items-center justify-around h-16 relative px-2">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href
+          const Icon = item.icon
+          
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-500 group ${
+                isActive ? 'text-[#5330ff]' : 'text-[#08080f]/30 hover:text-[#08080f]/50'
+              }`}
+            >
+              <div className={`p-2.5 rounded-2xl transition-all duration-500 ${
+                isActive 
+                ? 'bg-[#5330ff]/10 scale-110 shadow-lg shadow-[#5330ff]/5' 
+                : 'bg-transparent group-hover:bg-black/[0.03]'
+              }`}>
+                <Icon 
+                  size={20} 
+                  strokeWidth={isActive ? 3 : 2} 
+                  className={`transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} 
+                />
+              </div>
+              <span className={`text-[8px] font-black mt-1.5 uppercase tracking-[0.2em] transition-all duration-500 ${
+                isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 scale-90'
+              }`}>
+                {item.label}
+              </span>
+              
+              {isActive && (
+                <div className="absolute -bottom-1.5 w-1.5 h-1.5 bg-[#5330ff] rounded-full shadow-[0_0_12px_rgba(83,48,255,0.8)] animate-pulse" />
+              )}
+            </Link>
+          )
+        })}
       </div>
-    </div>
-  );
+    </nav>
+  )
 }
