@@ -2,20 +2,62 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
 
+// Logo igual ao do dash — F em fundo índigo com borda azul pastel
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="w-10 h-10 bg-[#ff64ca] border-2 border-foreground flex items-center justify-center rounded-xl"
-        style={{ boxShadow: '2px 2px 0 var(--foreground)' }}>
-        <span className="text-[#08080f] font-black text-xl leading-none">F</span>
+    <div className="flex items-center gap-3">
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-lg transition-transform hover:scale-105 active:scale-95"
+        style={{
+          background: '#5330ff',
+          border: '2px solid #82a1fd',
+          boxShadow: '2px 2px 0px 0px #82a1fd',
+        }}
+      >
+        F
       </div>
-      <div className="flex flex-col">
-        <span className="font-black text-2xl tracking-tighter text-foreground leading-[0.85]">FINEXA</span>
-        <div className="h-[3px] w-full bg-[#5330ff] mt-0.5 rounded-full" />
+      <div>
+        <span className="text-base font-bold text-foreground leading-none block tracking-tight">Finexa</span>
+        <span className="text-[10px] text-muted-foreground block">Seu dinheiro, com clareza.</span>
       </div>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('finexa-theme');
+    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = saved === 'dark' || (!saved && sysDark);
+    setDark(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, []);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem('finexa-theme', next ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', next);
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="nb-btn w-9 h-9 flex items-center justify-center bg-card text-foreground hover:bg-secondary transition-colors"
+      title={dark ? 'Modo claro' : 'Modo escuro'}
+      aria-label="Alternar tema"
+    >
+      {dark
+        ? <Sun className="h-4 w-4 text-[#fff245]" />
+        : <Moon className="h-4 w-4 text-[#5330ff]" />
+      }
+    </button>
   );
 }
 
@@ -40,57 +82,61 @@ export function Navbar() {
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
       scrolled
         ? 'bg-background/90 backdrop-blur-md border-b-2 border-border py-2'
-        : 'bg-transparent py-4'
+        : 'bg-transparent py-3'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
         <Link href="/"><Logo /></Link>
 
         {/* Links desktop */}
         <div className="hidden md:flex items-center gap-6">
           {links.map(l => (
             <a key={l.label} href={l.href}
-              className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wide">
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
               {l.label}
             </a>
           ))}
         </div>
 
-        {/* CTAs desktop */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* CTAs + ThemeToggle desktop */}
+        <div className="hidden sm:flex items-center gap-2">
+          <ThemeToggle />
           <Link href="/login">
-            <button className="nb-btn bg-background text-foreground px-5 py-2.5 text-sm font-black uppercase tracking-wide">
+            <button className="nb-btn bg-card text-foreground px-4 py-2 text-sm font-bold">
               Entrar
             </button>
           </Link>
           <Link href="/dashboard">
-            <button className="nb-btn bg-[#5330ff] text-white px-5 py-2.5 text-sm font-black uppercase tracking-wide hover:bg-[#6b47ff]"
-              style={{ borderColor: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
+            <button className="nb-btn bg-[#5330ff] text-white px-4 py-2 text-sm font-black"
+              style={{ borderColor: '#5330ff', boxShadow: '3px 3px 0 #82a1fd60' }}>
               Começar grátis
             </button>
           </Link>
         </div>
 
-        {/* Hamburguer mobile */}
-        <button className="md:hidden nb-btn p-2 bg-background" onClick={() => setOpen(!open)}>
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile */}
+        <div className="flex sm:hidden items-center gap-2">
+          <ThemeToggle />
+          <button className="nb-btn p-2 bg-card" onClick={() => setOpen(!open)}>
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-background border-b-4 border-[#5330ff] px-4 py-6 flex flex-col gap-4">
+        <div className="sm:hidden bg-background border-b-2 border-[#5330ff] px-4 py-5 flex flex-col gap-3">
           {links.map(l => (
             <a key={l.label} href={l.href} onClick={() => setOpen(false)}
-              className="font-black uppercase tracking-widest text-sm text-foreground py-2 border-b border-border">
+              className="font-semibold text-sm text-foreground py-2 border-b border-border">
               {l.label}
             </a>
           ))}
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-2 pt-1">
             <Link href="/login" onClick={() => setOpen(false)}>
-              <button className="nb-btn w-full py-3 bg-secondary text-foreground font-black uppercase text-sm">Entrar</button>
+              <button className="nb-btn w-full py-3 bg-card text-foreground font-bold text-sm">Entrar</button>
             </Link>
             <Link href="/dashboard" onClick={() => setOpen(false)}>
-              <button className="nb-btn w-full py-3 bg-[#5330ff] text-white font-black uppercase text-sm">Começar grátis</button>
+              <button className="nb-btn w-full py-3 bg-[#5330ff] text-white font-black text-sm">Começar grátis</button>
             </Link>
           </div>
         </div>
@@ -101,9 +147,9 @@ export function Navbar() {
 
 export function Footer() {
   return (
-    <footer className="border-t-2 border-border bg-card py-16">
+    <footer className="border-t-2 border-border bg-card py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-10">
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Logo />
           <p className="text-sm text-muted-foreground leading-relaxed">
             O controle financeiro que traz clareza para casais e famílias.
@@ -112,7 +158,7 @@ export function Footer() {
         {[
           { titulo: 'Produto', items: [['Como Funciona','/#como-funciona'],['Diferenciais','/#diferenciais'],['Planos','/#planos']] },
           { titulo: 'Legal', items: [['Termos de Uso','/termos'],['Privacidade','/privacidade']] },
-          { titulo: 'Contato', items: [['Suporte','mailto:contato@finexa.app']] },
+          { titulo: 'Contato', items: [['Suporte','mailto:contato@finexa.app'],['Letícia Passadore','#']] },
         ].map(col => (
           <div key={col.titulo}>
             <h4 className="font-black mb-4 text-[#5330ff] uppercase text-xs tracking-widest">{col.titulo}</h4>
@@ -126,8 +172,8 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
-        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
           © 2026 Finexa · Todos os direitos reservados.
         </p>
         <p className="text-xs text-muted-foreground">
