@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { ArrowRight, BarChart3, Settings2, Zap } from 'lucide-react';
 import type { DadosProjecaoBar } from '@/lib/types';
 
