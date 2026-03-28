@@ -46,8 +46,18 @@ export function KPICard({ titulo, valor, formato = 'moeda', variacao, icone: Ico
         <div className="flex items-center justify-between mb-3">
           <p className="label-uppercase text-muted-foreground">{titulo}</p>
           {Icone && (
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: corBarra ? `${corBarra}15` : 'var(--secondary)' }}>
-              <Icone className="h-3.5 w-3.5" style={{ color: corBarra || 'var(--muted-foreground)' }} />
+            <div 
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm border border-current/10" 
+              style={{ 
+                background: corBarra ? `${corBarra}15` : 'var(--secondary)',
+                color: corBarra || 'var(--primary)',
+                boxShadow: corBarra ? `0 0 15px ${corBarra}20` : 'none'
+              }}
+            >
+              <Icone 
+                className="h-4 w-4 transition-transform group-hover:scale-110" 
+                fill={corBarra ? `${corBarra}33` : 'currentColor'} 
+              />
             </div>
           )}
         </div>

@@ -136,9 +136,9 @@ export default function LandingPage() {
             <div className="absolute -left-12 top-20 p-4 bg-orange border-[4px] border-indigo rounded-2xl shadow-[8px_8px_0px_0px_var(--indigo)] animate-bounce duration-[4000ms] z-30">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-orange" />
+                  <Bell className="w-6 h-6 text-orange fill-orange/20" />
                 </div>
-                <div className="text-left text-white">
+                <div className="text-left text-foreground">
                    <div className="text-[10px] font-black uppercase tracking-widest leading-none">ALERTA</div>
                    <div className="text-sm font-black leading-tight">Conta Nova!</div>
                 </div>
@@ -154,7 +154,7 @@ export default function LandingPage() {
             </div>
 
             <div className="absolute -left-20 bottom-20 p-6 bg-teal border-[4px] border-indigo rounded-[2rem] shadow-[12px_12px_0px_0px_var(--indigo)] z-20 group hover:scale-110 transition-transform">
-              <TrendingUp className="w-10 h-10 text-white" />
+              <TrendingUp className="w-10 h-10 text-white fill-white/20" />
             </div>
           </div>
         </section>
@@ -176,7 +176,7 @@ export default function LandingPage() {
                   color: "border-indigo", 
                   shadow: "shadow-[12px_12px_0px_0px_var(--indigo)]",
                   titleColor: "text-indigo",
-                  icon: <PieChart className="w-8 h-8 text-indigo" />, 
+                  icon: <PieChart className="w-8 h-8 text-indigo fill-indigo/20" />, 
                   desc: "Visualize cada centavo com categorias automáticas e inteligentes.",
                   accent: "bg-indigo/10"
                 },
@@ -185,7 +185,7 @@ export default function LandingPage() {
                   color: "border-teal", 
                   shadow: "shadow-[12px_12px_0px_0px_var(--teal)]",
                   titleColor: "text-teal",
-                  icon: <TrendingDown className="w-8 h-8 text-teal" />, 
+                  icon: <TrendingDown className="w-8 h-8 text-teal fill-teal/20" />, 
                   desc: "Entenda o destino do seu dinheiro com relatórios visuais que não cansam a vista.",
                   accent: "bg-teal/10"
                 },
@@ -194,7 +194,7 @@ export default function LandingPage() {
                   color: "border-magenta", 
                   shadow: "shadow-[12px_12px_0px_0px_var(--magenta)]",
                   titleColor: "text-magenta",
-                  icon: <Sparkles className="w-8 h-8 text-magenta" />, 
+                  icon: <Sparkles className="w-8 h-8 text-magenta fill-magenta/20" />, 
                   desc: "Defina orçamentos realistas e receba alertas que ajudam você a parar de gastar sem pensar.",
                   accent: "bg-magenta/10"
                 }
@@ -231,7 +231,7 @@ export default function LandingPage() {
                     step: "01", 
                     title: "LANCE SEUS GASTOS", 
                     desc: "Registros rápidos e intuitivos, direto no seu celular ou computador.",
-                    icon: <Plus className="w-8 h-8 text-orange" />,
+                    icon: <Plus className="w-8 h-8 text-orange fill-orange/20" />,
                     color: "border-orange",
                     shadow: "shadow-[6px_6px_0px_0px_var(--orange)]",
                     numColor: "bg-orange"
@@ -240,7 +240,7 @@ export default function LandingPage() {
                     step: "02", 
                     title: "PROJEÇÃO E ALERTAS", 
                     desc: "Acompanhamento gráfico com alertas inteligentes e projeção automática de custos.",
-                    icon: <Bell className="w-8 h-8 text-indigo" />,
+                    icon: <Bell className="w-8 h-8 text-indigo fill-indigo/20" />,
                     color: "border-indigo",
                     shadow: "shadow-[6px_6px_0px_0px_var(--indigo)]",
                     numColor: "bg-indigo"
@@ -249,7 +249,7 @@ export default function LandingPage() {
                     step: "03", 
                     title: "ACOMPANHE A EVOLUÇÃO", 
                     desc: "Gráficos claros que mostram exatamente para onde seu dinheiro está indo.",
-                    icon: <BarChart3 className="w-8 h-8 text-teal" />,
+                    icon: <BarChart3 className="w-8 h-8 text-teal fill-teal/20" />,
                     color: "border-teal",
                     shadow: "shadow-[6px_6px_0px_0px_var(--teal)]",
                     numColor: "bg-teal"
@@ -258,7 +258,7 @@ export default function LandingPage() {
                   <div key={idx} className="flex flex-col items-center text-center space-y-6">
                     <div className={`w-24 h-24 rounded-[2rem] bg-background border-[4px] ${item.color} flex items-center justify-center ${item.shadow} relative z-10 bg-white dark:bg-zinc-900 transition-all hover:scale-110`}>
                       {item.icon}
-                      <div className={`absolute -top-3 -right-3 w-10 h-10 rounded-full ${item.numColor} text-white flex items-center justify-center font-black text-xs border-[3px] border-background shadow-lg`}>
+                      <div className={`absolute -top-3 -right-3 w-10 h-10 rounded-full ${item.numColor} ${item.numColor === 'bg-indigo' ? 'text-white' : 'text-foreground'} flex items-center justify-center font-black text-xs border-[3px] border-background shadow-lg`}>
                         {item.step}
                       </div>
                     </div>
@@ -290,10 +290,10 @@ export default function LandingPage() {
              
              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                {[
-                 { title: "Divisão Proporcional", color: "border-orange", icon: <Users className="w-8 h-8 text-orange" />, desc: "Calculamos a divisão justa baseada na renda de cada um." },
-                 { title: "Metas em Conjunto", color: "border-magenta", icon: <Target className="w-8 h-8 text-magenta" />, desc: "Planejem sonhos maiores e acompanhem o progresso real." },
-                 { title: "Despesas Fixas", color: "border-teal", icon: <Calendar className="w-8 h-8 text-teal" />, desc: "Nunca mais esqueçam de pagar contas importantes." },
-                 { title: "Foco em Privacidade", color: "border-yellow-p", icon: <Lock className="w-8 h-8 text-yellow-p" />, desc: "Seus dados criptografados e controle total de acesso." }
+                 { title: "Divisão Proporcional", color: "border-orange", icon: <Users className="w-8 h-8 text-orange fill-orange/20" />, desc: "Calculamos a divisão justa baseada na renda de cada um." },
+                 { title: "Metas em Conjunto", color: "border-magenta", icon: <Target className="w-8 h-8 text-magenta fill-magenta/20" />, desc: "Planejem sonhos maiores e acompanhem o progresso real." },
+                 { title: "Despesas Fixas", color: "border-teal", icon: <Calendar className="w-8 h-8 text-teal fill-teal/20" />, desc: "Nunca mais esqueçam de pagar contas importantes." },
+                 { title: "Foco em Privacidade", color: "border-yellow-p", icon: <Lock className="w-8 h-8 text-yellow-p fill-yellow-p/20" />, desc: "Seus dados criptografados e controle total de acesso." }
                ].map((item, idx) => (
                  <div key={idx} className={`p-8 bg-white dark:bg-zinc-900 border-[4px] ${item.color} rounded-[2.5rem] shadow-[10px_10px_0px_0px_var(--indigo-light)] flex flex-col items-start transition-all hover:-translate-y-4 text-foreground`}>
                    <div className="mb-6 p-4 bg-background border-2 border-border rounded-xl shadow-sm">{item.icon}</div>
@@ -318,7 +318,7 @@ export default function LandingPage() {
                 <span className={`text-xs font-black uppercase tracking-widest ${!isAnnual ? 'text-indigo underline decoration-4 underline-offset-4' : 'text-muted-foreground'}`}>Mensal</span>
                 <button 
                   onClick={() => setIsAnnual(!isAnnual)}
-                  className="w-16 h-8 rounded-full bg-[#0a0a14] border-[3px] border-indigo relative flex items-center px-1 transition-all"
+                  className="w-16 h-8 rounded-full bg-indigo-light/10 border-[3px] border-indigo relative flex items-center px-1 transition-all"
                 >
                   <div className={`w-4 h-4 rounded-full bg-indigo transition-all duration-300 shadow-[0_0_10px_rgba(83,48,255,1)] ${isAnnual ? 'translate-x-[32px]' : 'translate-x-0'}`}></div>
                 </button>
@@ -336,7 +336,7 @@ export default function LandingPage() {
                 price={calculatePrice(19.90)}
                 label="SOLO"
                 color="border-teal"
-                btnColor="bg-teal text-white hover:bg-teal/90 shadow-[4px_4px_0px_0px_#000]"
+                btnColor="bg-teal text-foreground hover:bg-teal/90 shadow-[4px_4px_0px_0px_#000]"
                 features={["Lançamentos ilimitados", "Categorias inteligentes", "Análise de gastos", "Alertas de limite"]}
               />
 
@@ -347,7 +347,7 @@ export default function LandingPage() {
                 label="PARA DOIS"
                 color="border-magenta"
                 featured
-                btnColor="bg-magenta text-white hover:bg-magenta/90 shadow-[4px_4px_0px_0px_#000]"
+                btnColor="bg-magenta text-foreground hover:bg-magenta/90 shadow-[4px_4px_0px_0px_#000]"
                 features={["Tudo do Individual", "Perfis Compartilhados (2)", "Divisão Proporcional", "Metas de Casal"]}
               />
 
@@ -357,7 +357,7 @@ export default function LandingPage() {
                 price={calculatePrice(49.90)}
                 label="TIME COMPLETO"
                 color="border-orange"
-                btnColor="bg-orange text-white hover:bg-orange/90 shadow-[4px_4px_0px_0px_#000]"
+                btnColor="bg-orange text-foreground hover:bg-orange/90 shadow-[4px_4px_0px_0px_#000]"
                 features={["Tudo do Casal", "Até 4 Perfis Inclusos", "Dashboard Familiar", "Gestão de Dependentes"]}
                 footer="ADICIONAL R$ 7/MÊS EXTRA"
               />

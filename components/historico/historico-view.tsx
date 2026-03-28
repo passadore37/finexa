@@ -241,7 +241,7 @@ export function HistoricoView({ categoriaFiltro, diaFiltro }: Props) {
                       onClick={() => iniciarEdicao(t)}
                       className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-4 w-4 text-indigo fill-indigo/20" />
                     </button>
                     {isConfirmando ? (
                       <>
@@ -262,7 +262,7 @@ export function HistoricoView({ categoriaFiltro, diaFiltro }: Props) {
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,75,74,0.1)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-magenta fill-magenta/20" />
                       </button>
                     )}
                   </div>

@@ -71,8 +71,8 @@ export function Dashboard() {
           </div>
           <h2 className="text-xl font-medium text-foreground mb-2">Erro ao carregar dados</h2>
           <p className="text-sm text-muted-foreground mb-6">{data?.error || 'Não foi possível conectar.'}</p>
-          <Button onClick={() => mutate()} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />Tentar novamente
+          <Button onClick={() => mutate()} variant="outline" className="border-border hover:bg-secondary text-primary group">
+            <RefreshCw className="h-4 w-4 mr-2 transition-transform group-hover:rotate-180 duration-500 fill-primary/20" />Tentar novamente
           </Button>
         </div>
       </div>
@@ -141,8 +141,8 @@ export function Dashboard() {
           <UsuarioSelector usuarioAtivo={usuariaAtiva} onChangeUsuario={setUsuariaAtiva} />
           <div className="flex items-center gap-2">
             {!verificando && isSupported && !isSubscribed && (
-              <Button onClick={() => registrar('geral')} variant="outline" size="sm" className="border-border hover:bg-secondary text-primary">
-                <Bell className="h-3.5 w-3.5 sm:mr-1.5" />
+              <Button onClick={() => registrar('geral')} variant="outline" size="sm" className="border-border hover:bg-secondary text-primary group">
+                <Bell className="h-3.5 w-3.5 sm:mr-1.5 fill-primary/20 transition-transform group-hover:rotate-12" />
                 <span className="text-xs hidden sm:inline">Notificações</span>
               </Button>
             )}
