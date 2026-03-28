@@ -89,7 +89,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Main Content */}
-      <main>
+      <main className="pt-20">
         {children}
       </main>
     </div>
