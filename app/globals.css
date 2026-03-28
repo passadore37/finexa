@@ -226,3 +226,91 @@ body {
   background-color: var(--foreground);
   opacity: 0.5;
 }
+
+/* ============================================
+   NEOBRUTALIST SYSTEM — inspirado na ref
+   ============================================ */
+
+/* Token de cor para dark/light text sobre background */
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Fundo com grade de pontos */
+.grid-bg {
+  background-size: 40px 40px;
+  background-image: radial-gradient(circle, rgba(8, 8, 15, 0.06) 1px, transparent 1px);
+}
+.dark .grid-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* Card neobrutalist — borda + sombra offset */
+.nb-card {
+  border: 2px solid hsl(var(--foreground) / 0.15);
+  box-shadow: 4px 4px 0px 0px hsl(var(--foreground) / 0.12);
+  border-radius: 24px;
+  transition: all 0.2s ease;
+}
+.dark .nb-card {
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.1);
+}
+.nb-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 10px 10px 0px 0px hsl(var(--foreground) / 0.12);
+}
+.dark .nb-card:hover {
+  box-shadow: 10px 10px 0px 0px rgba(255,255,255,0.1);
+}
+
+/* Botão neobrutalist */
+.nb-btn {
+  border: 2px solid hsl(var(--foreground) / 0.8);
+  box-shadow: 4px 4px 0px 0px hsl(var(--foreground) / 0.8);
+  border-radius: 16px;
+  transition: all 0.15s ease;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dark .nb-btn {
+  border-color: rgba(255,255,255,0.8);
+  box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.8);
+}
+.nb-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px hsl(var(--foreground) / 0.8);
+}
+.dark .nb-btn:hover {
+  box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.8);
+}
+.nb-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* Animações */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(3deg); }
+}
+.animate-float { animation: float 5s ease-in-out infinite; }
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(83,48,255,0.3); }
+  50% { box-shadow: 0 0 40px rgba(83,48,255,0.6); }
+}
+.animate-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* Texto vertical para decoração */
+.text-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+

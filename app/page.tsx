@@ -1,447 +1,412 @@
 'use client';
 
 import Link from 'next/link';
-import { 
-  ArrowRight, 
-  CheckCircle2, 
-  Smartphone, 
-  Users, 
-  TrendingUp, 
-  CreditCard,
-  Target,
-  Zap,
-  ShieldCheck,
-  PieChart,
-  Layout,
-  Lock,
-  MousePointer2,
-  Calendar,
-  Bell,
-  BarChart3,
-  Sparkles,
-  TrendingDown,
-  Plus,
-  ArrowUpRight
+import { useState } from 'react';
+import {
+  ArrowRight, Check, Users, TrendingUp, Calendar, Zap,
+  Smartphone, PieChart, ShieldCheck, Target, CreditCard,
+  ChevronDown, Menu, X
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar, Footer } from '@/components/landing-layout';
 
-export default function LandingPage() {
-  const [isAnnual, setIsAnnual] = useState(false);
+// ─── Dados ────────────────────────────────────────────────────────────────────
 
-  const calculatePrice = (monthly: number) => {
-    if (isAnnual) {
-      const yearlyTotal = monthly * 12 * 0.85;
-      return (yearlyTotal / 12).toFixed(2);
-    }
-    return monthly.toFixed(2);
-  };
+const PLANOS = [
+  {
+    id: 'individual', nome: 'Individual', preco: 19, emoji: '👤',
+    desc: 'Para quem quer controle total das próprias finanças',
+    cor: '#01b695', corText: 'text-[#01b695]', corBg: 'bg-[#01b695]',
+    destaque: false,
+    features: ['1 usuário', 'Dashboard completo', 'Metas pessoais', 'Histórico 12 meses', 'PWA nativo'],
+  },
+  {
+    id: 'casal', nome: 'Casal', preco: 29, emoji: '💑',
+    desc: 'O mais escolhido. Divisão justa, visão individual + geral',
+    cor: '#5330ff', corText: 'text-[#5330ff]', corBg: 'bg-[#5330ff]',
+    destaque: true,
+    features: ['2 usuários', 'Divisão proporcional ao salário', 'Dashboard individual + geral', 'Metas conjuntas', 'Orçamento semanal', 'Lançamento via Telegram'],
+  },
+  {
+    id: 'familia', nome: 'Família', preco: 39, emoji: '🏠',
+    desc: 'Para famílias que querem clareza sem complicação',
+    cor: '#ffa857', corText: 'text-[#ffa857]', corBg: 'bg-[#ffa857]',
+    destaque: false,
+    features: ['Até 4 usuários', 'Tudo do plano Casal', 'Perfis independentes', 'Visão consolidada', 'Relatório mensal', '+R$7/mês por extra'],
+  },
+];
 
+const DIFERENCIAIS = [
+  { icon: '⚖️', titulo: 'Divisão proporcional', desc: 'Quem ganha mais, contribui mais. Calculado automaticamente pela proporção de renda.', cor: '#01b695' },
+  { icon: '👤', titulo: 'Perfis individuais', desc: 'Cada pessoa vê seus próprios gastos, envelope e metas — sem expor o que não precisa.', cor: '#82a1fd' },
+  { icon: '🎯', titulo: 'Metas conjuntas', desc: 'Viagem, reserva, entrada do apê. Acompanhe o progresso junto, em tempo real.', cor: '#ff64ca' },
+  { icon: '📅', titulo: 'Orçamento semanal', desc: 'O salário vira envelopes semanais. Você sabe exatamente quanto pode gastar essa semana.', cor: '#ffa857' },
+  { icon: '⚡', titulo: 'Lançamento fácil', desc: 'App em 3 toques ou Telegram em linguagem natural. Claude interpreta e categoriza.', cor: '#fff245' },
+  { icon: '📱', titulo: 'PWA nativo', desc: 'Instala direto na tela do celular. Sem App Store. Abre como app de verdade.', cor: '#5330ff' },
+];
+
+const FAQ = [
+  { q: 'O parceiro precisa instalar algo?', r: 'Não. O Finexa é um PWA — é só acessar o link pelo celular e adicionar na tela inicial. Funciona em iPhone e Android.' },
+  { q: 'O que é divisão proporcional ao salário?', r: 'Se você ganha R$8.500 e seu parceiro R$6.500, o total é R$15.000. O aluguel de R$2.200 é dividido: você paga R$1.247 (57%) e seu parceiro R$953 (43%). Automático, sem negociação.' },
+  { q: 'Funciona offline?', r: 'O dashboard fica disponível offline. Para lançar novos gastos, é necessária conexão. Os dados sincronizam assim que você volta online.' },
+  { q: 'Posso cancelar quando quiser?', r: 'Sim. Sem fidelidade, sem multa. Cancela com um clique. Os dados ficam disponíveis por 30 dias para exportação.' },
+  { q: 'Meus dados são seguros?', r: 'Sim. Os dados ficam no Supabase com Row Level Security ativo — cada conta só acessa os próprios dados. Nunca vendemos informações.' },
+];
+
+// ─── Componentes ──────────────────────────────────────────────────────────────
+
+function Badge({ children, cor = '#5330ff' }: { children: React.ReactNode; cor?: string }) {
   return (
-    <div className="flex flex-col min-h-screen selection:bg-indigo selection:text-white overflow-hidden bg-background text-foreground">
-      <Navbar />
+    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest nb-btn"
+      style={{ background: `${cor}15`, color: cor, borderColor: `${cor}40`, boxShadow: `2px 2px 0 ${cor}30` }}>
+      {children}
+    </span>
+  );
+}
 
-      <main className="flex-grow pt-24 relative">
-        {/* Background Blobs for Hero */}
-        <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-indigo/10 blur-[120px] rounded-full -z-10"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-magenta/10 blur-[120px] rounded-full -z-10"></div>
-
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid md:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo border-2 border-indigo-light/20 rounded-2xl shadow-[4px_4px_0px_0px_rgba(83,48,255,0.1)]">
-              <span className="flex h-2 w-2 rounded-full bg-yellow-p animate-pulse"></span>
-              <span className="text-sm font-black text-white tracking-tight uppercase">Controle Financeiro</span>
+function AppMockup() {
+  return (
+    <div className="relative w-[260px] aspect-[9/19] bg-[#08080f] dark:bg-white/5 border-4 border-foreground/20 dark:border-white/20 rounded-[3rem] shadow-2xl overflow-hidden mx-auto">
+      <div className="absolute inset-0 p-4 flex flex-col gap-3">
+        {/* Status bar */}
+        <div className="flex justify-between items-center mt-4 px-1">
+          <span className="text-[10px] text-white font-bold">9:41</span>
+          <div className="w-16 h-4 bg-white/10 rounded-full" />
+          <div className="flex gap-1">{[1,2,3].map(i => <div key={i} className="w-1 h-1 rounded-full bg-white/30" />)}</div>
+        </div>
+        {/* Header */}
+        <div className="flex justify-between items-center px-1">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-[#5330ff] flex items-center justify-center text-white text-xs font-black">F</div>
+            <span className="text-white text-xs font-bold">Finexa</span>
+          </div>
+          <div className="w-6 h-6 rounded-full bg-[#ffa857]/20 border border-[#ffa857]/40 flex items-center justify-center text-[8px] text-[#ffa857] font-bold">L</div>
+        </div>
+        {/* KPIs */}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { l: 'Receitas', v: 'R$15k', c: '#01b695' },
+            { l: 'Despesas', v: 'R$4,7k', c: '#ff64ca' },
+            { l: 'Saldo', v: 'R$10k', c: '#82a1fd' },
+            { l: 'Livre', v: 'R$8,7k', c: '#fff245' },
+          ].map(k => (
+            <div key={k.l} className="bg-white/5 rounded-xl p-2" style={{ borderTop: `2px solid ${k.c}` }}>
+              <div className="text-[8px] text-white/40 uppercase">{k.l}</div>
+              <div className="text-xs font-bold text-white">{k.v}</div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tighter text-foreground">
-              Seu dinheiro, <br />
-              <span className="text-indigo drop-shadow-[4px_4px_0px_var(--indigo-light)]">com clareza.</span>
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed font-bold">
-              O controle financeiro que traz clareza para sua vida. Organize seus gastos, defina metas e planeje seu futuro com facilidade.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 mt-6">
-              <Link href="/dashboard">
-                <Button size="lg" className="h-16 px-10 text-xl bg-indigo hover:bg-indigo/90 text-white font-black shadow-[8px_8px_0px_0px_var(--indigo-light)] border-[4px] border-white/20 transition-all hover:-translate-y-1 active:translate-y-0 active:shadow-none">
-                  COMEÇAR AGORA <ArrowRight className="ml-2 h-6 w-6" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-4 py-3 px-6 bg-yellow-p border-[4px] border-indigo rounded-2xl shadow-[6px_6px_0px_0px_var(--indigo)] overflow-hidden">
-                <div className="p-2 bg-indigo/10 rounded-lg shrink-0">
-                  <ShieldCheck className="w-6 h-6 text-indigo" />
-                </div>
-                <div className="text-sm font-black leading-tight text-indigo">Privacidade Total <br /><span className="text-[10px] opacity-70 uppercase tracking-widest whitespace-nowrap">Controle 100% Pessoal</span></div>
+          ))}
+        </div>
+        {/* Categorias mini */}
+        <div className="bg-white/5 rounded-xl p-3 flex-1">
+          <div className="text-[8px] text-white/40 uppercase mb-2">Por categoria</div>
+          {[
+            { n: 'Moradia', p: 77, c: '#5330ff' },
+            { n: 'Alimentação', p: 14, c: '#ff64ca' },
+            { n: 'Transporte', p: 9, c: '#82a1fd' },
+          ].map(cat => (
+            <div key={cat.n} className="mb-1.5">
+              <div className="flex justify-between mb-0.5">
+                <span className="text-[8px] text-white/70">{cat.n}</span>
+                <span className="text-[8px] text-white/40">{cat.p}%</span>
+              </div>
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${cat.p}%`, background: cat.c }} />
               </div>
             </div>
-          </div>
-          
-          <div className="relative perspective-1000">
-            {/* Main Phone Mockup */}
-            <div className="relative mx-auto border-[12px] border-card bg-card rounded-[3rem] h-[600px] w-[300px] shadow-2xl overflow-hidden shadow-indigo/30 rotate-3 hover:rotate-0 transition-transform duration-500">
-              <div className="absolute top-0 w-full h-8 bg-card z-20"></div>
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-5 bg-muted rounded-full z-20"></div>
-              
-              <div className="bg-background h-full p-5 pt-12 flex flex-col gap-5">
-                 {/* Dashboard Simulation */}
-                 <div className="space-y-4">
-                   <div className="h-40 rounded-[2rem] bg-indigo p-5 text-white relative overflow-hidden shadow-lg border-[2px] border-white/10">
-                      <div className="text-[10px] opacity-80 font-black uppercase tracking-widest leading-none mb-1">Saldo Total</div>
-                      <div className="text-3xl font-black tracking-tighter">R$ 12.450</div>
-                      <div className="mt-4 flex gap-2">
-                        <div className="h-1.5 w-1/2 bg-white/20 rounded-full overflow-hidden">
-                          <div className="h-full w-2/3 bg-white"></div>
-                        </div>
-                        <div className="text-[8px] font-black uppercase">65% da meta</div>
-                      </div>
-                      <Sparkles className="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 rotate-12" />
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="h-28 rounded-3xl border-[2px] border-magenta bg-magenta/10 p-4 flex flex-col justify-between shadow-[4px_4px_0px_0px_var(--magenta)]">
-                         <TrendingUp className="w-5 h-5 text-magenta" />
-                         <div className="text-[10px] font-black text-magenta uppercase">Investidos</div>
-                      </div>
-                      <div className="h-28 rounded-3xl border-[2px] border-teal bg-teal/10 p-4 flex flex-col justify-between shadow-[4px_4px_0px_0px_var(--teal)]">
-                         <Target className="w-5 h-5 text-teal" />
-                         <div className="text-[10px] font-black text-teal uppercase">Reservas</div>
-                      </div>
-                   </div>
-
-                   <div className="space-y-4 pt-2">
-                      <div className="text-[10px] font-black uppercase text-foreground tracking-widest mb-2 border-b-[2px] border-indigo/20 pb-1">Atividade Recente</div>
-                      {[
-                        { icon: <Plus className="text-teal" />, label: "Salário", val: "+ R$ 8.5K", color: "text-teal" },
-                        { icon: <CreditCard className="text-magenta" />, label: "Mercado", val: "- R$ 450", color: "text-magenta" },
-                        { icon: <Zap className="text-orange" />, label: "Energia", val: "- R$ 280", color: "text-orange" }
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-4 p-2 rounded-2xl bg-card border-2 border-border shadow-sm">
-                          <div className="w-8 h-8 rounded-xl bg-background border border-border flex items-center justify-center shadow-sm">
-                            {item.icon}
-                          </div>
-                          <div className="flex-grow text-left">
-                            <div className="text-[10px] font-black text-foreground leading-none mb-1">{item.label}</div>
-                            <div className="text-[8px] text-muted-foreground font-black uppercase tracking-tighter">Hoje, 14:30</div>
-                          </div>
-                          <div className={`text-[10px] font-black ${item.color}`}>{item.val}</div>
-                        </div>
-                      ))}
-                   </div>
-                 </div>
-              </div>
-            </div>
-
-            {/* Floating Cards */}
-            <div className="absolute -left-12 top-20 p-4 bg-orange border-[4px] border-indigo rounded-2xl shadow-[8px_8px_0px_0px_var(--indigo)] animate-bounce duration-[4000ms] z-30">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-orange fill-orange/20" />
-                </div>
-                <div className="text-left text-foreground">
-                   <div className="text-[10px] font-black uppercase tracking-widest leading-none">ALERTA</div>
-                   <div className="text-sm font-black leading-tight">Conta Nova!</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -right-16 bottom-40 p-6 bg-background border-[4px] border-magenta rounded-[2.5rem] shadow-[12px_12px_0px_0px_var(--magenta)] animate-pulse duration-[5000ms] max-w-[200px] z-30">
-               <div className="text-[10px] font-black text-magenta uppercase tracking-widest mb-2">Meta</div>
-               <div className="text-2xl font-black mb-3 leading-none text-foreground">VIAGEM OK</div>
-               <div className="h-3 w-full bg-magenta/10 rounded-full overflow-hidden border-2 border-magenta/20">
-                 <div className="h-full w-[85%] bg-magenta"></div>
-               </div>
-            </div>
-
-            <div className="absolute -left-20 bottom-20 p-6 bg-teal border-[4px] border-indigo rounded-[2rem] shadow-[12px_12px_0px_0px_var(--indigo)] z-20 group hover:scale-110 transition-transform">
-              <TrendingUp className="w-10 h-10 text-white fill-white/20" />
-            </div>
-          </div>
-        </section>
-
-        {/* Missão Section */}
-        <section id="missao" className="bg-secondary/20 py-24 relative">
-          <div className="absolute top-[40%] left-[-5%] w-[300px] h-[300px] bg-teal/10 blur-[100px] rounded-full -z-10"></div>
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-none">O caos financeiro <br /><span className="text-indigo">acaba aqui.</span></h2>
-              <p className="text-lg text-muted-foreground font-black leading-relaxed">Gerenciar dinheiro não deveria ser uma fonte de estresse. É hora de retomar o controle com ferramentas feitas para humanos.</p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-10">
-              {[
-                { 
-                  q: "Quanto gastei esse mês?", 
-                  color: "border-indigo", 
-                  shadow: "shadow-[12px_12px_0px_0px_var(--indigo)]",
-                  titleColor: "text-indigo",
-                  icon: <PieChart className="w-8 h-8 text-indigo fill-indigo/20" />, 
-                  desc: "Visualize cada centavo com categorias automáticas e inteligentes.",
-                  accent: "bg-indigo/10"
-                },
-                { 
-                  q: "Para onde vai meu dinheiro?", 
-                  color: "border-teal", 
-                  shadow: "shadow-[12px_12px_0px_0px_var(--teal)]",
-                  titleColor: "text-teal",
-                  icon: <TrendingDown className="w-8 h-8 text-teal fill-teal/20" />, 
-                  desc: "Entenda o destino do seu dinheiro com relatórios visuais que não cansam a vista.",
-                  accent: "bg-teal/10"
-                },
-                { 
-                  q: "Como economizar mais?", 
-                  color: "border-magenta", 
-                  shadow: "shadow-[12px_12px_0px_0px_var(--magenta)]",
-                  titleColor: "text-magenta",
-                  icon: <Sparkles className="w-8 h-8 text-magenta fill-magenta/20" />, 
-                  desc: "Defina orçamentos realistas e receba alertas que ajudam você a parar de gastar sem pensar.",
-                  accent: "bg-magenta/10"
-                }
-              ].map((item, idx) => (
-                <div key={idx} className={`p-8 bg-background border-[4px] ${item.color} rounded-[2.5rem] ${item.shadow} transition-all hover:-translate-y-4 hover:shadow-[16px_16px_0px_0px_var(--indigo)] group text-left`}>
-                  <div className={`w-14 h-14 rounded-2xl ${item.accent} flex items-center justify-center mb-6 border-[3px] border-current/20 transition-transform group-hover:rotate-6 shadow-sm`}>
-                    {item.icon}
-                  </div>
-                  <h3 className={`text-2xl font-black mb-4 leading-tight ${item.titleColor} uppercase tracking-tight`}>{item.q}</h3>
-                  <p className="text-foreground font-black text-base leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Como Funciona Section */}
-        <section id="como-funciona" className="py-24 overflow-hidden relative">
-          <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-orange/10 blur-[120px] rounded-full -z-10"></div>
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-16">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl md:text-6xl font-black tracking-tight uppercase text-foreground">Simples como deve ser.</h2>
-                <div className="w-24 h-2 bg-indigo mx-auto rounded-full shadow-[0_4px_0_0_var(--indigo-light)]"></div>
-              </div>
-
-              {/* Horizontal Flow Desktop / Stacked Mobile */}
-              <div className="grid md:grid-cols-3 gap-16 relative">
-                <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-2 bg-indigo/10 rounded-full -z-10"></div>
-                
-                {[
-                  { 
-                    step: "01", 
-                    title: "LANCE SEUS GASTOS", 
-                    desc: "Registros rápidos e intuitivos, direto no seu celular ou computador.",
-                    icon: <Plus className="w-8 h-8 text-orange fill-orange/20" />,
-                    color: "border-orange",
-                    shadow: "shadow-[6px_6px_0px_0px_var(--orange)]",
-                    numColor: "bg-orange"
-                  },
-                  { 
-                    step: "02", 
-                    title: "PROJEÇÃO E ALERTAS", 
-                    desc: "Acompanhamento gráfico com alertas inteligentes e projeção automática de custos.",
-                    icon: <Bell className="w-8 h-8 text-indigo fill-indigo/20" />,
-                    color: "border-indigo",
-                    shadow: "shadow-[6px_6px_0px_0px_var(--indigo)]",
-                    numColor: "bg-indigo"
-                  },
-                  { 
-                    step: "03", 
-                    title: "ACOMPANHE A EVOLUÇÃO", 
-                    desc: "Gráficos claros que mostram exatamente para onde seu dinheiro está indo.",
-                    icon: <BarChart3 className="w-8 h-8 text-teal fill-teal/20" />,
-                    color: "border-teal",
-                    shadow: "shadow-[6px_6px_0px_0px_var(--teal)]",
-                    numColor: "bg-teal"
-                  }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex flex-col items-center text-center space-y-6">
-                    <div className={`w-24 h-24 rounded-[2rem] bg-background border-[4px] ${item.color} flex items-center justify-center ${item.shadow} relative z-10 bg-white dark:bg-zinc-900 transition-all hover:scale-110`}>
-                      {item.icon}
-                      <div className={`absolute -top-3 -right-3 w-10 h-10 rounded-full ${item.numColor} ${item.numColor === 'bg-indigo' ? 'text-white' : 'text-foreground'} flex items-center justify-center font-black text-xs border-[3px] border-background shadow-lg`}>
-                        {item.step}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-black mb-3 uppercase text-foreground tracking-tight">{item.title}</h4>
-                      <p className="text-muted-foreground font-black text-base leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Diferenciais Section */}
-        <section id="diferenciais" className="bg-indigo py-24 text-white relative">
-          <div className="absolute top-0 right-0 w-full h-full opacity-10 bg-gradient-to-br from-magenta via-indigo to-teal -z-0"></div>
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-             <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-20 text-left">
-               <div className="max-w-2xl space-y-6">
-                 <h2 className="text-4xl md:text-7xl font-black tracking-tighter uppercase leading-none">Diferenciais <br /><span className="text-yellow-p drop-shadow-[4px_4px_0px_var(--indigo)]">que encantam.</span></h2>
-                 <p className="text-xl font-black text-white/90 leading-relaxed uppercase tracking-tight">Design de alto nível para quem não se contenta com o básico.</p>
-               </div>
-               <div className="hidden md:block">
-                  <ArrowUpRight className="w-20 h-20 text-yellow-p" />
-               </div>
-             </div>
-             
-             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-               {[
-                 { title: "Divisão Proporcional", color: "border-orange", icon: <Users className="w-8 h-8 text-orange fill-orange/20" />, desc: "Calculamos a divisão justa baseada na renda de cada um." },
-                 { title: "Metas em Conjunto", color: "border-magenta", icon: <Target className="w-8 h-8 text-magenta fill-magenta/20" />, desc: "Planejem sonhos maiores e acompanhem o progresso real." },
-                 { title: "Despesas Fixas", color: "border-teal", icon: <Calendar className="w-8 h-8 text-teal fill-teal/20" />, desc: "Nunca mais esqueçam de pagar contas importantes." },
-                 { title: "Foco em Privacidade", color: "border-yellow-p", icon: <Lock className="w-8 h-8 text-yellow-p fill-yellow-p/20" />, desc: "Seus dados criptografados e controle total de acesso." }
-               ].map((item, idx) => (
-                 <div key={idx} className={`p-8 bg-white dark:bg-zinc-900 border-[4px] ${item.color} rounded-[2.5rem] shadow-[10px_10px_0px_0px_var(--indigo-light)] flex flex-col items-start transition-all hover:-translate-y-4 text-foreground`}>
-                   <div className="mb-6 p-4 bg-background border-2 border-border rounded-xl shadow-sm">{item.icon}</div>
-                   <h3 className="text-xl font-black mb-4 uppercase leading-none tracking-tight">{item.title}</h3>
-                   <p className="text-muted-foreground font-black text-xs leading-relaxed">{item.desc}</p>
-                 </div>
-               ))}
-             </div>
-          </div>
-        </section>
-
-        {/* Plans Section */}
-        <section id="planos" className="py-24 relative">
-          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-magenta/5 blur-[120px] rounded-full -z-10"></div>
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16 space-y-6">
-              <h2 className="text-5xl md:text-7xl font-black tracking-tight text-foreground uppercase leading-none">Investindo no <br /><span className="text-indigo">seu futuro.</span></h2>
-              
-              {/* Annual Toggle */}
-              <div className="flex items-center justify-center gap-6 mt-12 bg-secondary p-3 rounded-2xl border-[3px] border-border w-fit mx-auto">
-                <span className={`text-xs font-black uppercase tracking-widest ${!isAnnual ? 'text-indigo underline decoration-4 underline-offset-4' : 'text-muted-foreground'}`}>Mensal</span>
-                <button 
-                  onClick={() => setIsAnnual(!isAnnual)}
-                  className="w-16 h-8 rounded-full bg-indigo-light/10 border-[3px] border-indigo relative flex items-center px-1 transition-all"
-                >
-                  <div className={`w-4 h-4 rounded-full bg-indigo transition-all duration-300 shadow-[0_0_10px_rgba(83,48,255,1)] ${isAnnual ? 'translate-x-[32px]' : 'translate-x-0'}`}></div>
-                </button>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs font-black uppercase tracking-widest ${isAnnual ? 'text-indigo underline decoration-4 underline-offset-4' : 'text-muted-foreground'}`}>Anual</span>
-                  <span className="bg-yellow-p text-[10px] font-black px-3 py-1 rounded-full text-indigo animate-bounce border-2 border-indigo">-15% OFF</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto items-start">
-              {/* Individual Plan */}
-              <PlanCard 
-                title="INDIVIDUAL"
-                price={calculatePrice(19.90)}
-                label="SOLO"
-                color="border-teal"
-                btnColor="bg-teal text-foreground hover:bg-teal/90 shadow-[4px_4px_0px_0px_#000]"
-                features={["Lançamentos ilimitados", "Categorias inteligentes", "Análise de gastos", "Alertas de limite"]}
-              />
-
-              {/* Casal Plan */}
-              <PlanCard 
-                title="CASAL"
-                price={calculatePrice(29.90)}
-                label="PARA DOIS"
-                color="border-magenta"
-                featured
-                btnColor="bg-magenta text-foreground hover:bg-magenta/90 shadow-[4px_4px_0px_0px_#000]"
-                features={["Tudo do Individual", "Perfis Compartilhados (2)", "Divisão Proporcional", "Metas de Casal"]}
-              />
-
-              {/* Família Plan */}
-              <PlanCard 
-                title="FAMÍLIA"
-                price={calculatePrice(49.90)}
-                label="TIME COMPLETO"
-                color="border-orange"
-                btnColor="bg-orange text-foreground hover:bg-orange/90 shadow-[4px_4px_0px_0px_#000]"
-                features={["Tudo do Casal", "Até 4 Perfis Inclusos", "Dashboard Familiar", "Gestão de Dependentes"]}
-                footer="ADICIONAL R$ 7/MÊS EXTRA"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ Section */}
-        <section className="py-24 bg-indigo/5 relative">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
-            <h2 className="text-4xl font-black mb-12 text-center text-foreground uppercase tracking-tight">CLAREZA TOTAL.</h2>
-            <Accordion type="single" collapsible className="space-y-6">
-              {[
-                { q: "COMO FUNCIONA O PERÍODO DE TESTE?", a: "Você pode usar todas as funcionalidades sem restrição por 14 dias para sentir a clareza no seu dia a dia." },
-                { q: "POSSO CANCELAR A QUALQUER MOMENTO?", a: "Sim! A Finexa não tem contratos de fidelidade. Você cancela com um clique e continua tendo acesso até o fim do período pago." },
-                { q: "COMO MEUS DADOS SÃO PROTEGIDOS?", a: "Utilizamos criptografia padrão bancário (SSL/AES-256) e auditorias constantes. Privacidade é nossa prioridade total." },
-                { q: "POR QUE O CONTROLE É ATIVO?", a: "A consciência financeira nasce do registro ativo. A Finexa torna esse processo 5x mais rápido, garantindo que você realmente entenda para onde cada centavo está indo." }
-              ].map((item, idx) => (
-                <AccordionItem key={idx} value={`item-${idx}`} className="border-[4px] border-border rounded-[2.5rem] px-8 bg-background overflow-hidden transition-all data-[state=open]:border-indigo shadow-[8px_8px_0px_0px_var(--indigo)/5]">
-                  <AccordionTrigger className="text-xl font-black py-8 hover:no-underline text-foreground uppercase tracking-tighter text-left">{item.q}</AccordionTrigger>
-                  <AccordionContent className="pb-8 text-foreground font-black text-base leading-relaxed">{item.a}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 text-center px-4 relative">
-          <div className="max-w-7xl mx-auto bg-indigo border-[6px] border-foreground p-16 md:p-24 rounded-[4rem] shadow-[24px_24px_0px_0px_var(--foreground)] relative overflow-hidden group">
-            <div className="relative z-10">
-              <h2 className="text-6xl md:text-8xl font-black text-white mb-8 uppercase tracking-tighter leading-none group-hover:scale-[1.02] transition-transform">Pronto para <br />ter clareza?</h2>
-              <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto font-black uppercase tracking-tight">Transforme o estresse financeiro em tranquilidade compartilhada hoje mesmo.</p>
-              <Link href="/dashboard">
-                <Button size="lg" className="h-20 px-16 text-2xl bg-yellow-p text-indigo hover:bg-white font-black rounded-[2rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.3)] transition-all hover:scale-105 active:translate-y-4 active:shadow-none border-[4px] border-indigo">
-                  COMEÇAR AGORA
-                </Button>
-              </Link>
-            </div>
-            {/* Shapes decorative */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-magenta/30 blur-[130px] -z-0"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal/30 blur-[130px] -z-0"></div>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-function PlanCard({ title, price, label, color, features, featured = false, footer = "", btnColor = "" }) {
+function FaqItem({ q, r }: { q: string; r: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className={`p-8 bg-background border-[4px] ${color} ${featured ? 'md:scale-105 md:-translate-y-4 shadow-[12px_12px_0px_0px_var(--indigo-light)] z-20' : 'shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)]'} rounded-[3rem] flex flex-col relative transition-all hover:shadow-xl overflow-hidden group text-foreground`}>
-      {featured && (
-        <div className={`absolute -top-0 left-1/2 -translate-x-1/2 ${color.replace('border-', 'bg-')} text-white px-6 py-1 rounded-b-2xl text-[10px] font-black uppercase tracking-widest border-x-2 border-b-2 border-indigo/20`}>
-          RECOMENDADO
+    <div className="nb-card bg-card overflow-hidden">
+      <button onClick={() => setOpen(!open)}
+        className="w-full flex justify-between items-center text-left p-6 gap-4">
+        <span className="font-black text-base text-foreground">{q}</span>
+        <ChevronDown className={`h-5 w-5 text-[#5330ff] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-6 pb-6 text-sm text-muted-foreground leading-relaxed border-t border-border pt-4">
+          {r}
         </div>
       )}
-      <div className="mb-10 pt-4 text-left">
-        <h3 className="text-3xl font-black mb-2 text-foreground uppercase tracking-tighter">{title}</h3>
-        <div className="flex items-baseline gap-1">
-          <span className="text-xl font-black opacity-50">R$</span>
-          <span className="text-5xl font-black tracking-tighter text-foreground leading-none">{price}</span>
-          <span className="text-muted-foreground font-black uppercase text-[10px]">/mês</span>
-        </div>
-        <p className={`text-[10px] font-black p-1 px-3 bg-secondary rounded-lg w-fit mt-3 uppercase tracking-widest ${color.replace('border-', 'text-')}`}>{label}</p>
-      </div>
-      <ul className="space-y-5 mb-10 flex-grow text-left">
-        {features.map((f, i) => (
-          <li key={i} className="flex gap-3 items-center text-sm font-black text-foreground">
-            <CheckCircle2 className={`h-6 w-6 shrink-0 ${color.replace('border-', 'text-')}`} /> 
-            <span className="uppercase tracking-tight">{f}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="space-y-4">
-        <Link href="/dashboard" className="w-full">
-          <Button className={`w-full h-14 ${btnColor} border-[3px] border-black/10 font-black rounded-2xl text-lg uppercase transition-all hover:-translate-y-1`}>
-            QUERO {title}
-          </Button>
-        </Link>
-        {footer && <p className="text-[9px] text-center font-black text-muted-foreground opacity-80 uppercase tracking-widest">{footer}</p>}
-      </div>
+    </div>
+  );
+}
+
+// ─── Landing Page ─────────────────────────────────────────────────────────────
+
+export default function LandingPage() {
+  const [anual, setAnual] = useState(false);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
+      <Navbar />
+
+      <main className="flex-grow pt-20">
+
+        {/* ── HERO ── */}
+        <section className="grid-bg relative min-h-[90vh] flex items-center">
+          {/* Blobs decorativos */}
+          <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-[#5330ff]/8 blur-[120px] rounded-full -z-10 dark:bg-[#5330ff]/15" />
+          <div className="absolute top-[20%] right-[-5%] w-[350px] h-[350px] bg-[#ff64ca]/8 blur-[100px] rounded-full -z-10 dark:bg-[#ff64ca]/12" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full grid md:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <Badge cor="#01b695">✦ Controle Financeiro Para Casais</Badge>
+
+              <h1 className="text-5xl md:text-7xl font-black leading-[1.0] tracking-tighter text-foreground">
+                Seu dinheiro,{' '}
+                <br />
+                <span className="text-[#5330ff]"
+                  style={{ textShadow: '4px 4px 0 #82a1fd50' }}>
+                  com clareza.
+                </span>
+              </h1>
+
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed font-medium">
+                O único app que divide as contas{' '}
+                <strong className="text-foreground">proporcionalmente ao salário</strong>{' '}
+                de cada um. Para casais e famílias que querem controle real.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/dashboard">
+                  <button className="nb-btn bg-[#5330ff] text-white px-8 py-4 text-base font-black uppercase tracking-wide flex items-center gap-2 animate-glow">
+                    Começar grátis <ArrowRight className="h-5 w-5" />
+                  </button>
+                </Link>
+                <div className="nb-card flex items-center gap-3 px-5 py-4 bg-[#fff245] dark:bg-[#fff245] border-foreground/80">
+                  <ShieldCheck className="h-5 w-5 text-[#08080f] flex-shrink-0" />
+                  <div className="text-[#08080f]">
+                    <div className="text-sm font-black leading-tight">14 dias grátis</div>
+                    <div className="text-[10px] opacity-60 uppercase tracking-widest">Sem cartão de crédito</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Métricas sociais */}
+              <div className="flex gap-6 pt-2">
+                {[
+                  { n: '14 dias', l: 'trial grátis' },
+                  { n: '3 planos', l: 'para cada fase' },
+                  { n: '100%', l: 'privado' },
+                ].map(m => (
+                  <div key={m.l}>
+                    <div className="text-xl font-black text-[#5330ff]">{m.n}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide">{m.l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center relative">
+              {/* Card flutuante 1 */}
+              <div className="absolute -top-4 -right-4 nb-card bg-[#01b695] text-[#08080f] p-3 animate-float z-10">
+                <div className="text-[10px] font-black uppercase">Economia este mês</div>
+                <div className="text-lg font-black">+R$ 1.240</div>
+              </div>
+              {/* Card flutuante 2 */}
+              <div className="absolute -bottom-4 -left-4 nb-card bg-[#fff245] text-[#08080f] p-3 animate-float-slow z-10">
+                <div className="text-[10px] font-black uppercase">Meta viagem</div>
+                <div className="text-lg font-black">75% ✈️</div>
+              </div>
+              <AppMockup />
+            </div>
+          </div>
+        </section>
+
+        {/* ── PROBLEMA ── */}
+        <section className="py-24 bg-foreground/[0.02]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <Badge>O problema</Badge>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
+                Você sabe quanto<br />gastou esse mês?
+              </h2>
+              <p className="text-muted-foreground mt-4 text-lg max-w-lg mx-auto">Reconhece alguma dessas situações?</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { e: '😰', t: 'Quanto gastamos?', d: 'No fim do mês, ninguém sabe ao certo. O dinheiro foi embora e ninguém sabe para onde.', top: '#ff64ca' },
+                { e: '🤔', t: 'Quem pagou o quê?', d: 'Contas divididas no feeling, discussões sobre quem deve mais. Toda hora.', top: '#ffa857' },
+                { e: '😤', t: 'Por que não sobra?', d: 'Os salários caem, as contas consomem tudo. Nunca sobra para o que importa.', top: '#fff245' },
+              ].map(p => (
+                <div key={p.t} className="nb-card bg-card p-8" style={{ borderTop: `4px solid ${p.top}` }}>
+                  <div className="text-5xl mb-4">{p.e}</div>
+                  <h3 className="text-xl font-black text-foreground mb-3">{p.t}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{p.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── COMO FUNCIONA ── */}
+        <section id="como-funciona" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <Badge cor="#ffa857">Como funciona</Badge>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
+                Simples assim.
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {[
+                { n: '01', t: 'Configure os salários', d: 'Informe o salário de cada um. O Finexa calcula a proporção e divide tudo automaticamente.', cor: '#01b695' },
+                { n: '02', t: 'Cadastre as fixas', d: 'Aluguel, condomínio, assinaturas. Cada um vê sua parte proporcional, sem discussão.', cor: '#5330ff' },
+                { n: '03', t: 'Lance e acompanhe', d: 'App em 3 toques ou Telegram. O dashboard atualiza em tempo real para os dois.', cor: '#ff64ca' },
+              ].map((s, i) => (
+                <div key={s.n} className="relative">
+                  <div className="text-7xl font-black text-foreground/5 dark:text-white/5 mb-4" style={{ fontFamily: 'inherit' }}>{s.n}</div>
+                  <div className="nb-card bg-card p-6 -mt-8">
+                    <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center text-xl"
+                      style={{ background: `${s.cor}20`, border: `2px solid ${s.cor}40` }}>
+                      {['⚙️','📋','🚀'][i]}
+                    </div>
+                    <h3 className="text-lg font-black text-foreground mb-2">{s.t}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{s.d}</p>
+                    <div className="w-8 h-1 rounded-full mt-4" style={{ background: s.cor }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── DIFERENCIAIS ── */}
+        <section id="diferenciais" className="py-24 bg-foreground/[0.02] grid-bg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <Badge cor="#ff64ca">Diferenciais</Badge>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
+                Feito para quem<br />divide a vida.
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {DIFERENCIAIS.map(d => (
+                <div key={d.titulo} className="nb-card bg-card p-6 cursor-default">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
+                    style={{ background: `${d.cor}15`, border: `2px solid ${d.cor}30` }}>
+                    {d.icon}
+                  </div>
+                  <h3 className="font-black text-lg text-foreground mb-2">{d.titulo}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{d.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── PLANOS ── */}
+        <section id="planos" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <Badge>Planos</Badge>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
+                Escolha o seu plano.
+              </h2>
+              <p className="text-muted-foreground mt-3">14 dias grátis em todos os planos. Sem cartão de crédito.</p>
+            </div>
+
+            {/* Toggle */}
+            <div className="flex items-center justify-center gap-4 mb-12">
+              <span className={`text-sm font-bold ${!anual ? 'text-foreground' : 'text-muted-foreground'}`}>Mensal</span>
+              <button onClick={() => setAnual(!anual)}
+                className="nb-btn relative w-14 h-7 rounded-full p-0.5 transition-colors"
+                style={{ background: anual ? '#5330ff' : 'var(--secondary)' }}>
+                <div className={`w-6 h-6 rounded-full bg-white transition-all duration-200 ${anual ? 'translate-x-7' : 'translate-x-0'}`} />
+              </button>
+              <span className={`text-sm font-bold ${anual ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Anual <span className="text-[#01b695] font-black">-20%</span>
+              </span>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 items-start">
+              {PLANOS.map(p => {
+                const preco = anual ? Math.round(p.preco * 0.8) : p.preco;
+                return (
+                  <div key={p.id}
+                    className={`nb-card bg-card p-8 relative ${p.destaque ? 'border-[#5330ff] shadow-[6px_6px_0_#5330ff]' : ''}`}
+                    style={p.destaque ? { borderColor: '#5330ff', boxShadow: '6px 6px 0 #5330ff30' } : {}}>
+                    {p.destaque && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 nb-btn bg-[#5330ff] text-white text-xs font-black px-4 py-1.5 uppercase tracking-wider">
+                        ⭐ Mais popular
+                      </div>
+                    )}
+                    <div className="text-4xl mb-3">{p.emoji}</div>
+                    <h3 className="text-2xl font-black text-foreground mb-1">{p.nome}</h3>
+                    <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{p.desc}</p>
+                    <div className="mb-6">
+                      <span className="text-5xl font-black text-foreground">R${preco}</span>
+                      <span className="text-muted-foreground text-sm">/mês</span>
+                      {anual && <div className="text-xs text-[#01b695] font-bold mt-1">R${preco * 12}/ano · 20% de desconto</div>}
+                    </div>
+                    <ul className="space-y-3 mb-8">
+                      {p.features.map(f => (
+                        <li key={f} className="flex items-center gap-3 text-sm text-foreground">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${p.cor}20`, color: p.cor }}>
+                            <Check className="h-3 w-3" />
+                          </div>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href={`/dashboard?plano=${p.id}`}>
+                      <button className="nb-btn w-full py-4 font-black uppercase tracking-wide text-sm"
+                        style={p.destaque ? { background: '#5330ff', color: '#fff', borderColor: '#5330ff' } : { background: 'var(--secondary)', color: 'var(--foreground)' }}>
+                        Começar grátis
+                      </button>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section id="faq" className="py-24 bg-foreground/[0.02]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge cor="#82a1fd">Dúvidas</Badge>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-4 text-foreground">
+                Perguntas frequentes
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {FAQ.map(item => <FaqItem key={item.q} {...item} />)}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA FINAL ── */}
+        <section className="py-24">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="nb-card bg-[#5330ff] p-16 text-center relative overflow-hidden"
+              style={{ borderColor: '#82a1fd', boxShadow: '8px 8px 0 #3a1fd4' }}>
+              <div className="absolute top-0 right-0 text-[200px] leading-none font-black text-white/5 select-none">F</div>
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 relative z-10">
+                Comece hoje.<br />Sem cartão.
+              </h2>
+              <p className="text-white/70 text-lg mb-8 relative z-10">14 dias grátis. Depois, a partir de R$19/mês.</p>
+              <Link href="/dashboard" className="relative z-10">
+                <button className="nb-btn bg-[#fff245] text-[#08080f] px-12 py-5 text-lg font-black uppercase tracking-wide"
+                  style={{ borderColor: '#08080f', boxShadow: '4px 4px 0 #08080f' }}>
+                  Criar conta grátis ✦
+                </button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <Footer />
     </div>
   );
 }
