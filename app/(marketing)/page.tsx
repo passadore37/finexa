@@ -10,6 +10,7 @@ import {
   Smartphone,
   PieChart as LucidePieChart,
   ArrowRight,
+  Target,
   CreditCard,
   Coins,
   Wallet,
