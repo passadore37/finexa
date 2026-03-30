@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-// Logo igual ao do dash — F em fundo índigo com borda azul pastel
 function Logo() {
   return (
     <div className="flex items-center gap-3">
@@ -26,8 +25,6 @@ function Logo() {
     </div>
   );
 }
-
-// ThemeToggle local removido para usar o componente compartilhado
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -73,7 +70,7 @@ export function Navbar() {
               Entrar
             </button>
           </Link>
-          <Link href="/dashboard">
+          <Link href="/cadastro">
             <button className="nb-btn bg-[#5330ff] text-white px-4 py-2 text-sm font-black"
               style={{ borderColor: '#5330ff', boxShadow: '3px 3px 0 #82a1fd60' }}>
               Começar grátis
@@ -103,7 +100,7 @@ export function Navbar() {
             <Link href="/login" onClick={() => setOpen(false)}>
               <button className="nb-btn w-full py-3 bg-card text-foreground font-bold text-sm">Entrar</button>
             </Link>
-            <Link href="/dashboard" onClick={() => setOpen(false)}>
+            <Link href="/cadastro" onClick={() => setOpen(false)}>
               <button className="nb-btn w-full py-3 bg-[#5330ff] text-white font-black text-sm">Começar grátis</button>
             </Link>
           </div>
