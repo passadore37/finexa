@@ -21,6 +21,7 @@ import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/typ
 import { HistoricoView } from '@/components/historico/historico-view';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
 import { calcularEvolucaoMensal, calcularProjecaoBar, calcularParceladas, gerarAlertas, gerarSugestoes } from '@/lib/indicadores';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface APIResponse {
   success: boolean;
@@ -146,6 +147,7 @@ export function Dashboard() {
                 <span className="text-xs hidden sm:inline">Notificações</span>
               </Button>
             )}
+            <ThemeToggle />
           </div>
         </div>
       </div>

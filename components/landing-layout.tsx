@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 // Logo igual ao do dash — F em fundo índigo com borda azul pastel
 function Logo() {
@@ -26,40 +27,7 @@ function Logo() {
   );
 }
 
-function ThemeToggle() {
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('finexa-theme');
-    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = saved === 'dark' || (!saved && sysDark);
-    setDark(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  }, []);
-
-  function toggle() {
-    const next = !dark;
-    setDark(next);
-    localStorage.setItem('finexa-theme', next ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', next);
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-  }
-
-  return (
-    <button
-      onClick={toggle}
-      className="nb-btn w-9 h-9 flex items-center justify-center bg-card text-foreground hover:bg-secondary transition-colors"
-      title={dark ? 'Modo claro' : 'Modo escuro'}
-      aria-label="Alternar tema"
-    >
-      {dark
-        ? <Sun className="h-4 w-4 text-[#fff245]" />
-        : <Moon className="h-4 w-4 text-[#5330ff]" />
-      }
-    </button>
-  );
-}
+// ThemeToggle local removido para usar o componente compartilhado
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
