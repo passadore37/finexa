@@ -52,7 +52,7 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
     supabase
       .from('transacoes')
       .select('*')
-      .gte('data', getPrimeiroDiaMes(-1))
+      .gte('data', getPrimeiroDiaMes(-5))  // 6 meses para o gráfico de evolução
       .lte('data', getUltimoDiaMes(0))
       .order('data', { ascending: false }),
 

@@ -41,6 +41,10 @@ export function calcularEvolucaoMensal(
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
     const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
 
+    // Label com mês e ano curto para evitar ambiguidade (ex: Mar/24 vs Mar/25)
+    const mesLabel = `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+    const ehMesAtual = d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+
     if (perfil && propPerfil !== undefined) {
       const receitas = tsMes
         .filter(t => t.tipo === 'receita' && t.responsavel === perfil)
@@ -48,11 +52,16 @@ export function calcularEvolucaoMensal(
       const despesas = tsMes
         .filter(t => t.tipo === 'despesa')
         .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, propPerfil), 0);
-      return { mes: MESES[d.getMonth()], receitas, despesas, saldo: receitas - despesas };
+      return { mes: ehMesAtual ? `${MESES[d.getMonth()]} ●` : mesLabel, receitas, despesas, saldo: receitas - despesas };
     }
 
     const tot = calcularTotais(tsMes);
-    return { mes: MESES[d.getMonth()], receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
+    return {
+      mes: ehMesAtual ? `${MESES[d.getMonth()]} ●` : mesLabel,
+      receitas: tot.receitas,
+      despesas: tot.despesas,
+      saldo: tot.receitas - tot.despesas
+    };
   });
 }
 
