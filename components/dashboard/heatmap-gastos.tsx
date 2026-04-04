@@ -126,7 +126,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
                        <TooltipTrigger asChild>
                          <div
                            onClick={() => temGasto && onDiaSelect?.(celula.dia)}
-                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform relative ${dia.futuro ? 'opacity-20 cursor-not-allowed pointer-events-none' : temGasto ? 'hover:scale-110 cursor-pointer' : 'cursor-default pointer-events-none'} ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''} ${isActive && !dia.futuro ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110 z-10' : ''}`}
+                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform relative ${celula.futuro ? 'opacity-20 cursor-not-allowed pointer-events-none' : temGasto ? 'hover:scale-110 cursor-pointer' : 'cursor-default pointer-events-none'} ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''} ${isActive && !celula.futuro ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110 z-10' : ''}`}
                            style={{
                              backgroundColor: temGasto ? corBg : 'var(--secondary)',
                              color: temGasto ? corTexto : 'var(--muted-foreground)',
