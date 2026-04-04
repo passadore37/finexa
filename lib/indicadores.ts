@@ -275,7 +275,7 @@ export function calcularParceladas(
         totalParcelas,
         parcelasRestantes,
         comprometimentoFuturo,
-        mesTermino: `${MESES[fim.getMonth()]}/${fim.getFullYear()}`,
+        mesTermino: `${MESES[fim.getMonth()]}/${String(fim.getFullYear()).slice(2)}`,
       };
     })
     .filter(p => p.parcelasRestantes > 0)
@@ -504,7 +504,7 @@ function calcularProjecao(ts: Transacao[]): ProjecaoFinanceira[] {
     saldo += media;
 
     return {
-      mes: MESES[d.getMonth()],
+      mes: `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
       saldoProjetado: saldo,
       saldoOtimista: saldo + media * 0.2 * (i + 1),
       saldoPessimista: saldo - media * 0.3 * (i + 1)
@@ -686,18 +686,15 @@ export function gerarAlertas(
     });
   }
 
-  const proxMes =
-    MESES[new Date(
-      new Date().getFullYear(),
-      new Date().getMonth() + 1
-    ).getMonth()];
+  const proxMesDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
+  const proxMesLabel = `${MESES[proxMesDate.getMonth()]}/${String(proxMesDate.getFullYear()).slice(2)}`;
 
   parceladas.forEach(p => {
-    if (p.mesTermino.startsWith(proxMes)) {
+    if (p.mesTermino.startsWith(proxMesLabel.split('/')[0]) || p.mesTermino.startsWith(proxMesLabel)) {
       alertas.push({
         id: `fim-${p.descricao}`,
         tipo: 'sucesso',
-        titulo: `${p.descricao} termina em ${proxMes}`,
+        titulo: `${p.descricao} termina em ${proxMesLabel}`,
         mensagem: `R$ ${p.valorParcela.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} liberados no próximo mês.`
       });
     }

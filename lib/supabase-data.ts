@@ -104,31 +104,45 @@ export async function fetchDadosPlanilha(): Promise<DadosPlanilha> {
     valorTotalCompromisso: row.valor_total_compromisso ? Number(row.valor_total_compromisso) : undefined,
   }));
 
-  // Salários como receitas do mês atual
-  if (salarioLeticia > 0) {
-    transacoes.push({
-      id: 'sal-let',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0),
-      descricao: 'Salário Letícia',
-      categoria: 'Salário',
-      tipo: 'receita',
-      valor: salarioLeticia,
-      responsavel: 'leticia',
-      recorrente: true,
-    });
-  }
+  // Injetar salários sintéticos SOMENTE nos meses que têm transações reais
+  // — usuários novos ficam zerados até lançar o primeiro dado
+  for (let offset = -5; offset <= 0; offset++) {
+    const dataSal = new Date(hoje.getFullYear(), hoje.getMonth() + offset, 1, 12, 0, 0);
+    const anoMes = dataSal.getFullYear() * 100 + dataSal.getMonth();
 
-  if (salarioGiovanna > 0) {
-    transacoes.push({
-      id: 'sal-gio',
-      data: new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0),
-      descricao: 'Salário Giovanna',
-      categoria: 'Salário',
-      tipo: 'receita',
-      valor: salarioGiovanna,
-      responsavel: 'giovanna',
-      recorrente: true,
+    // Verificar se existe ao menos 1 transação real neste mês
+    const temTransacaoReal = rows.some(row => {
+      const d = new Date(row.data + 'T12:00:00');
+      return d.getFullYear() * 100 + d.getMonth() === anoMes;
     });
+
+    if (!temTransacaoReal) continue; // mês vazio → não injeta salário
+
+    const sfx = offset === 0 ? '' : String(offset);
+    if (salarioLeticia > 0) {
+      transacoes.push({
+        id: `sal-let${sfx}`,
+        data: dataSal,
+        descricao: 'Salário Letícia',
+        categoria: 'Salário',
+        tipo: 'receita' as const,
+        valor: salarioLeticia,
+        responsavel: 'leticia',
+        recorrente: true,
+      });
+    }
+    if (salarioGiovanna > 0) {
+      transacoes.push({
+        id: `sal-gio${sfx}`,
+        data: dataSal,
+        descricao: 'Salário Giovanna',
+        categoria: 'Salário',
+        tipo: 'receita' as const,
+        valor: salarioGiovanna,
+        responsavel: 'giovanna',
+        recorrente: true,
+      });
+    }
   }
 
   // Nota: contas fixas do planejamento NÃO são injetadas como transações sintéticas.
