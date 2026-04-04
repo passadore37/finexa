@@ -24,10 +24,8 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: H
     const hoje = new Date();
     const anoAlvo = ano !== undefined ? ano : hoje.getFullYear();
     const mesAlvo = mes !== undefined ? mes : hoje.getMonth();
-    // Alias para compatibilidade com o resto do código
-    
-    const ultimoDia = new Date(_ano, _mes + 1, 0).getDate();
-    const diaHoje = (_mes === hoje.getMonth() && _ano === hoje.getFullYear()) ? hoje.getDate() : ultimoDia;
+    const ultimoDia = new Date(anoAlvo, mesAlvo + 1, 0).getDate();
+    const diaHoje = (mesAlvo === hoje.getMonth() && anoAlvo === hoje.getFullYear()) ? hoje.getDate() : ultimoDia;
     const diasMes = Array.from({ length: ultimoDia }, (_, i) => ({
       dia: i + 1,
       total: 0,
@@ -38,7 +36,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: H
     const tsMes = transacoes.filter(t => {
       if (t.tipo !== 'despesa') return false;
       const tDate = new Date(typeof t.data === 'string' && t.data.length === 10 ? t.data + 'T12:00:00' : t.data);
-      return tDate.getMonth() === _mes && tDate.getFullYear() === _ano;
+      return tDate.getMonth() === mesAlvo && tDate.getFullYear() === anoAlvo;
     });
 
     // Somar por dia
@@ -53,12 +51,12 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: H
     const max = Math.max(...diasMes.map(d => d.total), 1);
     
     // Obter fuso ajustado pra formatar mês
-    const mesNome = new Date(_ano, _mes, 1).toLocaleString('pt-BR', { month: 'long' });
+    const mesNome = new Date(anoAlvo, mesAlvo, 1).toLocaleString('pt-BR', { month: 'long' });
 
     return { dias: diasMes, maxValor: max, mesAtualNome: mesNome };
   }, [transacoes]);
 
-  const primeiroDiaSemana = new Date(_ano, _mes, 1).getDay();
+  const primeiroDiaSemana = new Date(anoAlvo, mesAlvo, 1).getDay();
 
   // Vamos montar o array de células pro calendário (preenche o começo com "vazios")
   type DiaMes = { dia: number; total: number; futuro?: boolean };
