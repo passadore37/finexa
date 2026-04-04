@@ -1,4 +1,4 @@
-// middleware.ts — protege rotas do app, libera marketing
+// middleware.ts — proteção de rotas + propagação de sessão Supabase
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -10,7 +10,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return request.cookies.getAll(); },
+        getAll() {
+          return request.cookies.getAll();
+        },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
@@ -24,22 +26,45 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Verificar sessão
+  // IMPORTANTE: getUser() renova o token se necessário
+  // Não usar getSession() aqui — é menos seguro
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Rotas públicas — liberar sempre
-  const rotasPublicas = ['/', '/login', '/cadastro', '/plano', '/termos', '/privacidade'];
-  const isPublica = rotasPublicas.some(r => pathname === r || pathname.startsWith(r + '?'));
-  const isApi = pathname.startsWith('/api/');
-  const isStatic = pathname.startsWith('/_next/') || pathname.startsWith('/public/');
+  // Arquivos estáticos — liberar sempre sem verificação
+  const isStatic =
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/public/') ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|json|txt|xml)$/.test(pathname);
 
-  if (isPublica || isApi || isStatic) {
+  if (isStatic) return supabaseResponse;
+
+  // Rotas públicas de marketing — liberar sempre
+  const isMarketing =
+    pathname === '/' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/cadastro') ||
+    pathname.startsWith('/plano') ||
+    pathname.startsWith('/termos') ||
+    pathname.startsWith('/privacidade');
+
+  if (isMarketing) return supabaseResponse;
+
+  // API routes — verificar sessão e adicionar family_id no header
+  if (pathname.startsWith('/api/')) {
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Não autorizado. Faça login para continuar.' },
+        { status: 401 }
+      );
+    }
+    // Propagar user id para as API routes via header
+    supabaseResponse.headers.set('x-user-id', user.id);
     return supabaseResponse;
   }
 
-  // Rotas protegidas — exigir sessão
+  // Todas as outras rotas (dashboard, lancar, metas, planejamento) — exigir sessão
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
@@ -52,6 +77,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Proteger tudo exceto arquivos estáticos do Next.js
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
