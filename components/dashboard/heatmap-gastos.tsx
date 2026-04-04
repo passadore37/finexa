@@ -20,7 +20,7 @@ interface HeatmapGastosProps {
 }
 
 export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: HeatmapGastosProps) {
-  const { dias, maxValor, mesAtualNome } = useMemo(() => {
+  const { dias, maxValor, mesAtualNome, celulas } = useMemo(() => {
     const hoje = new Date();
     const anoAlvo = ano !== undefined ? ano : hoje.getFullYear();
     const mesAlvo = mes !== undefined ? mes : hoje.getMonth();
@@ -53,14 +53,13 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: H
     // Obter fuso ajustado pra formatar mês
     const mesNome = new Date(anoAlvo, mesAlvo, 1).toLocaleString('pt-BR', { month: 'long' });
 
-    return { dias: diasMes, maxValor: max, mesAtualNome: mesNome };
-  }, [transacoes]);
 
-  const primeiroDiaSemana = new Date(anoAlvo, mesAlvo, 1).getDay();
+    const primeiroDiaSemana = new Date(anoAlvo, mesAlvo, 1).getDay();
+    type DiaMes = { dia: number; total: number; futuro?: boolean };
+    const celulas = (Array.from({ length: primeiroDiaSemana }, () => null) as Array<DiaMes | null>).concat(diasMes);
 
-  // Vamos montar o array de células pro calendário (preenche o começo com "vazios")
-  type DiaMes = { dia: number; total: number; futuro?: boolean };
-  const celulas = (Array.from({ length: primeiroDiaSemana }, () => null) as Array<DiaMes | null>).concat(dias);
+    return { dias: diasMes, maxValor: max, mesAtualNome: mesNome, celulas };
+  }, [transacoes, mes, ano]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
