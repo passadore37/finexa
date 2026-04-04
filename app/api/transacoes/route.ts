@@ -26,7 +26,14 @@ export async function POST(req: Request) {
     const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, tipo, data, responsavel } = body;
     if (!valor || !categoria) return NextResponse.json({ success: false, error: 'Valor e categoria obrigatórios' }, { status: 400 });
     const { data: result, error: err } = await supabase.from('transacoes').insert({
-      data: data || new Date().toISOString().split('T')[0],
+      data: data || (() => {
+        // Usar data local (não UTC) para evitar bug de timezone
+        const agora = new Date();
+        const ano = agora.getFullYear();
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const dia = String(agora.getDate()).padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+      })(),
       valor: Number(valor), categoria,
       descricao: descricao || categoria,
       perfil: perfil || 'casal',

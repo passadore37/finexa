@@ -24,9 +24,11 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
     const mes = hoje.getMonth();
     
     const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+    const diaHoje = hoje.getDate(); // não mostrar dias futuros
     const diasMes = Array.from({ length: ultimoDia }, (_, i) => ({
       dia: i + 1,
       total: 0,
+      futuro: (i + 1) > diaHoje, // marcador de dia futuro
     }));
 
     // Filtrar apenas despesas deste mês
@@ -56,7 +58,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
   const primeiroDiaSemana = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay();
 
   // Vamos montar o array de células pro calendário (preenche o começo com "vazios")
-  type DiaMes = { dia: number; total: number };
+  type DiaMes = { dia: number; total: number; futuro?: boolean };
   const celulas = (Array.from({ length: primeiroDiaSemana }, () => null) as Array<DiaMes | null>).concat(dias);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -124,7 +126,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
                        <TooltipTrigger asChild>
                          <div
                            onClick={() => temGasto && onDiaSelect?.(celula.dia)}
-                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform hover:scale-110 cursor-pointer relative ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110 z-10' : ''} ${!temGasto ? 'cursor-default pointer-events-none' : ''}`}
+                           className={`w-8 h-8 rounded-sm flex items-center justify-center text-[10px] sm:text-xs transition-transform relative ${dia.futuro ? 'opacity-20 cursor-not-allowed pointer-events-none' : temGasto ? 'hover:scale-110 cursor-pointer' : 'cursor-default pointer-events-none'} ${isHoje ? 'ring-1 ring-foreground ring-offset-1 ring-offset-card' : ''} ${isActive && !dia.futuro ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110 z-10' : ''}`}
                            style={{
                              backgroundColor: temGasto ? corBg : 'var(--secondary)',
                              color: temGasto ? corTexto : 'var(--muted-foreground)',

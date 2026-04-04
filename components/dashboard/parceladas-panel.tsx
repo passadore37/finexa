@@ -55,7 +55,7 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
     <Card className="border border-border bg-card card-hover">
       <CardHeader className="pb-2">
         <CardTitle className="label-uppercase text-muted-foreground">
-          Parceladas Ativas
+          Parcelas Ativas
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -79,7 +79,7 @@ export function ParceladasPanel({ parceladas, comprometimentoTotal }: Parceladas
           </div>
         </div>
 
-        {/* Lista de Parceladas (scroll dentro do card) */}
+        {/* Lista de Parcelas (scroll dentro do card) */}
         <div className="flex-1 overflow-y-auto max-h-[22rem] space-y-3 custom-scrollbar pr-1">
           {parceladas.map((parcelada, index) => {
             const cor = CORES_CATEGORIA[parcelada.categoria] || CORES_CATEGORIA.Outros;

@@ -12,6 +12,8 @@ import type { EvolucaoMensal } from '@/lib/types';
 
 interface EvolucaoChartProps {
   dados: EvolucaoMensal[];
+  mesSelecionado?: string | null;
+  onMesSelect?: (mes: string | null) => void;
 }
 
 const chartConfig = {
@@ -25,7 +27,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function EvolucaoChart({ dados }: EvolucaoChartProps) {
+export function EvolucaoChart({ dados, mesSelecionado, onMesSelect }: EvolucaoChartProps) {
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -37,13 +39,28 @@ export function EvolucaoChart({ dados }: EvolucaoChartProps) {
   return (
     <Card className="border border-border bg-card card-hover">
       <CardHeader className="pb-2">
-        <CardTitle className="label-uppercase text-muted-foreground">
-          Evolução Mensal
-        </CardTitle>
+        <div className="flex items-center justify-between w-full">
+          <CardTitle className="label-uppercase text-muted-foreground">
+            Evolução Mensal
+          </CardTitle>
+          {onMesSelect && (
+            <span className="text-[10px] text-muted-foreground/60">clique para filtrar</span>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[280px] w-full">
-          <BarChart data={dados} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <BarChart
+            data={dados}
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            onClick={(data) => {
+              if (data?.activePayload?.[0]) {
+                const mes = data.activePayload[0].payload.mes;
+                onMesSelect?.(mesSelecionado === mes ? null : mes);
+              }
+            }}
+            style={{ cursor: onMesSelect ? 'pointer' : 'default' }}
+          >
             <CartesianGrid 
               strokeDasharray="3 3" 
               stroke="rgba(255, 255, 255, 0.06)" 
@@ -89,6 +106,16 @@ export function EvolucaoChart({ dados }: EvolucaoChartProps) {
           </BarChart>
         </ChartContainer>
         
+        {mesSelecionado && (
+          <div className="flex items-center justify-center gap-2 mt-2 mb-1">
+            <span className="text-xs text-muted-foreground">
+              Exibindo: <span className="font-bold text-foreground">{mesSelecionado}</span>
+            </span>
+            <button onClick={() => onMesSelect?.(null)} className="text-xs text-[#5330ff] hover:underline font-bold">
+              Ver todos
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: '#3B6D11' }} />

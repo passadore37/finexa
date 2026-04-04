@@ -40,6 +40,7 @@ export function Dashboard() {
   // Estado de filtro por categoria — compartilhado entre gráfico e histórico
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
   const [diaAtivo, setDiaAtivo] = useState<number | null>(null);
+  const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
 
   const { data, error, isLoading, mutate } = useSWR<APIResponse>(
     '/api/financeiro', fetcher,
@@ -49,7 +50,7 @@ export function Dashboard() {
   useEffect(() => { aplicarCorPerfil(usuariaAtiva); }, [usuariaAtiva]);
 
   // Limpar filtro ao trocar perfil
-  useEffect(() => { setCategoriaAtiva(null); setDiaAtivo(null); }, [usuariaAtiva]);
+  useEffect(() => { setCategoriaAtiva(null); setDiaAtivo(null); setMesSelecionado(null); }, [usuariaAtiva]);
 
   useEffect(() => {
     const handler = () => mutate();
@@ -101,6 +102,23 @@ export function Dashboard() {
     : dados.transacoes;
 
   const evolucaoMensal = isPerfil ? calcularEvolucaoMensal(transacoesVisiveis) : indicadores.evolucaoMensal;
+
+  // Quando um mês está selecionado no gráfico, filtrar dados para aquele mês
+  const MESES_MAP: Record<string, number> = {
+    'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5,
+    'Jul': 6, 'Ago': 7, 'Set': 8, 'Out': 9, 'Nov': 10, 'Dez': 11,
+  };
+  const transacoesDoMes = mesSelecionado
+    ? (() => {
+        const [nomeMes, anoStr] = mesSelecionado.replace(' ●', '').split('/');
+        const mes = MESES_MAP[nomeMes];
+        const ano = anoStr ? 2000 + parseInt(anoStr) : new Date().getFullYear();
+        return transacoesVisiveis.filter(t => {
+          const d = t.data instanceof Date ? t.data : new Date(typeof t.data === 'string' && t.data.length === 10 ? t.data + 'T12:00:00' : t.data);
+          return d.getMonth() === mes && d.getFullYear() === ano;
+        });
+      })()
+    : transacoesVisiveis;
   const limite = usuariaAtiva === 'casal' ? limites.leticia + limites.giovanna : limites[usuariaAtiva as 'leticia' | 'giovanna'] || 9000;
 
   const fixas = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
@@ -109,8 +127,8 @@ export function Dashboard() {
   const ano = hoje.getFullYear();
 
   const projecaoBar = isPerfil
-    ? calcularProjecaoBar(transacoesVisiveis, mes, ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', perfilDados!.proporcaoRenda)
-    : calcularProjecaoBar(transacoesVisiveis, mes, ano, limite, fixas);
+    ? calcularProjecaoBar(transacoesDoMes, mes, ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', perfilDados!.proporcaoRenda)
+    : calcularProjecaoBar(transacoesDoMes, mes, ano, limite, fixas);
 
   const parceladas = isPerfil
     ? calcularParceladas(transacoesVisiveis, new Date(), usuariaAtiva, perfilDados!.proporcaoRenda)
@@ -167,7 +185,11 @@ export function Dashboard() {
         {/* Projeção + Evolução */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar dados={{ ...projecaoBar, limite }} onAjustarLimite={async (v) => { await fetch('/api/limite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perfil: usuariaAtiva, limite: v }) }); mutate(); }} perfilGeral={usuariaAtiva === 'casal'} fixas={fixas} />
-          <EvolucaoChart dados={evolucaoMensal} />
+          <EvolucaoChart
+            dados={evolucaoMensal}
+            mesSelecionado={mesSelecionado}
+            onMesSelect={setMesSelecionado}
+          />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
@@ -175,7 +197,7 @@ export function Dashboard() {
         {/* Calor do mês (Heatmap) + Fluxo de Dinheiro (Sankey) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 min-h-[300px]">
            <HeatmapGastos 
-             transacoes={transacoesVisiveis} 
+             transacoes={transacoesDoMes} 
              diaAtivo={diaAtivo} 
              onDiaSelect={(d) => setDiaAtivo(prev => prev === d ? null : d)} 
            />
@@ -203,7 +225,11 @@ export function Dashboard() {
         <div className="section-separator my-6 sm:my-8" />
 
         {/* Histórico — recebe filtro da categoria clicada no gráfico */}
-        <HistoricoView categoriaFiltro={categoriaAtiva} diaFiltro={diaAtivo} />
+        <HistoricoView
+          categoriaFiltro={categoriaAtiva}
+          diaFiltro={diaAtivo}
+          mesFiltro={mesSelecionado}
+        />
 
         <div className="section-separator my-6 sm:my-8" />
 

@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { authGuard } from '@/lib/auth-guard';
+
+// Cliente admin para operações de cron (sem sessão de usuário)
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(req: Request) {
   // Cron externo usa ?secret=... — não precisa de sessão
@@ -20,8 +29,9 @@ export async function POST(req: Request) {
     const mesAtual = `${meses[hoje.getMonth()]}-${String(hoje.getFullYear()).slice(2)}`;
     const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 
-    // Para cron sem sessão, busca todos os planejamentos ativos
-    const { data: planejamentos } = await supabase
+    // Para cron sem sessão, usa admin client para bypassar RLS
+    const supabaseAdmin = getAdminClient();
+    const { data: planejamentos } = await supabaseAdmin
       .from('planejamento').select('*').order('updated_at', { ascending: false });
 
     if (!planejamentos?.length)
@@ -38,7 +48,7 @@ export async function POST(req: Request) {
       const propLet = total > 0 ? Math.round((salLet / total) * 100) : 50;
       const divisaoReal = `${propLet}/${100 - propLet}`;
 
-      const { data: existentes } = await supabase.from('transacoes').select('descricao')
+      const { data: existentes } = await supabaseAdmin.from('transacoes').select('descricao')
         .eq('family_id', planejamento.family_id).eq('data', primeiroDia).eq('recorrente', true);
 
       const descricoesExistentes = new Set((existentes || []).map((t: any) => t.descricao.toLowerCase().trim()));
@@ -53,7 +63,7 @@ export async function POST(req: Request) {
         }));
 
       if (novas.length > 0) {
-        await supabase.from('transacoes').insert(novas);
+        await supabaseAdmin.from('transacoes').insert(novas);
         totalInseridas += novas.length;
       }
     }

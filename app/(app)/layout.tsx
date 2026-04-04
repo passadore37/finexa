@@ -2,7 +2,6 @@
 
 import { Logo } from '@/components/logo';
 import { TabNav } from '@/components/tab-nav';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +15,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <p className="text-[10px] text-muted-foreground mt-0.5">Seu dinheiro, com clareza.</p>
             </div>
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <TabNav />

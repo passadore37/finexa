@@ -41,7 +41,7 @@ export function TabNav() {
               >
                 <Icon 
                   className="h-3.5 w-3.5 flex-shrink-0 transition-all duration-300" 
-                  fill={active ? 'rgba(255,255,255,0.3)' : `${tab.color}33`}
+                  fill={active ? 'rgba(255,255,255,0.25)' : 'none'}
                   strokeWidth={active ? 2.5 : 2}
                 />
                 {tab.label}

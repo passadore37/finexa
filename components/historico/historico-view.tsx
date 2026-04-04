@@ -19,6 +19,7 @@ interface Transacao {
 
 interface Props {
   categoriaFiltro?: string | null;
+  mesFiltro?: string | null;
   diaFiltro?: number | null;
 }
 
@@ -38,7 +39,7 @@ function getDataTransacao(dataStr: string) {
   return d.getDate();
 }
 
-export function HistoricoView({ categoriaFiltro, diaFiltro }: Props) {
+export function HistoricoView({ categoriaFiltro, diaFiltro, mesFiltro }: Props) {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
