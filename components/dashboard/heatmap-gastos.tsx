@@ -15,16 +15,19 @@ interface HeatmapGastosProps {
   transacoes: Transacao[];
   diaAtivo?: number | null;
   onDiaSelect?: (dia: number) => void;
+  mes?: number;
+  ano?: number;
 }
 
-export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGastosProps) {
+export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: HeatmapGastosProps) {
   const { dias, maxValor, mesAtualNome } = useMemo(() => {
     const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = hoje.getMonth();
+    const anoAlvo = ano !== undefined ? ano : hoje.getFullYear();
+    const mesAlvo = mes !== undefined ? mes : hoje.getMonth();
+    // Alias para compatibilidade com o resto do código
     
-    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
-    const diaHoje = hoje.getDate(); // não mostrar dias futuros
+    const ultimoDia = new Date(_ano, _mes + 1, 0).getDate();
+    const diaHoje = (_mes === hoje.getMonth() && _ano === hoje.getFullYear()) ? hoje.getDate() : ultimoDia;
     const diasMes = Array.from({ length: ultimoDia }, (_, i) => ({
       dia: i + 1,
       total: 0,
@@ -35,7 +38,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
     const tsMes = transacoes.filter(t => {
       if (t.tipo !== 'despesa') return false;
       const tDate = new Date(typeof t.data === 'string' && t.data.length === 10 ? t.data + 'T12:00:00' : t.data);
-      return tDate.getMonth() === mes && tDate.getFullYear() === ano;
+      return tDate.getMonth() === _mes && tDate.getFullYear() === _ano;
     });
 
     // Somar por dia
@@ -50,12 +53,12 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect }: HeatmapGast
     const max = Math.max(...diasMes.map(d => d.total), 1);
     
     // Obter fuso ajustado pra formatar mês
-    const mesNome = hoje.toLocaleString('pt-BR', { month: 'long' });
+    const mesNome = new Date(_ano, _mes, 1).toLocaleString('pt-BR', { month: 'long' });
 
     return { dias: diasMes, maxValor: max, mesAtualNome: mesNome };
   }, [transacoes]);
 
-  const primeiroDiaSemana = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay();
+  const primeiroDiaSemana = new Date(_ano, _mes, 1).getDay();
 
   // Vamos montar o array de células pro calendário (preenche o começo com "vazios")
   type DiaMes = { dia: number; total: number; futuro?: boolean };

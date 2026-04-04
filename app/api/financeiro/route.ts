@@ -8,14 +8,21 @@ export async function GET(req: Request) {
   const { family_id, error } = await authGuard(req);
   if (error) return error;
   try {
-    const dados = await fetchDadosPlanilha(family_id!);
+    const { searchParams } = new URL(req.url);
+    // Aceita ?mes=2&ano=2026 para buscar mês específico
+    const mesParam = searchParams.get('mes');
+    const anoParam = searchParams.get('ano');
+    const mes = mesParam !== null ? parseInt(mesParam) : undefined;
+    const ano = anoParam !== null ? parseInt(anoParam) : undefined;
+
+    const dados = await fetchDadosPlanilha(family_id!, mes, ano);
     const indicadores = calcularTodosIndicadores(dados);
 
     const { data: limitesData } = await supabase
       .from('limites_financeiros').select('*').eq('family_id', family_id);
 
     const limites = {
-      leticia: limitesData?.find(l => l.perfil === 'leticia')?.limite ?? 0,
+      leticia:  limitesData?.find(l => l.perfil === 'leticia')?.limite  ?? 0,
       giovanna: limitesData?.find(l => l.perfil === 'giovanna')?.limite ?? 0,
     };
 
