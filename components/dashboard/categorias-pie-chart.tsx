@@ -9,7 +9,7 @@ interface Props {
   dados: DespesaPorCategoria[];
   onCategoriaSelect?: (categoria: string | null) => void;
   categoriaAtiva?: string | null;
-  getCor?: (nome: string) => string;
+  getCor?: (nome: string) => string; // prop para categorias customizadas
 }
 
 const CORES: Record<string, string> = {
@@ -19,11 +19,8 @@ const CORES: Record<string, string> = {
   Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
 };
 
-// Cores que precisam de texto ESCURO quando usadas como fundo (amarelos, verdes claros)
 const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
 
-
-// Retorna cor do texto sobre o fundo da categoria — funciona em light e dark
 function getTextSobreCor(cor: string): string {
   return FUNDO_CLARO.has(cor) ? '#1a1a1a' : '#ffffff';
 }
@@ -31,33 +28,27 @@ function getTextSobreCor(cor: string): string {
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 
-// Shape expandido para fatia ativa
 function ActiveShape(props: any) {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
   return (
     <g>
-      <Sector
-        cx={cx} cy={cy}
-        innerRadius={innerRadius - 3}
-        outerRadius={outerRadius + 7}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
+      <Sector cx={cx} cy={cy} innerRadius={innerRadius - 3} outerRadius={outerRadius + 7}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} />
     </g>
   );
 }
 
+export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, getCor: getCorProp }: Props) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
-
-export function CategoriasPieChart({
-  // Resolver cor — usa prop getCor (para categorias custom) ou fallback para mapa local
+  // Resolver cor: usa prop getCor (custom) ou mapa padrão
   function resolverCor(cat: string): string {
     return (getCorProp ? getCorProp(cat) : null) || CORES[cat] || '#888780';
   }
 
   // Tooltip interno (precisa de resolverCor em escopo)
-  function CustomTooltipInterno({ active, payload }: any) {
+  function CustomTooltip({ active, payload }: any) {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload as DespesaPorCategoria;
     const cor = resolverCor(d.categoria);
@@ -72,10 +63,6 @@ export function CategoriasPieChart({
       </div>
     );
   }
-
- dados, onCategoriaSelect, categoriaAtiva, getCor: getCorProp }: Props) {
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
   if (!dados || dados.length === 0) {
     return (
@@ -101,17 +88,14 @@ export function CategoriasPieChart({
     onCategoriaSelect?.(categoriaAtiva === cat ? null : cat);
   }
 
-
   return (
     <Card className="border bg-card">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="label-uppercase text-muted-foreground">Despesas por categoria</CardTitle>
           {categoriaAtiva && (
-            <button
-              onClick={() => onCategoriaSelect?.(null)}
-              className="text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <button onClick={() => onCategoriaSelect?.(null)}
+              className="text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors">
               Limpar ✕
             </button>
           )}
@@ -119,15 +103,10 @@ export function CategoriasPieChart({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row items-center gap-4">
-
-          {/* Gráfico donut com label central */}
           <div className="relative w-44 h-44 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={dados}
-                  cx="50%" cy="50%"
-                  innerRadius={48} outerRadius={72}
+                <Pie data={dados} cx="50%" cy="50%" innerRadius={48} outerRadius={72}
                   dataKey="valor" nameKey="categoria"
                   activeIndex={activeIndex >= 0 ? activeIndex : hoverIndex ?? undefined}
                   activeShape={ActiveShape}
@@ -137,109 +116,63 @@ export function CategoriasPieChart({
                   style={{ cursor: 'pointer', outline: 'none' }}
                 >
                   {dados.map((entry) => (
-                    <Cell
-                      key={entry.categoria}
-                      fill={resolverCor(entry.categoria)}
+                    <Cell key={entry.categoria} fill={resolverCor(entry.categoria)}
                       opacity={categoriaAtiva && categoriaAtiva !== entry.categoria ? 0.18 : 1}
-                      stroke="var(--card)"
-                      strokeWidth={2}
+                      stroke="var(--card)" strokeWidth={2}
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltipInterno />} />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
-
           </div>
 
-          {/* Legenda clicável */}
           <div className="flex-1 w-full space-y-1 min-w-0">
             {dados.map((d) => {
               const cor = resolverCor(d.categoria);
               const isActive = categoriaAtiva === d.categoria;
               const isHover = hoverLegenda === d.categoria;
               const isDimmed = !!categoriaAtiva && !isActive;
-              // Texto sobre fundo colorido — sempre legível em light e dark
               const textoSobreCor = getTextSobreCor(cor);
-
               return (
-                <button
-                  key={d.categoria}
-                  onClick={() => handleClick(d)}
+                <button key={d.categoria} onClick={() => handleClick(d)}
                   onMouseEnter={() => setHoverLegenda(d.categoria)}
                   onMouseLeave={() => setHoverLegenda(null)}
                   className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 transition-all duration-150 text-left"
                   style={{
                     opacity: isDimmed ? 0.2 : 1,
-                    // Fundo: cor sólida se ativo, cor suave se hover, transparente se normal
-                    background: isActive
-                      ? cor
-                      : isHover
-                      ? `${cor}20`
-                      : 'transparent',
+                    background: isActive ? cor : isHover ? `${cor}20` : 'transparent',
                     border: `1.5px solid ${isActive ? cor : isHover ? `${cor}60` : 'transparent'}`,
                   }}
                 >
-                  {/* Indicador / check */}
-                  <div
-                    className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center text-[11px] font-bold"
-                    style={{
-                      background: isActive ? 'rgba(0,0,0,0.18)' : `${cor}25`,
-                      // Cor do ícone: branco/preto sobre o fundo ativo, cor da categoria se normal
-                      color: isActive ? textoSobreCor : cor,
-                    }}
-                  >
+                  <div className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center text-[11px] font-bold"
+                    style={{ background: isActive ? 'rgba(0,0,0,0.18)' : `${cor}25`, color: isActive ? textoSobreCor : cor }}>
                     {isActive
                       ? <span style={{ color: textoSobreCor, fontSize: 12 }}>✓</span>
                       : <span style={{ width: 8, height: 8, borderRadius: 2, background: cor, display: 'block' }} />
                     }
                   </div>
-
-                  {/* Nome da categoria */}
-                  <span
-                    className="text-sm flex-1 truncate font-semibold"
-                    style={{
-                      // CRÍTICO: quando ativo usa textoSobreCor (preto ou branco sobre a cor)
-                      // Quando inativo usa variável CSS do tema — funciona em light E dark
-                      color: isActive ? textoSobreCor : 'var(--foreground)',
-                    }}
-                  >
+                  <span className="text-sm flex-1 truncate font-semibold"
+                    style={{ color: isActive ? textoSobreCor : 'var(--foreground)' }}>
                     {d.categoria}
                   </span>
-
-                  {/* Percentual */}
-                  <span
-                    className="text-[11px] font-medium w-8 text-right tabular-nums"
-                    style={{
-                      color: isActive
-                        ? FUNDO_CLARO.has(cor) ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)'
-                        : 'var(--muted-foreground)',
-                    }}
-                  >
+                  <span className="text-[11px] font-medium w-8 text-right tabular-nums"
+                    style={{ color: isActive ? (FUNDO_CLARO.has(cor) ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)') : 'var(--muted-foreground)' }}>
                     {Math.round(d.percentual)}%
                   </span>
-
-                  {/* Valor */}
-                  <span
-                    className="text-sm font-bold tabular-nums"
-                    style={{ color: isActive ? textoSobreCor : 'var(--foreground)' }}
-                  >
+                  <span className="text-sm font-bold tabular-nums"
+                    style={{ color: isActive ? textoSobreCor : 'var(--foreground)' }}>
                     {fmt(d.valor)}
                   </span>
                 </button>
               );
             })}
-
-            {/* Total */}
             <div className="flex items-center justify-between pt-2 mt-1 border-t border-border px-3">
               <span className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">
                 {categoriaAtiva ? categoriaAtiva : 'Total'}
               </span>
               <span className="text-sm font-bold tabular-nums text-foreground">
-                {categoriaAtiva
-                  ? fmt(dados.find(d => d.categoria === categoriaAtiva)?.valor || 0)
-                  : fmt(total)
-                }
+                {categoriaAtiva ? fmt(dados.find(d => d.categoria === categoriaAtiva)?.valor || 0) : fmt(total)}
               </span>
             </div>
           </div>
