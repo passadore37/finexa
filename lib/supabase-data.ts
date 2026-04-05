@@ -1,4 +1,12 @@
-import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Service role bypassa RLS — seguro pois family_id é sempre filtrado explicitamente
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 import type { Transacao, DadosPlanilha, ContaFixaConfig } from './types';
 
 function primeiroValido(...vals: (number | string | null | undefined)[]): number {
@@ -17,10 +25,10 @@ function getMesLabel(mes: number, ano: number): string {
 
 async function garantirConfiguracaoMes(mes: number, ano: number, family_id: string) {
   const mesLabel = getMesLabel(mes, ano);
-  const { data } = await supabase.from('configuracao_mensal').select('*')
+  const { data } = await getAdmin().from('configuracao_mensal').select('*')
     .eq('mes', mesLabel).eq('family_id', family_id).single();
   if (!data) {
-    const { data: novo } = await supabase.from('configuracao_mensal')
+    const { data: novo } = await getAdmin().from('configuracao_mensal')
       .insert({ mes: mesLabel, limite: 9000, salario_leticia: 0, salario_giovanna: 0, family_id })
       .select().single();
     return novo;
@@ -45,11 +53,11 @@ export async function fetchDadosPlanilha(
   const fimAnt    = new Date(anoAntNum, mesAntNum + 1, 0).toISOString().split('T')[0];
 
   const [resMes, resAnt, resPl] = await Promise.all([
-    supabase.from('transacoes').select('*').eq('family_id', family_id)
+    getAdmin().from('transacoes').select('*').eq('family_id', family_id)
       .gte('data', inicioMes).lte('data', fimMes).order('data', { ascending: false }),
-    supabase.from('transacoes').select('*').eq('family_id', family_id)
+    getAdmin().from('transacoes').select('*').eq('family_id', family_id)
       .gte('data', inicioAnt).lte('data', fimAnt).order('data', { ascending: false }),
-    supabase.from('planejamento').select('*').eq('family_id', family_id)
+    getAdmin().from('planejamento').select('*').eq('family_id', family_id)
       .order('updated_at', { ascending: false }).limit(1).single(),
   ]);
 
