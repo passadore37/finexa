@@ -208,10 +208,14 @@ export function calcularDespesasPorCategoriaPerfil(
   perfil: 'leticia' | 'giovanna',
   salarioLeticia: number,
   salarioGiovanna: number,
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
+  mesRef?: number,
+  anoRef?: number,
 ): DespesaPorCategoria[] {
 
   const hoje = new Date();
+  const mesUsar = mesRef !== undefined ? mesRef : hoje.getMonth();
+  const anoUsar = anoRef !== undefined ? anoRef : hoje.getFullYear();
 
   return calcularDespesasPorCategoriaPerfilMes(
     ts,
@@ -219,8 +223,8 @@ export function calcularDespesasPorCategoriaPerfil(
     salarioLeticia,
     salarioGiovanna,
     contasFixasConfig,
-    hoje.getMonth(),
-    hoje.getFullYear(),
+    mesUsar,
+    anoUsar,
   );
 }
 
@@ -597,7 +601,9 @@ function calcularIndicadoresPerfil(
       perfil,
       salarioLeticia,
       salarioGiovanna,
-      contasFixasConfig
+      contasFixasConfig,
+      mes,
+      ano
     ),
   };
 }
