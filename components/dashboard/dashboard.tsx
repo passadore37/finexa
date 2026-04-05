@@ -75,13 +75,7 @@ export function Dashboard() {
     return () => window.removeEventListener('planejamento-atualizado', handler);
   }, [mutate]);
 
-  const navegarMes = useCallback((mes: number, ano: number) => {
-    navegarMes(mes, ano);
-  }, []);
-
-  const selecionarMesGrafico = useCallback((mes: number, ano: number) => {
-    navegarMes(mes, ano);
-  }, []);
+  const selecionarMesGrafico = (mes: number, ano: number) => navegarMes(mes, ano);
 
   if (!mounted || isLoading) return <DashboardSkeleton />;
 
