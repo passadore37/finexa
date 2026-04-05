@@ -311,11 +311,11 @@ export function gerarAlertas(
   const alertas: any[] = [];
   const saldo = totaisAtual.receitas - totaisAtual.despesas;
 
-  if (saldo < 0) alertas.push({ id: 'saldo-neg', tipo: 'erro', titulo: 'Saldo negativo', mensagem: `Despesas superam receitas em R$ ${Math.abs(saldo).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.` });
-  if (projecao > limite) alertas.push({ id: 'proj-limite', tipo: 'aviso', titulo: 'Projeção acima do limite', mensagem: `Projetado R$ ${projecao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} vs limite R$ ${limite.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.` });
+  if (saldo < 0) alertas.push({ id: 'saldo-neg', tipo: 'critico', titulo: 'Saldo negativo', mensagem: `Despesas superam receitas em R$ ${Math.abs(saldo).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.` });
+  if (projecao > limite) alertas.push({ id: 'proj-limite', tipo: 'atencao', titulo: 'Projeção acima do limite', mensagem: `Projetado R$ ${projecao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} vs limite R$ ${limite.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.` });
 
   const totalParcMes = parceladas.reduce((acc, p) => acc + p.valorParcela, 0);
-  if (limite > 0 && totalParcMes / limite > 0.3) alertas.push({ id: 'parcelas-alto', tipo: 'aviso', titulo: 'Parcelas comprometem o limite', mensagem: `Parcelas = ${Math.round((totalParcMes / limite) * 100)}% do limite.` });
+  if (limite > 0 && totalParcMes / limite > 0.3) alertas.push({ id: 'parcelas-alto', tipo: 'atencao', titulo: 'Parcelas comprometem o limite', mensagem: `Parcelas = ${Math.round((totalParcMes / limite) * 100)}% do limite.` });
 
   const proxMesDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
   const proxMesLabel = `${MESES[proxMesDate.getMonth()]}/${String(proxMesDate.getFullYear()).slice(2)}`;
@@ -335,9 +335,9 @@ export function gerarSugestoes(
 ): any[] {
   const sugestoes: any[] = [];
   const taxaPoupanca = totais.receitas > 0 ? ((totais.receitas - totais.despesas) / totais.receitas) * 100 : 0;
-  if (taxaPoupanca < 10) sugestoes.push({ id: 'poupanca-baixa', tipo: 'dica', titulo: 'Taxa de poupança baixa', mensagem: 'Tente guardar pelo menos 10% da renda mensal.' });
+  if (taxaPoupanca < 10) sugestoes.push({ id: 'poupanca-baixa', tipo: 'info', titulo: 'Taxa de poupança baixa', mensagem: 'Tente guardar pelo menos 10% da renda mensal.' });
   const lazer = categorias.find(c => c.categoria === 'Lazer');
-  if (lazer && lazer.percentual > 20) sugestoes.push({ id: 'lazer-alto', tipo: 'dica', titulo: 'Lazer acima de 20%', mensagem: `Lazer representa ${Math.round(lazer.percentual)}% dos gastos.` });
+  if (lazer && lazer.percentual > 20) sugestoes.push({ id: 'lazer-alto', tipo: 'info', titulo: 'Lazer acima de 20%', mensagem: `Lazer representa ${Math.round(lazer.percentual)}% dos gastos.` });
   return sugestoes;
 }
 
