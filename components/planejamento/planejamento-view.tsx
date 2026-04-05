@@ -341,70 +341,57 @@ export function PlanejamentoView() {
             </p>
           </div>
 
-          {/* Fluxo visual por perfil */}
-          {indiv.map(p => (
-            <Card key={p.perfil} className="border-border bg-card overflow-hidden">
-              <div className="h-1 w-full" style={{ background: p.cor }} />
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold" style={{ color: p.cor }}>
-                  {p.nome} — {Math.round(p.prop * 100)}% do salário combinado
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 pb-4">
-
-                {/* Etapas com setas */}
-                {[
-                  { icon: Wallet,     label: '① Salário',                          val: p.sal,    cor: 'var(--foreground)', bg: 'var(--secondary)',       detalhe: '100% do que entra' },
-                  { icon: TrendingUp, label: `② Guardar primeiro (${p.pct}%)`,       val: p.invest, cor: '#4ADE80',           bg: '#1D9E7518',              detalhe: `R$ ${fmtD(p.invest / diasNoMes)}/dia` },
-                  { icon: Receipt,    label: '③ Pagar as fixas',                    val: p.fixas,  cor: '#E24B4A',           bg: '#E24B4A18',              detalhe: `${Math.round(p.pctFixas)}% do salário` },
-                ].map((etapa, i) => {
-                  const Icon = etapa.icon;
-                  return (
-                    <div key={i}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl border"
-                        style={{ background: etapa.bg, borderColor: `${etapa.cor}25` }}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${etapa.cor}25` }}>
-                          <Icon className="h-4 w-4" style={{ color: etapa.cor }} />
+          {/* Fluxo visual por perfil — lado a lado */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {indiv.map(p => (
+              <Card key={p.perfil} className="border-border bg-card overflow-hidden">
+                <div className="h-1 w-full" style={{ background: p.cor }} />
+                <CardHeader className="pb-1 pt-3 px-3">
+                  <CardTitle className="text-xs font-bold" style={{ color: p.cor }}>
+                    {p.nome} — {Math.round(p.prop * 100)}%
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5 pb-3 px-3">
+                  {[
+                    { icon: Wallet,     label: 'Salário',                  val: p.sal,    cor: 'var(--foreground)' },
+                    { icon: TrendingUp, label: `Invest. (${p.pct}%)`,      val: p.invest, cor: '#4ADE80' },
+                    { icon: Receipt,    label: 'Fixas',                    val: p.fixas,  cor: '#E24B4A' },
+                  ].map((etapa, i) => {
+                    const Icon = etapa.icon;
+                    return (
+                      <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg border"
+                        style={{ background: `${etapa.cor}10`, borderColor: `${etapa.cor}20` }}>
+                        <div className="flex items-center gap-1.5">
+                          <Icon className="h-3 w-3 flex-shrink-0" style={{ color: etapa.cor }} />
+                          <span className="text-[10px] text-muted-foreground">{etapa.label}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-foreground">{etapa.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{etapa.detalhe}</p>
-                        </div>
-                        <span className="text-base font-black tabular-nums" style={{ color: etapa.cor }}>{fmt(etapa.val)}</span>
+                        <span className="text-xs font-black tabular-nums" style={{ color: etapa.cor }}>{fmt(etapa.val)}</span>
                       </div>
-                      <div className="flex justify-center my-0.5">
-                        <ArrowRight className="h-3 w-3 text-muted-foreground/40 rotate-90" />
-                      </div>
+                    );
+                  })}
+                  <div className="flex items-center justify-between py-1.5 px-2 rounded-lg border-2"
+                    style={{ background: `${p.cor}12`, borderColor: `${p.cor}40` }}>
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="h-3 w-3 flex-shrink-0" style={{ color: p.cor }} />
+                      <span className="text-[10px] font-bold text-foreground">Disponível</span>
                     </div>
-                  );
-                })}
-
-                {/* Resultado */}
-                <div className="flex items-center gap-3 p-3 rounded-xl border-2"
-                  style={{ background: `${p.cor}12`, borderColor: `${p.cor}40` }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${p.cor}25` }}>
-                    <Zap className="h-4 w-4" style={{ color: p.cor }} />
+                    <span className="text-sm font-black tabular-nums" style={{ color: p.cor }}>{fmt(p.disponivel)}</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-foreground">④ Saldo disponível</p>
-                    <p className="text-[10px] text-muted-foreground">{Math.round(p.pctGastos)}% do salário · {fmt(p.porDia)}/dia · {fmt(p.porSemana)}/sem</p>
-                  </div>
-                  <span className="text-xl font-black tabular-nums" style={{ color: p.cor }}>{fmt(p.disponivel)}</span>
-                </div>
-
-                {/* Mini barra de distribuição */}
-                <div className="mt-1">
-                  <div className="h-3 rounded-full overflow-hidden flex gap-0.5">
+                  <div className="h-2 rounded-full overflow-hidden flex gap-0.5 mt-1">
                     {[
-                      { w: p.pct,             bg: '#1D9E75' },
-                      { w: p.pctFixas,        bg: '#E24B4A' },
-                      { w: p.pctGastos,       bg: p.cor },
+                      { w: p.pct,       bg: '#1D9E75' },
+                      { w: p.pctFixas,  bg: '#E24B4A' },
+                      { w: p.pctGastos, bg: p.cor },
                     ].map((seg, i) => (
-                      <div key={i} className="h-full rounded-sm transition-all duration-700 flex items-center justify-center"
-                        style={{ width: `${seg.w}%`, background: seg.bg, minWidth: seg.w > 0 ? '4px' : '0' }} />
+                      <div key={i} className="h-full rounded-sm"
+                        style={{ width: `${seg.w}%`, background: seg.bg, minWidth: seg.w > 0 ? '3px' : '0' }} />
                     ))}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground text-center">{fmt(p.porDia)}/dia · {fmt(p.porSemana)}/sem</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
                   </div>
                   <div className="flex gap-3 mt-1.5 flex-wrap">
                     {[
@@ -421,43 +408,6 @@ export function PlanejamentoView() {
               </CardContent>
             </Card>
           ))}
-
-          {/* Gráfico comparativo */}
-          <Card className="border-border bg-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-foreground">Comparativo — saldo disponível disponível</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={indiv.map(p => ({
-                  nome: p.nome,
-                  invest: Math.round(p.invest),
-                  fixas:  Math.round(p.fixas),
-                  livre:  Math.round(p.disponivel),
-                  cor:    p.cor,
-                }))} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="nome" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#888' }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#888' }} width={55}
-                    tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v, name) => [fmt(v as number), name === 'invest' ? 'Investimento' : name === 'fixas' ? 'Fixas' : 'Livre']}
-                    contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="invest" stackId="a" fill="#1D9E75" radius={[0,0,0,0]} name="invest" />
-                  <Bar dataKey="fixas"  stackId="a" fill="#E24B4A" radius={[0,0,0,0]} name="fixas" />
-                  <Bar dataKey="livre"  stackId="a" radius={[6,6,0,0]} name="livre">
-                    {indiv.map((p, i) => <Cell key={i} fill={p.cor} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="flex gap-4 justify-center mt-2 flex-wrap">
-                {[{ cor: '#1D9E75', l: 'Investimento' }, { cor: '#E24B4A', l: 'Fixas' }, { cor: 'var(--primary)', l: 'Livre' }].map(i => (
-                  <span key={i.l} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="w-3 h-3 rounded-sm" style={{ background: i.cor }} />{i.l}
-                  </span>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Níveis de saúde financeira */}
           <Card className="border-border bg-card">
@@ -600,16 +550,16 @@ export function PlanejamentoView() {
                 </div>
 
                 {/* Header dias da semana */}
-                <div className="grid grid-cols-7 gap-1 mb-1">
+                <div className="grid grid-cols-7 gap-0.5 mb-1">
                   {['D','S','T','Q','Q','S','S'].map((d, i) => (
                     <div key={i} className="text-center text-[9px] text-muted-foreground font-bold">{d}</div>
                   ))}
                 </div>
 
                 {/* Grid compacto */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5">
                   {celulas.map((dia, idx) => {
-                    if (!dia) return <div key={`e-${idx}`} className="aspect-square" />;
+                    if (!dia) return <div key={`e-${idx}`} className="w-7 h-7" />;
                     const isHoje2  = dia === diaHoje;
                     const isFuturo = dia > diaHoje;
                     const gastos   = gastoPorDia[dia];
@@ -629,10 +579,10 @@ export function PlanejamentoView() {
 
                     return (
                       <div key={dia}
-                        className="aspect-square rounded-md flex flex-col items-center justify-center relative text-center"
+                        className="w-7 h-7 rounded-md flex flex-col items-center justify-center relative text-center"
                         style={{ background: bg, opacity: isFuturo ? 0.3 : 1 }}
                         title={gastos ? `Let: ${fmt(gastos.leticia)} | Gio: ${fmt(gastos.giovanna)}` : ''}>
-                        <span className="text-[10px] font-bold leading-none"
+                        <span className="text-[9px] font-bold leading-none"
                           style={{ color: isHoje2 ? '#fff' : 'var(--foreground)' }}>
                           {dia}
                         </span>
