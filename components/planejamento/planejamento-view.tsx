@@ -52,12 +52,23 @@ export function PlanejamentoView() {
   const [carregando, setCarregando]   = useState(true);
   const [importando, setImportando]   = useState(false);
   const [importMsg, setImportMsg]     = useState('');
+  const [transacoes, setTransacoes]   = useState<any[]>([]);
 
   const semanas    = useMemo(() => getSemanasDoMes(), []);
   const hoje       = new Date();
   const diaHoje    = hoje.getDate();
   const diasNoMes  = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
   const semanaAtual = semanas.find(s => diaHoje >= s.inicio && diaHoje <= s.fim)?.numero ?? 1;
+
+  useEffect(() => {
+    if (aba === 'orcamento' && transacoes.length === 0) {
+      const hoje = new Date();
+      fetch(`/api/transacoes?mes=${hoje.getMonth()}&ano=${hoje.getFullYear()}`)
+        .then(r => r.json())
+        .then(res => { if (res.success) setTransacoes(res.data || []); });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aba]);
 
   useEffect(() => {
     fetch('/api/planejamento').then(r => r.json()).then(res => {
@@ -154,7 +165,7 @@ export function PlanejamentoView() {
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Planejamento</p>
           <h2 className="text-xl font-black text-foreground">Planejamento Financeiro</h2>
-          <p className="text-sm text-muted-foreground mt-1">Configure, entenda a metodologia e acompanhe seu envelope semanal.</p>
+          <p className="text-sm text-muted-foreground mt-1">Configure, entenda a metodologia e acompanhe seu saldo disponível semanal.</p>
         </div>
         {alterado && (
           <button onClick={salvar} disabled={saveStatus === 'saving'}
@@ -326,7 +337,7 @@ export function PlanejamentoView() {
             <p className="text-sm font-bold text-foreground mb-1">💡 A ideia central</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Antes de gastar qualquer coisa, o dinheiro passa por <strong className="text-foreground">3 filtros</strong> em sequência.
-              O que sobrar é o seu <strong className="text-primary">envelope livre</strong> — você pode gastar sem culpa.
+              O que sobrar é o seu <strong className="text-primary">saldo disponível</strong> — você pode gastar sem culpa.
             </p>
           </div>
 
@@ -377,7 +388,7 @@ export function PlanejamentoView() {
                     <Zap className="h-4 w-4" style={{ color: p.cor }} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-foreground">④ Envelope livre</p>
+                    <p className="text-xs font-bold text-foreground">④ Saldo disponível</p>
                     <p className="text-[10px] text-muted-foreground">{Math.round(p.pctGastos)}% do salário · {fmt(p.porDia)}/dia · {fmt(p.porSemana)}/sem</p>
                   </div>
                   <span className="text-xl font-black tabular-nums" style={{ color: p.cor }}>{fmt(p.disponivel)}</span>
@@ -414,7 +425,7 @@ export function PlanejamentoView() {
           {/* Gráfico comparativo */}
           <Card className="border-border bg-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-foreground">Comparativo — envelope disponível</CardTitle>
+              <CardTitle className="text-sm font-bold text-foreground">Comparativo — saldo disponível disponível</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={180}>
@@ -451,7 +462,7 @@ export function PlanejamentoView() {
           {/* Níveis de saúde financeira */}
           <Card className="border-border bg-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-foreground">Saúde financeira do seu envelope</CardTitle>
+              <CardTitle className="text-sm font-bold text-foreground">Saúde financeira do seu saldo disponível</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
@@ -482,7 +493,7 @@ export function PlanejamentoView() {
           <div className="flex gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
             <Info className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Metodologia inspirada no <strong className="text-foreground">Método dos Envelopes</strong>: separe o dinheiro por destino antes de gastar.
+              Metodologia inspirada no <strong className="text-foreground">Método dos Saldo Disponívels</strong>: separe o dinheiro por destino antes de gastar.
               O acompanhamento real dos gastos acontece na aba <strong className="text-foreground">Gastos</strong>.
             </p>
           </div>
@@ -513,7 +524,7 @@ export function PlanejamentoView() {
             </div>
           </div>
 
-          {/* Individuais */}
+          {/* Saldo individual */}
           <div className="grid grid-cols-2 gap-3">
             {indiv.map(p => (
               <div key={p.perfil} className="p-3 rounded-xl border" style={{ borderColor: `${p.cor}30`, background: `${p.cor}08` }}>
@@ -532,114 +543,183 @@ export function PlanejamentoView() {
             ))}
           </div>
 
-          {/* Gráfico de barras — envelope por semana */}
-          <Card className="border-border bg-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-foreground">Envelope por semana do mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart
-                  data={semanas.map(s => ({
-                    label: `Sem ${s.numero}`,
-                    casal: Math.round(porSemanaTotal),
-                    leticia: Math.round(indiv[0].porSemana),
-                    giovanna: Math.round(indiv[1].porSemana),
-                    atual: s.numero === semanaAtual,
-                  }))}
-                  margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#888' }} />
-                  <YAxis hide />
-                  <Tooltip formatter={(v, name) => [fmt(v as number), name === 'leticia' ? 'Letícia' : name === 'giovanna' ? 'Giovanna' : 'Casal']}
-                    contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11 }} />
-                  <Bar dataKey="leticia"  fill="#82a1fd" radius={[0,0,0,0]} />
-                  <Bar dataKey="giovanna" fill="#ff64ca" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {/* Calendário compacto estilo heatmap */}
+          {(() => {
+            const hoje2 = new Date();
+            const primeiroDia = new Date(hoje2.getFullYear(), hoje2.getMonth(), 1).getDay();
 
-          {/* Calendário visual do mês */}
-          <Card className="border-border bg-card">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-bold text-foreground">
-                  {hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-                </CardTitle>
-                <span className="text-[10px] text-muted-foreground">{fmt(porDiaTotal)}/dia</span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Header dias da semana */}
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {['D','S','T','Q','Q','S','S'].map((d, i) => (
-                  <div key={i} className="text-center text-[9px] text-muted-foreground font-bold py-1">{d}</div>
-                ))}
-              </div>
-              {/* Grid dias */}
-              {(() => {
-                const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).getDay();
-                const cells = Array.from({ length: primeiroDia }, (_, i) => ({ dia: 0, i }));
-                for (let d = 1; d <= diasNoMes; d++) cells.push({ dia: d, i: primeiroDia + d - 1 });
+            // Calcular gasto por dia por perfil usando regra de rateio
+            const salarios = { leticia: salLet, giovanna: salGio };
+            const gastoPorDia: Record<number, { leticia: number; giovanna: number; total: number }> = {};
 
-                // Agrupar em semanas para colorir
-                const semanaDodia = (d: number) => semanas.find(s => d >= s.inicio && d <= s.fim);
-                const semanasCores = ['#5330ff22', '#82a1fd22', '#ff64ca22', '#ffa85722', '#01b69522'];
+            transacoes.forEach((t: any) => {
+              if (t.recorrente) return; // fixas não contam no orçamento variável
+              const d   = new Date(t.data + 'T12:00:00');
+              const dia = d.getDate();
+              if (!gastoPorDia[dia]) gastoPorDia[dia] = { leticia: 0, giovanna: 0, total: 0 };
 
-                return (
-                  <div className="grid grid-cols-7 gap-1">
-                    {cells.map(({ dia, i }) => {
-                      if (dia === 0) return <div key={`empty-${i}`} />;
-                      const sem = semanaDodia(dia);
-                      const isHoje = dia === diaHoje;
-                      const isFuturo = dia > diaHoje;
-                      const semIdx = sem ? sem.numero - 1 : 0;
-                      return (
-                        <div key={dia}
-                          className="aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold transition-all relative"
-                          style={{
-                            background: isHoje ? 'var(--primary)' : semanasCores[semIdx % semanasCores.length],
-                            color: isHoje ? '#fff' : isFuturo ? 'var(--muted-foreground)' : 'var(--foreground)',
-                            opacity: isFuturo ? 0.4 : 1,
-                          }}>
+              const val = Number(t.valor);
+              const div = t.divisao || 'pessoal';
+              const perf = t.perfil || 'casal';
+
+              // Rateio por perfil
+              let vLet = 0, vGio = 0;
+              if (div === 'pessoal') {
+                if (perf === 'leticia')  vLet = val;
+                else if (perf === 'giovanna') vGio = val;
+                else { vLet = val * propLet; vGio = val * propGio; }
+              } else if (div === '50/50') {
+                vLet = val / 2; vGio = val / 2;
+              } else {
+                // X/Y format
+                const parts = div.split('/').map(Number);
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                  const tot = parts[0] + parts[1];
+                  vLet = val * (parts[0] / tot);
+                  vGio = val * (parts[1] / tot);
+                } else {
+                  vLet = val * propLet; vGio = val * propGio;
+                }
+              }
+              gastoPorDia[dia].leticia  += vLet;
+              gastoPorDia[dia].giovanna += vGio;
+              gastoPorDia[dia].total    += val;
+            });
+
+            // Verificar se dia ultrapassou saldo diário
+            const celulas = Array.from({ length: primeiroDia }, (_, i) => null as null)
+              .concat(Array.from({ length: diasNoMes }, (_, i) => i + 1));
+
+            return (
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-bold text-foreground">
+                    {hoje2.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c2 => c2.toUpperCase())}
+                  </p>
+                  <span className="text-[10px] text-muted-foreground">{fmt(porDiaTotal)}/dia disponível</span>
+                </div>
+
+                {/* Header dias da semana */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {['D','S','T','Q','Q','S','S'].map((d, i) => (
+                    <div key={i} className="text-center text-[9px] text-muted-foreground font-bold">{d}</div>
+                  ))}
+                </div>
+
+                {/* Grid compacto */}
+                <div className="grid grid-cols-7 gap-1">
+                  {celulas.map((dia, idx) => {
+                    if (!dia) return <div key={`e-${idx}`} className="aspect-square" />;
+                    const isHoje2  = dia === diaHoje;
+                    const isFuturo = dia > diaHoje;
+                    const gastos   = gastoPorDia[dia];
+                    const totalDia = gastos?.total ?? 0;
+                    const overLet  = gastos ? gastos.leticia  > indiv[0].porDia : false;
+                    const overGio  = gastos ? gastos.giovanna > indiv[1].porDia : false;
+                    const overAny  = overLet || overGio;
+                    const semana   = semanas.find(s => dia >= s.inicio && dia <= s.fim);
+                    const semIdx   = semana ? semana.numero - 1 : 0;
+                    const semCores = ['#5330ff','#82a1fd','#ff64ca','#ffa857','#01b695'];
+
+                    // Cor do fundo do dia
+                    let bg = `${semCores[semIdx % semCores.length]}22`;
+                    if (isHoje2) bg = 'var(--primary)';
+                    if (!isFuturo && totalDia > 0 && overAny) bg = '#E24B4A25';
+                    if (!isFuturo && totalDia > 0 && !overAny) bg = '#1D9E7525';
+
+                    return (
+                      <div key={dia}
+                        className="aspect-square rounded-md flex flex-col items-center justify-center relative text-center"
+                        style={{ background: bg, opacity: isFuturo ? 0.3 : 1 }}
+                        title={gastos ? `Let: ${fmt(gastos.leticia)} | Gio: ${fmt(gastos.giovanna)}` : ''}>
+                        <span className="text-[10px] font-bold leading-none"
+                          style={{ color: isHoje2 ? '#fff' : 'var(--foreground)' }}>
                           {dia}
-                          {isHoje && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#4ADE80]" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+                        </span>
+                        {/* Dots de perfil */}
+                        {!isFuturo && gastos && (
+                          <div className="flex gap-[2px] mt-[2px]">
+                            <div className="w-[4px] h-[4px] rounded-full"
+                              style={{ background: overLet ? '#E24B4A' : '#82a1fd', opacity: gastos.leticia > 0 ? 1 : 0.2 }} />
+                            <div className="w-[4px] h-[4px] rounded-full"
+                              style={{ background: overGio ? '#E24B4A' : '#ff64ca', opacity: gastos.giovanna > 0 ? 1 : 0.2 }} />
+                          </div>
+                        )}
+                        {isHoje2 && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#4ADE80]" />}
+                      </div>
+                    );
+                  })}
+                </div>
 
-              {/* Legenda semanas */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {semanas.map((s, i) => {
-                  const isAtual = s.numero === semanaAtual;
-                  const cores = ['#5330ff', '#82a1fd', '#ff64ca', '#ffa857', '#01b695'];
-                  return (
-                    <div key={s.numero} className="flex items-center gap-1.5 text-[10px]">
-                      <span className="w-2.5 h-2.5 rounded-sm" style={{ background: cores[i % cores.length] }} />
-                      <span className={isAtual ? 'font-bold text-foreground' : 'text-muted-foreground'}>
-                        Sem {s.numero} {isAtual ? '← atual' : ''}
-                      </span>
-                    </div>
-                  );
-                })}
+                {/* Legenda */}
+                <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-border">
+                  {[
+                    { cor: '#1D9E7525', border: '#1D9E75', label: 'Dentro do orçamento' },
+                    { cor: '#E24B4A25', border: '#E24B4A', label: 'Ultrapassou' },
+                    { cor: 'transparent', border: 'var(--border)', label: 'Sem gastos' },
+                  ].map(l => (
+                    <span key={l.label} className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                      <span className="w-3 h-3 rounded-sm border" style={{ background: l.cor, borderColor: l.border }} />
+                      {l.label}
+                    </span>
+                  ))}
+                  <span className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                    <span className="flex gap-[2px]">
+                      <span className="w-[4px] h-[4px] rounded-full bg-[#82a1fd]" />
+                      <span className="w-[4px] h-[4px] rounded-full bg-[#ff64ca]" />
+                    </span>
+                    Letícia · Giovanna
+                  </span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            );
+          })()}
 
           {/* Cards de semanas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {semanas.map((s, i) => {
               const isAtual = s.numero === semanaAtual;
               const isPast  = s.numero < semanaAtual;
-              const cores   = ['#5330ff', '#82a1fd', '#ff64ca', '#ffa857', '#01b695'];
+              const cores   = ['#5330ff','#82a1fd','#ff64ca','#ffa857','#01b695'];
               const cor     = cores[i % cores.length];
+
+              // Gasto acumulado da semana
+              const gastoSemLet = transacoes
+                .filter((t: any) => {
+                  if (t.recorrente) return false;
+                  const d = new Date(t.data + 'T12:00:00').getDate();
+                  return d >= s.inicio && d <= s.fim;
+                })
+                .reduce((acc: number, t: any) => {
+                  const val = Number(t.valor);
+                  const div = t.divisao || 'pessoal';
+                  const perf = t.perfil || 'casal';
+                  if (div === 'pessoal') return acc + (perf === 'leticia' ? val : 0);
+                  if (div === '50/50') return acc + val / 2;
+                  return acc + val * propLet;
+                }, 0);
+
+              const gastoSemGio = transacoes
+                .filter((t: any) => {
+                  if (t.recorrente) return false;
+                  const d = new Date(t.data + 'T12:00:00').getDate();
+                  return d >= s.inicio && d <= s.fim;
+                })
+                .reduce((acc: number, t: any) => {
+                  const val = Number(t.valor);
+                  const div = t.divisao || 'pessoal';
+                  const perf = t.perfil || 'casal';
+                  if (div === 'pessoal') return acc + (perf === 'giovanna' ? val : 0);
+                  if (div === '50/50') return acc + val / 2;
+                  return acc + val * propGio;
+                }, 0);
+
+              const pctUsadoLet = indiv[0].porSemana > 0 ? Math.min((gastoSemLet / indiv[0].porSemana) * 100, 100) : 0;
+              const pctUsadoGio = indiv[1].porSemana > 0 ? Math.min((gastoSemGio / indiv[1].porSemana) * 100, 100) : 0;
+
               return (
                 <div key={s.numero} className="p-4 rounded-xl border transition-all"
-                  style={{ borderColor: isAtual ? cor : 'var(--border)', background: isAtual ? `${cor}10` : 'var(--secondary)', opacity: isPast ? 0.6 : 1 }}>
+                  style={{ borderColor: isAtual ? cor : 'var(--border)', background: isAtual ? `${cor}10` : 'var(--secondary)', opacity: isPast ? 0.7 : 1 }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-sm" style={{ background: cor }} />
@@ -652,7 +732,7 @@ export function PlanejamentoView() {
 
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Casal / semana</p>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">Saldo semanal</p>
                       <p className="text-xl font-black tabular-nums" style={{ color: cor }}>{fmt(porSemanaTotal)}</p>
                     </div>
                     <div>
@@ -661,29 +741,47 @@ export function PlanejamentoView() {
                     </div>
                   </div>
 
-                  {/* Barra de progresso da semana */}
+                  {/* Progresso semana atual */}
                   {isAtual && (
-                    <div className="mb-3">
+                    <div className="mb-3 p-2 rounded-lg bg-secondary/50">
                       <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                         <span>Dia {diaHoje - s.inicio + 1} de {s.dias}</span>
-                        <span>{fmt(porDiaTotal * (diaHoje - s.inicio + 1))} gastos esperados</span>
+                        <span>{Math.round(((diaHoje - s.inicio + 1) / s.dias) * 100)}% da semana</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-border overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                          style={{ width: `${((diaHoje - s.inicio + 1) / s.dias) * 100}%`, background: cor }} />
+                        <div className="h-full rounded-full" style={{ width: `${((diaHoje - s.inicio + 1) / s.dias) * 100}%`, background: cor }} />
                       </div>
                     </div>
                   )}
 
-                  {indiv.map(p => (
-                    <div key={p.perfil} className="flex justify-between items-center pt-2 border-t border-border/40">
-                      <span className="text-[10px] font-bold" style={{ color: p.cor }}>{p.nome}</span>
-                      <div className="flex gap-3 text-[10px]">
-                        <span className="text-muted-foreground">{fmt(p.porSemana)}/sem</span>
-                        <span className="font-bold" style={{ color: p.cor }}>{fmt(p.porDia)}/dia</span>
+                  {/* Gasto por perfil com barra */}
+                  {indiv.map((p, pi) => {
+                    const gasto   = pi === 0 ? gastoSemLet : gastoSemGio;
+                    const pctUsado = pi === 0 ? pctUsadoLet : pctUsadoGio;
+                    const over    = gasto > p.porSemana;
+                    const diasComprometidos = p.porDia > 0 ? Math.ceil(gasto / p.porDia) : 0;
+                    return (
+                      <div key={p.perfil} className="pt-2 border-t border-border/40">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[10px] font-bold" style={{ color: p.cor }}>{p.nome}</span>
+                          <div className="flex items-center gap-2">
+                            {over && (
+                              <span className="text-[9px] text-[#E24B4A] font-bold">
+                                comprometeu {diasComprometidos}d
+                              </span>
+                            )}
+                            <span className="text-[10px] font-bold tabular-nums" style={{ color: over ? '#E24B4A' : p.cor }}>
+                              {fmt(gasto)}/{fmt(p.porSemana)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                          <div className="h-full rounded-full transition-all"
+                            style={{ width: `${Math.min(pctUsado, 100)}%`, background: over ? '#E24B4A' : p.cor }} />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })}
@@ -693,7 +791,8 @@ export function PlanejamentoView() {
             <Star className="h-4 w-4 text-[#ffa857] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               O que sobrar de uma semana pode ser usado na seguinte ou poupado.
-              O acompanhamento real dos gastos aparece na aba <strong className="text-foreground">Gastos</strong>.
+              Gastos recorrentes (fixas) não entram no saldo disponível — já foram descontados no planejamento.
+              O acompanhamento completo aparece na aba <strong className="text-foreground">Gastos</strong>.
             </p>
           </div>
         </div>
