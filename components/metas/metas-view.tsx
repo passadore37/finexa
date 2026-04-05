@@ -387,21 +387,36 @@ export function MetasView() {
   const [visibilidade, setVisibilidade] = useState<'privada' | 'compartilhada'>('compartilhada');
   const [salvando, setSalvando] = useState(false);
 
+  const [totalFixasRecorrentes, setTotalFixasRecorrentes] = useState(0);
+
   useEffect(() => {
+    const hoje = new Date();
     Promise.all([
       fetch('/api/metas?aportes=true').then(r => r.json()),
       fetch('/api/reserva').then(r => r.json()),
       fetch('/api/planejamento').then(r => r.json()),
-    ]).then(([metasRes, reservaRes, planoRes]) => {
+      // Buscar transações recorrentes do mês como fallback para contas fixas
+      fetch(`/api/transacoes?mes=${hoje.getMonth()}&ano=${hoje.getFullYear()}`).then(r => r.json()),
+    ]).then(([metasRes, reservaRes, planoRes, transacoesRes]) => {
       if (metasRes.success) { setMetas(metasRes.data || []); setAportes(metasRes.aportes || []); }
       if (reservaRes.success) setReservas(reservaRes.data || []);
       if (planoRes.success && planoRes.data) setPlanejamento(planoRes.data);
+
+      // Calcular total de fixas recorrentes das transações reais
+      if (transacoesRes.success) {
+        const recorrentes = (transacoesRes.data || []).filter((t: any) => t.recorrente);
+        const total = recorrentes.reduce((acc: number, t: any) => acc + Number(t.valor), 0);
+        setTotalFixasRecorrentes(total);
+      }
     }).finally(() => setCarregando(false));
   }, []);
 
-  // Contas fixas do planejamento
-  const totalFixasConjunto = useMemo(() =>
-    (planejamento?.contas_fixas || []).reduce((acc, c) => acc + Number(c.valor), 0), [planejamento]);
+  // Contas fixas: usa planejamento.contas_fixas se disponível,
+  // senão usa a soma das transações recorrentes do mês atual como fallback
+  const totalFixasConjunto = useMemo(() => {
+    const doPlano = (planejamento?.contas_fixas || []).reduce((acc, c) => acc + Number(c.valor), 0);
+    return doPlano > 0 ? doPlano : totalFixasRecorrentes;
+  }, [planejamento, totalFixasRecorrentes]);
 
   const salLeticia  = planejamento?.salario_leticia  || 0;
   const salGiovanna = planejamento?.salario_giovanna || 0;
