@@ -103,6 +103,9 @@ function parseDivisaoParaPerfil(
 
   if (divisao === '50/50') return 0.5;
 
+  // 'pessoal' = gasto 100% do responsável (tratado em calcularValorParaPerfil)
+  if (divisao === 'pessoal') return null;
+
   const partes = divisao.split('/');
 
   if (partes.length === 2) {
@@ -128,6 +131,11 @@ function calcularValorParaPerfil(
   if (t.recorrente) {
     const prop = parseDivisaoParaPerfil(t.divisao, perfil);
     return t.valor * (prop ?? propPerfil);
+  }
+
+  // 'pessoal' = gasto 100% do responsável
+  if (t.divisao === 'pessoal') {
+    return t.responsavel === perfil ? t.valor : 0;
   }
 
   if (t.divisao === '50/50') {
@@ -163,12 +171,12 @@ export function calcularDespesasPorCategoriaPerfilMes(
   const despesas = filtrarPorMes(ts, mes, ano)
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário')
     .filter(t => {
-      // Inclui: recorrentes, responsável do perfil, 50/50, ou qualquer divisão customizada
-      if (t.recorrente) return true;
-      if (t.responsavel === perfil) return true;
-      if (t.divisao === '50/50') return true;
-      // Inclui divisões customizadas (ex: 70/30, 60/40)
-      if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true;
+      if (t.recorrente) return true;                        // fixas: sempre incluir
+      if (t.divisao === 'pessoal') return t.responsavel === perfil; // pessoal: só do perfil
+      if (t.responsavel === perfil) return true;            // gasto próprio
+      if (t.divisao === '50/50') return true;               // dividido igualmente
+      if (!t.responsavel || t.responsavel === 'casal') return true; // casal
+      if (t.divisao && parseDivisaoParaPerfil(t.divisao, perfil) !== null) return true; // 60/40 etc
       return false;
     });
 

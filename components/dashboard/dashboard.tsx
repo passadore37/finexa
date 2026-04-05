@@ -115,13 +115,13 @@ export function Dashboard() {
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter(t => {
         if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
-        return (
-          t.recorrente ||
-          t.responsavel === usuariaAtiva ||
-          t.divisao === '50/50' ||
-          !t.responsavel ||
-          (t.totalParcelas && t.totalParcelas > 1)
-        );
+        if (t.recorrente) return true;                                          // fixas sempre
+        if (t.divisao === 'pessoal') return t.responsavel === usuariaAtiva;     // pessoal: só do perfil
+        if (t.responsavel === usuariaAtiva) return true;                        // gasto próprio
+        if (t.divisao === '50/50') return true;                                 // dividido
+        if (!t.responsavel || t.responsavel === 'casal') return true;           // casal
+        if (t.totalParcelas && t.totalParcelas > 1) return true;               // parceladas
+        return false;
       })
     : dados.transacoes;
 
