@@ -15,6 +15,7 @@ import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { useMesContext } from '@/hooks/use-mes-context';
 import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
 import { useCategorias } from '@/hooks/use-categorias';
 import { Button } from '@/components/ui/button';
@@ -45,9 +46,9 @@ export function Dashboard() {
   const { isSupported, isSubscribed, verificando, registrar } = usePushNotifications(usuariaAtiva);
   const { getCor } = useCategorias();
 
-  // Mês visualizado — default = mês atual
-  const hoje = new Date();
-  const [mesSel, setMesSel] = useState({ mes: hoje.getMonth(), ano: hoje.getFullYear() });
+  // Mês visualizado — compartilhado globalmente via hook
+  const { mes: mesSel_mes, ano: mesSel_ano, navegarMes, ehMesAtual } = useMesContext();
+  const mesSel = { mes: mesSel_mes, ano: mesSel_ano };
 
   // Filtro por categoria e dia
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
@@ -75,11 +76,11 @@ export function Dashboard() {
   }, [mutate]);
 
   const navegarMes = useCallback((mes: number, ano: number) => {
-    setMesSel({ mes, ano });
+    navegarMes(mes, ano);
   }, []);
 
   const selecionarMesGrafico = useCallback((mes: number, ano: number) => {
-    setMesSel({ mes, ano });
+    navegarMes(mes, ano);
   }, []);
 
   if (!mounted || isLoading) return <DashboardSkeleton />;

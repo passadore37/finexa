@@ -6,6 +6,7 @@ import { Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check,
          TrendingUp, Zap, Shield, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { useMesContext } from '@/hooks/use-mes-context';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface ContaFixa { id: string; descricao: string; valor: number; categoria: string; }
@@ -15,19 +16,21 @@ type Aba = 'configurar' | 'metodologia' | 'orcamento';
 const fmt  = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 const fmtD = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function getSemanasDoMes() {
+function getSemanasDoMes(mes?: number, ano?: number) {
   const hoje = new Date();
-  const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  const m = mes !== undefined ? mes : hoje.getMonth();
+  const a = ano !== undefined ? ano : hoje.getFullYear();
+  const ultimo = new Date(a, m + 1, 0);
   const semanas: Array<{ numero: number; label: string; inicio: number; fim: number; dias: number }> = [];
-  let cur = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  let cur = new Date(a, m, 1);
   let num = 1;
   while (cur <= ultimo) {
     const fim = new Date(cur);
     fim.setDate(cur.getDate() + (6 - cur.getDay()));
     if (fim > ultimo) fim.setTime(ultimo.getTime());
     const dias = fim.getDate() - cur.getDate() + 1;
-    const m = (hoje.getMonth() + 1).toString().padStart(2, '0');
-    semanas.push({ numero: num, label: `${cur.getDate().toString().padStart(2,'0')}–${fim.getDate().toString().padStart(2,'0')}/${m}`, inicio: cur.getDate(), fim: fim.getDate(), dias });
+    const ml = (m + 1).toString().padStart(2, '0');
+    semanas.push({ numero: num, label: `${cur.getDate().toString().padStart(2,'0')}–${fim.getDate().toString().padStart(2,'0')}/${ml}`, inicio: cur.getDate(), fim: fim.getDate(), dias });
     cur = new Date(fim); cur.setDate(cur.getDate() + 1); num++;
   }
   return semanas;
@@ -54,21 +57,27 @@ export function PlanejamentoView() {
   const [importMsg, setImportMsg]     = useState('');
   const [transacoes, setTransacoes]   = useState<any[]>([]);
 
-  const semanas    = useMemo(() => getSemanasDoMes(), []);
+  const semanas    = useMemo(() => getSemanasDoMes(mesGlobal, anoGlobal), [mesGlobal, anoGlobal]);
   const hoje       = new Date();
-  const diaHoje    = hoje.getDate();
-  const diasNoMes  = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-  const semanaAtual = semanas.find(s => diaHoje >= s.inicio && diaHoje <= s.fim)?.numero ?? 1;
+  const diaHoje    = mesGlobal === hoje.getMonth() && anoGlobal === hoje.getFullYear() ? hoje.getDate() : 32;
+  const diasNoMes  = new Date(anoGlobal, mesGlobal + 1, 0).getDate();
+  const semanaAtual = semanas.find(s => diaHoje >= s.inicio && diaHoje <= s.fim)?.numero ?? semanas.length;
+
+  // Label do mês visualizado
+  const MESES_NOMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesLabel = `${MESES_NOMES_PT[mesGlobal]} ${anoGlobal}`;
+
+  const { mes: mesGlobal, ano: anoGlobal } = useMesContext();
 
   useEffect(() => {
-    if (aba === 'orcamento' && transacoes.length === 0) {
-      const hoje = new Date();
-      fetch(`/api/transacoes?mes=${hoje.getMonth()}&ano=${hoje.getFullYear()}`)
+    if (aba === 'orcamento') {
+      // Sempre rebusca quando muda o mês ou a aba
+      fetch(`/api/transacoes?mes=${mesGlobal}&ano=${anoGlobal}`)
         .then(r => r.json())
         .then(res => { if (res.success) setTransacoes(res.data || []); });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aba]);
+  }, [aba, mesGlobal, anoGlobal]);
 
   useEffect(() => {
     fetch('/api/planejamento').then(r => r.json()).then(res => {
@@ -528,7 +537,7 @@ export function PlanejamentoView() {
               <div className="rounded-2xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-bold text-foreground">
-                    {hoje2.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c2 => c2.toUpperCase())}
+                    {mesLabel}
                   </p>
                   <span className="text-[10px] text-muted-foreground">{fmt(porDiaTotal)}/dia disponível</span>
                 </div>
