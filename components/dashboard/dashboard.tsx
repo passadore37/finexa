@@ -19,10 +19,9 @@ import { useMesContext } from '@/hooks/use-mes-context';
 import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
 import { useCategorias } from '@/hooks/use-categorias';
 import { Button } from '@/components/ui/button';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Bell } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
 import { HistoricoView } from '@/components/historico/historico-view';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
 import { calcularEvolucaoMensal, calcularProjecaoBar, calcularParceladas, gerarAlertas, gerarSugestoes } from '@/lib/indicadores';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -43,7 +42,6 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
-  const { isSupported, isSubscribed, verificando, registrar } = usePushNotifications(usuariaAtiva);
   const { getCor } = useCategorias();
 
   // Mês visualizado — compartilhado globalmente via hook
@@ -183,12 +181,7 @@ export function Dashboard() {
           <UsuarioSelector usuarioAtivo={usuariaAtiva} onChangeUsuario={setUsuariaAtiva} />
           <MesNavegador mes={mesSel.mes} ano={mesSel.ano} onChange={navegarMes} />
           <div className="flex items-center gap-2">
-            {!verificando && isSupported && !isSubscribed && (
-              <Button onClick={() => registrar('geral')} variant="outline" size="sm" className="border-border hover:bg-secondary text-primary group">
-                <Bell className="h-3.5 w-3.5 sm:mr-1.5 fill-primary/20 transition-transform group-hover:rotate-12" />
-                <span className="text-xs hidden sm:inline">Notificações</span>
-              </Button>
-            )}
+
             <ThemeToggle />
           </div>
         </div>
