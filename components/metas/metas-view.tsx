@@ -421,8 +421,12 @@ export function MetasView() {
   const salLeticia  = planejamento?.salario_leticia  || 0;
   const salGiovanna = planejamento?.salario_giovanna || 0;
   const salTotal = salLeticia + salGiovanna;
-  const propLet = salTotal > 0 ? salLeticia / salTotal : 0.5;
-  const propGio = 1 - propLet;
+
+  // Proporção real por salário — salário 0 = não participa
+  // Fallback 50/50 apenas se AMBOS forem zero
+  const propLet = salTotal > 0 ? (salLeticia > 0 ? salLeticia / salTotal : 0) : 0.5;
+  const propGio = salTotal > 0 ? (salGiovanna > 0 ? salGiovanna / salTotal : 0) : 0.5;
+
   const fixasLeticia  = totalFixasConjunto * propLet;
   const fixasGiovanna = totalFixasConjunto * propGio;
 
@@ -430,9 +434,9 @@ export function MetasView() {
   const perfisReserva = plano === 'individual'
     ? [{ perfil: perfilAtivo, nome: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.nome ?? perfilAtivo, cor: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.cor ?? '#5330ff', fixas: totalFixasConjunto }]
     : [
-        { perfil: 'leticia',  nome: 'Letícia',  cor: '#82a1fd', fixas: fixasLeticia },
-        { perfil: 'giovanna', nome: 'Giovanna', cor: '#ff64ca', fixas: fixasGiovanna },
-        { perfil: 'casal',    nome: 'Conjunta', cor: '#ffa857', fixas: totalFixasConjunto },
+        { perfil: 'leticia',  nome: `Letícia (${Math.round(propLet * 100)}%)`,  cor: '#82a1fd', fixas: fixasLeticia },
+        { perfil: 'giovanna', nome: `Giovanna (${Math.round(propGio * 100)}%)`, cor: '#ff64ca', fixas: fixasGiovanna },
+        { perfil: 'casal',    nome: 'Conjunta (total)', cor: '#ffa857', fixas: totalFixasConjunto },
       ];
 
   async function salvarReserva(perfil: string, saldo: number) {
