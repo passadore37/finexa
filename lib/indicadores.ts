@@ -30,16 +30,43 @@ function salariosDoPerfil(salarioLeticia: number, salarioGiovanna: number) {
 
 // ─── Evolução Mensal ─────────────────────────────────────────────────────────
 
-export function calcularEvolucaoMensal(ts: Transacao[]): EvolucaoMensal[] {
+export function calcularEvolucaoMensal(
+  ts: Transacao[],
+  perfil?: 'leticia' | 'giovanna',
+  salarioLeticia = 0,
+  salarioGiovanna = 0,
+): EvolucaoMensal[] {
   const hoje = new Date();
+  const salarios = { leticia: salarioLeticia, giovanna: salarioGiovanna };
+
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
     const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
-    const tot = calcularTotais(tsMes);
     const ehAtual = d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
     const label = ehAtual
       ? `${MESES[d.getMonth()]} ●`
       : `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+
+    if (perfil) {
+      // Perfil individual: calcular receita e despesa rateadas
+      const receitas = tsMes
+        .filter(t => t.tipo === 'receita' && t.responsavel === perfil)
+        .reduce((acc, t) => acc + t.valor, 0);
+
+      const despesas = tsMes
+        .filter(t => t.tipo !== 'receita')
+        .reduce((acc, t) => {
+          return acc + calcularValorParMembro(
+            { valor: t.valor, perfil: t.responsavel, responsavel: t.responsavel, divisao: t.divisao, recorrente: t.recorrente },
+            perfil, salarios
+          );
+        }, 0);
+
+      return { mes: label, receitas, despesas, saldo: receitas - despesas };
+    }
+
+    // Geral: somar tudo bruto
+    const tot = calcularTotais(tsMes);
     return { mes: label, receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
   });
 }

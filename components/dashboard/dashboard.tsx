@@ -131,7 +131,9 @@ export function Dashboard() {
 
   const limite  = usuariaAtiva === 'casal' ? limites.leticia + limites.giovanna : limites[usuariaAtiva as 'leticia' | 'giovanna'] || 9000;
   const fixas   = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
-  const evolucaoMensal = isPerfil ? calcularEvolucaoMensal(transacoesVisiveis) : indicadores.evolucaoMensal;
+  const evolucaoMensal = isPerfil
+    ? calcularEvolucaoMensal(dados.transacoes, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
+    : indicadores.evolucaoMensal;
 
   const projecaoBar = isPerfil
     ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
@@ -159,13 +161,21 @@ export function Dashboard() {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 
   // Dados do gráfico de evolução — usa API completa se disponível, fallback para cálculo local
-  const evolucaoGrafico: EvolucaoItem[] = evolucaoData?.evolucao?.length
-    ? evolucaoData.evolucao
-    : evolucaoMensal.map(e => {
+  const MESES_IDX: Record<string, number> = { Jan:0,Fev:1,Mar:2,Abr:3,Mai:4,Jun:5,Jul:6,Ago:7,Set:8,Out:9,Nov:10,Dez:11 };
+
+  const evolucaoGrafico: EvolucaoItem[] = isPerfil
+    // Perfil individual: usa cálculo local que já aplica o rateio correto
+    ? evolucaoMensal.map(e => {
         const [nomeMes, anoStr] = e.mes.replace(' ●','').split('/');
-        const MESES: Record<string, number> = { Jan:0,Fev:1,Mar:2,Abr:3,Mai:4,Jun:5,Jul:6,Ago:7,Set:8,Out:9,Nov:10,Dez:11 };
-        return { mes: MESES[nomeMes] ?? 0, ano: anoStr ? 2000+parseInt(anoStr) : mesSel.ano, label: e.mes, receitas: e.receitas, despesas: e.despesas, saldo: e.saldo };
-      });
+        return { mes: MESES_IDX[nomeMes] ?? 0, ano: anoStr ? 2000+parseInt(anoStr) : mesSel.ano, label: e.mes, receitas: e.receitas, despesas: e.despesas, saldo: e.saldo };
+      })
+    // Geral: usa API que busca histórico completo sem rateio
+    : evolucaoData?.evolucao?.length
+      ? evolucaoData.evolucao
+      : evolucaoMensal.map(e => {
+          const [nomeMes, anoStr] = e.mes.replace(' ●','').split('/');
+          return { mes: MESES_IDX[nomeMes] ?? 0, ano: anoStr ? 2000+parseInt(anoStr) : mesSel.ano, label: e.mes, receitas: e.receitas, despesas: e.despesas, saldo: e.saldo };
+        });
 
   return (
     <div className="min-h-screen bg-background">
