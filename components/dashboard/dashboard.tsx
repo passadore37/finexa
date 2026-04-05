@@ -104,6 +104,7 @@ export function Dashboard() {
 
   const { indicadores, dados, limites } = data;
   const isPerfil = usuariaAtiva === 'leticia' || usuariaAtiva === 'giovanna';
+  const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
   const perfilDados = isPerfil
     ? indicadores[usuariaAtiva === 'leticia' ? 'perfilLeticia' : 'perfilGiovanna']
     : null;
