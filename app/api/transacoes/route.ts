@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   if (error) return error;
   try {
     const body = await req.json();
-    const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, tipo, data, responsavel } = body;
+    const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, data, responsavel } = body;
     if (!valor || !categoria) return NextResponse.json({ success: false, error: 'Valor e categoria obrigatórios' }, { status: 400 });
     const { data: result, error: err } = await getAdmin().from('transacoes').insert({
       data: data || dataLocalHoje(),
@@ -50,8 +50,6 @@ export async function POST(req: Request) {
       parcela_atual: parcela_atual || 1,
       total_parcelas: total_parcelas || 1,
       recorrente: recorrente || false,
-      tipo: tipo || 'despesa',
-      responsavel: responsavel || null,
       family_id,
     }).select().single();
     if (err) throw err;

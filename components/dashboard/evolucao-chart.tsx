@@ -89,11 +89,24 @@ export function EvolucaoChart({ dados, mesAtivo, onMesClick }: EvolucaoChartProp
             <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#888885' }} />
             <YAxis tickLine={false} axisLine={false} tickFormatter={fmt} tick={{ fontSize: 11, fill: '#888885' }} width={60} />
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number)}
-                />
-              }
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const entry = payload[0]?.payload;
+                return (
+                  <div className="bg-card border border-border rounded-lg p-3 shadow-lg text-xs">
+                    <p className="font-bold text-foreground mb-1.5">{label}{entry?.parcial ? ' (parcial)' : ''}</p>
+                    {payload.map((p: any) => (
+                      <p key={p.dataKey} style={{ color: p.fill }} className="flex justify-between gap-4">
+                        <span>{p.name}</span>
+                        <span className="font-bold">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value)}
+                        </span>
+                      </p>
+                    ))}
+                    {entry?.parcial && <p className="text-muted-foreground mt-1 italic">Mês em andamento</p>}
+                  </div>
+                );
+              }}
             />
             <Bar dataKey="receitas" radius={[4,4,0,0]} maxBarSize={40}>
               {dadosPagina.map((entry, i) => {

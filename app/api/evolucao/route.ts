@@ -39,15 +39,27 @@ export async function GET(req: Request) {
 
     const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+
     const evolucao = Object.entries(mesesMap)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, v]) => ({
-        mes: v.mes, ano: v.ano,
-        label: `${MESES[v.mes]}/${String(v.ano).slice(2)}`,
-        receitas: salarioTotal,
-        despesas: v.despesas,
-        saldo: salarioTotal - v.despesas,
-      }));
+      .map(([, v]) => {
+        const ehMesAtual = v.mes === mesAtual && v.ano === anoAtual;
+        return {
+          mes: v.mes, ano: v.ano,
+          // Mês atual: label com indicador visual
+          label: ehMesAtual
+            ? `${MESES[v.mes]} ●`
+            : `${MESES[v.mes]}/${String(v.ano).slice(2)}`,
+          receitas: salarioTotal,
+          // Despesas = gastos reais acumulados (sem projeção)
+          despesas: v.despesas,
+          saldo: salarioTotal - v.despesas,
+          parcial: ehMesAtual, // flag: mês ainda em andamento
+        };
+      });
 
     return NextResponse.json({ evolucao });
   } catch (err) {
