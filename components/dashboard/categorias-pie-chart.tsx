@@ -9,6 +9,7 @@ interface Props {
   dados: DespesaPorCategoria[];
   onCategoriaSelect?: (categoria: string | null) => void;
   categoriaAtiva?: string | null;
+  getCor?: (nome: string) => string;
 }
 
 const CORES: Record<string, string> = {
@@ -21,7 +22,7 @@ const CORES: Record<string, string> = {
 // Cores que precisam de texto ESCURO quando usadas como fundo (amarelos, verdes claros)
 const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
 
-function getCor(cat: string) { return CORES[cat] || '#888780'; }
+function getCor(cat: string) { return (getCorProp ? getCorProp(cat) : CORES[cat]) || '#888780'; }
 
 // Retorna cor do texto sobre o fundo da categoria — funciona em light e dark
 function getTextSobreCor(cor: string): string {
@@ -72,7 +73,7 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
-export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva }: Props) {
+export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva , getCor: getCorProp }): Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 

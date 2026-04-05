@@ -1,21 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, Users, User } from 'lucide-react';
-import { CATEGORIAS_DISPONIVEIS } from '@/lib/types';
+import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus } from 'lucide-react';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
 import { PERFIL_CONFIG } from '@/lib/perfil-config';
+import { useCategorias } from '@/hooks/use-categorias';
+import { ModalNovaCategoria } from './modal-nova-categoria';
 
 type Status = 'idle' | 'saving' | 'success' | 'error';
 type ModoDivisao = 'pessoal' | '5050' | 'proporcional' | 'membros';
-
-const CORES_CAT: Record<string, string> = {
-  'Alimentação': '#D4537E', 'Transporte': '#378ADD', 'Lazer': '#EF9F27',
-  'Casa': '#1D9E75', 'Assinaturas': '#7F77DD', 'Saúde': '#E24B4A',
-  'Gatos': '#C4843E', 'Moradia': '#4A90A4', 'Compras': '#A85D32',
-  'Educação': '#2D6B9A', 'Energia': '#854F0B', 'Gás': '#5A7A52', 'Outros': '#666666',
-};
 
 const MEMBROS_CASAL = [
   { id: 'leticia',  nome: 'Letícia',  cor: '#82a1fd' },
@@ -28,6 +22,9 @@ export function LancarView() {
   const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
 
   const plano = perfilAuth?.plano ?? 'casal';
+  const [modalCategoria, setModalCategoria] = useState(false);
+  const { categoriasPadrao, categoriasCustom, getCor, criarCategoria } = useCategorias(usuariaAtiva);
+  const todasCategorias = [...categoriasPadrao, ...categoriasCustom];
   const ehIndividual = plano === 'individual';
   const ehFamilia    = plano === 'familia';
   const ehCasal      = !ehIndividual && !ehFamilia;
@@ -139,20 +136,35 @@ export function LancarView() {
 
       {/* Categoria */}
       <div>
-        <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Categoria</label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[10px] text-muted-foreground uppercase tracking-widest">Categoria</label>
+          <button onClick={() => setModalCategoria(true)}
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border border-dashed border-border hover:border-primary hover:text-primary transition-colors text-muted-foreground">
+            <Plus className="h-3 w-3" /> Nova
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIAS_DISPONIVEIS.map(cat => {
-            const cor = CORES_CAT[cat] || '#666';
-            const selected = categoria === cat;
+          {todasCategorias.map(cat => {
+            const selected = categoria === cat.nome;
             return (
-              <button key={cat} onClick={() => setCategoria(cat)}
+              <button key={cat.nome} onClick={() => setCategoria(cat.nome)}
                 className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 border"
-                style={selected ? { background: cor, color: 'white', borderColor: cor } : { background: `${cor}18`, color: cor, borderColor: `${cor}44` }}
-              >{cat}</button>
+                style={selected ? { background: cat.cor, color: 'white', borderColor: cat.cor } : { background: `${cat.cor}18`, color: cat.cor, borderColor: `${cat.cor}44` }}
+              >{cat.nome}</button>
             );
           })}
         </div>
       </div>
+
+      {/* Modal nova categoria */}
+      {modalCategoria && (
+        <ModalNovaCategoria
+          perfilAtivo={usuariaAtiva}
+          membros={MEMBROS_CASAL}
+          onCriar={criarCategoria}
+          onFechar={() => setModalCategoria(false)}
+        />
+      )}
 
       {/* Divisão — oculto para individual */}
       {!ehIndividual && (

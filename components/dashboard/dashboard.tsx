@@ -16,6 +16,7 @@ import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
+import { useCategorias } from '@/hooks/use-categorias';
 import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Bell } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
@@ -42,6 +43,7 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
   const { isSupported, isSubscribed, verificando, registrar } = usePushNotifications(usuariaAtiva);
+  const { getCor } = useCategorias();
 
   // Mês visualizado — default = mês atual
   const hoje = new Date();
@@ -254,6 +256,7 @@ export function Dashboard() {
             dados={categorias}
             categoriaAtiva={categoriaAtiva}
             onCategoriaSelect={(cat) => setCategoriaAtiva(prev => prev === cat ? null : cat)}
+            getCor={getCor}
           />
           <ParceladasPanel parceladas={parceladas} comprometimentoTotal={comprometimentoTotal} />
         </div>
