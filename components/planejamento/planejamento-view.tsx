@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check, X as XIcon, Info, Save, Loader2, RefreshCw } from 'lucide-react';
+import { TrendingUp, Receipt, Wallet, PiggyBank, CalendarDays,
+         Pencil, Check, X as XIcon, Info, Save, Loader2, RefreshCw,
+         Sun, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface Props {
-  salarioLeticia: number;
-  salarioGiovanna: number;
-}
+import { useUsuarioContext } from '@/hooks/use-usuario-context';
 
 interface ContaFixa {
   id: string;
@@ -17,492 +15,494 @@ interface ContaFixa {
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+type Aba = 'configurar' | 'metodologia' | 'semanas';
 
-function fmt(valor: number) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function fmt(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-function getSemanasDoMes(): Array<{ numero: number; label: string }> {
+function getSemanasDoMes() {
   const hoje = new Date();
   const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-  const semanas = [];
-  let inicio = new Date(primeiroDia);
+  const ultimoDia   = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  const semanas: Array<{ numero: number; label: string; inicio: number; fim: number }> = [];
+  let cur = new Date(primeiroDia);
   let num = 1;
-  while (inicio <= ultimoDia) {
-    const fim = new Date(inicio);
-    fim.setDate(inicio.getDate() + (6 - inicio.getDay()));
+  while (cur <= ultimoDia) {
+    const fim = new Date(cur);
+    fim.setDate(cur.getDate() + (6 - cur.getDay()));
     if (fim > ultimoDia) fim.setTime(ultimoDia.getTime());
-    const dI = inicio.getDate().toString().padStart(2, '0');
-    const dF = fim.getDate().toString().padStart(2, '0');
-    semanas.push({ numero: num, label: `Sem ${num} — ${dI} a ${dF}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}` });
-    inicio = new Date(fim);
-    inicio.setDate(inicio.getDate() + 1);
-    num++;
+    const m = (hoje.getMonth() + 1).toString().padStart(2, '0');
+    semanas.push({ numero: num, label: `${cur.getDate().toString().padStart(2,'0')} a ${fim.getDate().toString().padStart(2,'0')}/${m}`, inicio: cur.getDate(), fim: fim.getDate() });
+    cur = new Date(fim); cur.setDate(cur.getDate() + 1); num++;
   }
   return semanas;
 }
 
-const CONTAS_FIXAS_PADRAO: ContaFixa[] = [
-  { id: '1', descricao: 'Aluguel', valor: 2200, categoria: 'Moradia' },
-  { id: '2', descricao: 'Condomínio', valor: 650, categoria: 'Moradia' },
-  { id: '3', descricao: 'Plano de Saúde', valor: 890, categoria: 'Saúde' },
-  { id: '4', descricao: 'Internet', valor: 120, categoria: 'Assinaturas' },
-  { id: '5', descricao: 'Streaming', valor: 69, categoria: 'Assinaturas' },
-  { id: '6', descricao: 'Gás', valor: 80, categoria: 'Casa' },
-  { id: '7', descricao: 'Energia', valor: 180, categoria: 'Casa' },
-];
-
-export function PlanejamentoView({ salarioLeticia, salarioGiovanna }: Props) {
-  const [salLet, setSalLet] = useState(salarioLeticia || 8500);
-  const [salGio, setSalGio] = useState(salarioGiovanna || 6500);
-  const [pctInvestimento, setPctInvestimento] = useState(10);
+export function PlanejamentoView() {
+  const { usuariaAtiva } = useUsuarioContext();
+  const isGeral = usuariaAtiva === 'casal';
+  const [aba, setAba] = useState<Aba>('configurar');
+  const [salLet, setSalLet]         = useState(0);
+  const [salGio, setSalGio]         = useState(0);
+  const [pctInvest, setPctInvest]   = useState(10);
   const [contasFixas, setContasFixas] = useState<ContaFixa[]>([]);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [editValor, setEditValor] = useState('');
-  const [novaDescricao, setNovaDescricao] = useState('');
-  const [novoValor, setNovoValor] = useState('');
+  const [editValor, setEditValor]   = useState('');
+  const [novaDesc, setNovaDesc]     = useState('');
+  const [novoVal, setNovoVal]       = useState('');
   const [adicionando, setAdicionando] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const [importandoFixas, setImportandoFixas] = useState(false);
-  const [importMsg, setImportMsg] = useState('');
+  const [alterado, setAlterado]     = useState(false);
   const [carregando, setCarregando] = useState(true);
-  const [alterado, setAlterado] = useState(false);
+  const [importando, setImportando] = useState(false);
+  const [importMsg, setImportMsg]   = useState('');
 
-  const semanas = useMemo(() => getSemanasDoMes(), []);
-  const hoje = new Date();
+  const semanas  = useMemo(() => getSemanasDoMes(), []);
+  const hoje     = new Date();
+  const diaHoje  = hoje.getDate();
+  const semanaAtual = semanas.find(s => diaHoje >= s.inicio && diaHoje <= s.fim)?.numero ?? 1;
 
-  const semanaAtual = useMemo(() => {
-    const semanasMes = getSemanasDoMes();
-    const dia = hoje.getDate();
-    for (let i = 0; i < semanasMes.length; i++) {
-      const partes = semanasMes[i].label.split('—')[1]?.trim().split(' ') || [];
-      const ini = parseInt(partes[0]);
-      const fim = parseInt(semanasMes[i].label.split('a ')[1]?.split('/')[0] || '0');
-      if (dia >= ini && dia <= fim) return i + 1;
-    }
-    return 1;
-  }, []);
-
-  // Carregar dados do Supabase ao montar
   useEffect(() => {
-    fetch('/api/planejamento')
-      .then(r => r.json())
-      .then(res => {
-        if (res.success && res.data) {
-          setSalLet(res.data.salario_leticia);
-          setSalGio(res.data.salario_giovanna);
-          setPctInvestimento(res.data.percentual_investimento);
-          if (res.data.contas_fixas?.length > 0) {
-            setContasFixas(res.data.contas_fixas);
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setCarregando(false));
+    fetch('/api/planejamento').then(r => r.json()).then(res => {
+      if (res.success && res.data) {
+        setSalLet(res.data.salario_leticia || 0);
+        setSalGio(res.data.salario_giovanna || 0);
+        setPctInvest(res.data.percentual_investimento || 10);
+        if (res.data.contas_fixas?.length > 0) setContasFixas(res.data.contas_fixas);
+      }
+    }).finally(() => setCarregando(false));
   }, []);
 
-  // Marcar como alterado quando qualquer valor muda
-  const marcarAlterado = () => setAlterado(true);
+  const mark = () => setAlterado(true);
 
-  async function importarFixasMes() {
-    setImportandoFixas(true);
-    setImportMsg('');
-    try {
-      const res = await fetch('/api/fixas-mensais', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setImportMsg(data.message);
-        window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
-      } else {
-        setImportMsg('Erro ao importar');
-      }
-    } catch {
-      setImportMsg('Erro ao importar');
-    } finally {
-      setImportandoFixas(false);
-      setTimeout(() => setImportMsg(''), 4000);
-    }
-  }
+  const salTotal     = salLet + salGio;
+  const investimento = salTotal * (pctInvest / 100);
+  const totalFixas   = contasFixas.reduce((a, c) => a + c.valor, 0);
+  const disponivel   = Math.max(0, salTotal - investimento - totalFixas);
+  const porSemana    = semanas.length > 0 ? disponivel / semanas.length : 0;
+  const diasNoMes    = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+  const porDia       = diasNoMes > 0 ? disponivel / diasNoMes : 0;
+  const pctFixas     = salTotal > 0 ? (totalFixas / salTotal) * 100 : 0;
+  const pctGastos    = salTotal > 0 ? (disponivel / salTotal) * 100 : 0;
+  const propLet      = salTotal > 0 ? (salLet > 0 ? salLet / salTotal : 0) : 0.5;
+  const propGio      = salTotal > 0 ? (salGio > 0 ? salGio / salTotal : 0) : 0.5;
+
+  const indiv = [
+    { perfil: 'leticia',  nome: 'Letícia',  cor: '#82a1fd', sal: salLet,  prop: propLet },
+    { perfil: 'giovanna', nome: 'Giovanna', cor: '#ff64ca', sal: salGio,  prop: propGio },
+  ].map(p => ({
+    ...p,
+    investimento: salTotal * (pctInvest / 100) * p.prop,
+    fixas:        totalFixas * p.prop,
+    disponivel:   disponivel * p.prop,
+    porSemana:    (disponivel * p.prop) / (semanas.length || 1),
+    porDia:       (disponivel * p.prop) / (diasNoMes || 30),
+  }));
 
   async function salvar() {
     setSaveStatus('saving');
     try {
       const res = await fetch('/api/planejamento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          salario_leticia: salLet,
-          salario_giovanna: salGio,
-          percentual_investimento: pctInvestimento,
-          contas_fixas: contasFixas,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salario_leticia: salLet, salario_giovanna: salGio,
+          percentual_investimento: pctInvest, contas_fixas: contasFixas }),
       });
       const data = await res.json();
-      if (data.success) {
-        setSaveStatus('saved');
-        setAlterado(false);
-        setTimeout(() => setSaveStatus('idle'), 3000);
-      } else {
-        setSaveStatus('error');
-        setTimeout(() => setSaveStatus('idle'), 3000);
-      }
-    } catch {
-      setSaveStatus('error');
+      setSaveStatus(data.success ? 'saved' : 'error');
+      if (data.success) { setAlterado(false); window.dispatchEvent(new CustomEvent('planejamento-atualizado')); }
       setTimeout(() => setSaveStatus('idle'), 3000);
-    }
-  }
-
-  const salarioTotal = salLet + salGio;
-  const investimento = salarioTotal * (pctInvestimento / 100);
-  const totalFixas = contasFixas.reduce((a, c) => a + c.valor, 0);
-  const disponivelGastos = Math.max(0, salarioTotal - investimento - totalFixas);
-  const porSemana = semanas.length > 0 ? disponivelGastos / semanas.length : 0;
-  const pctFixas = salarioTotal > 0 ? (totalFixas / salarioTotal) * 100 : 0;
-  const pctGastos = salarioTotal > 0 ? (disponivelGastos / salarioTotal) * 100 : 0;
-
-  function iniciarEdicao(conta: ContaFixa) {
-    setEditandoId(conta.id);
-    setEditValor(conta.valor.toString());
+    } catch { setSaveStatus('error'); setTimeout(() => setSaveStatus('idle'), 3000); }
   }
 
   function salvarEdicao(id: string) {
-  const novoVal = parseFloat(editValor.replace(',', '.'));
-  if (!isNaN(novoVal) && novoVal >= 0) {
-    setContasFixas(prev => prev.map(c => c.id === id ? { ...c, valor: novoVal } : c));
-    salvar(); // salva direto, sem precisar clicar no botão
-  }
-  setEditandoId(null);
-}
-
-  function removerConta(id: string) {
-    setContasFixas(prev => prev.filter(c => c.id !== id));
-    marcarAlterado();
+    const v = parseFloat(editValor.replace(',', '.'));
+    if (!isNaN(v) && v >= 0) { setContasFixas(prev => prev.map(c => c.id === id ? { ...c, valor: v } : c)); mark(); }
+    setEditandoId(null);
   }
 
   function adicionarConta() {
-    const valor = parseFloat(novoValor.replace(',', '.'));
-    if (!novaDescricao || isNaN(valor) || valor <= 0) return;
-    setContasFixas(prev => [...prev, { id: Date.now().toString(), descricao: novaDescricao, valor, categoria: 'Outros' }]);
-    setNovaDescricao('');
-    setNovoValor('');
-    setAdicionando(false);
-    marcarAlterado();
+    const v = parseFloat(novoVal.replace(',', '.'));
+    if (!novaDesc || isNaN(v) || v <= 0) return;
+    setContasFixas(prev => [...prev, { id: Date.now().toString(), descricao: novaDesc, valor: v, categoria: 'Outros' }]);
+    setNovaDesc(''); setNovoVal(''); setAdicionando(false); mark();
   }
 
-  if (carregando) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+  async function importarFixas() {
+    setImportando(true); setImportMsg('');
+    try {
+      const res  = await fetch('/api/fixas-mensais', { method: 'POST' });
+      const data = await res.json();
+      setImportMsg(data.success ? data.message : 'Erro ao importar');
+      if (data.success) window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
+    } catch { setImportMsg('Erro'); }
+    finally { setImportando(false); setTimeout(() => setImportMsg(''), 4000); }
   }
+
+  if (carregando) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-      {/* Header com botão salvar */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Planejamento</p>
-          <h2 className="text-xl font-medium text-foreground">Despesas Fixas</h2>
-          <p className="text-sm text-muted-foreground mt-1">Salário → investimento → despesas fixas → envelope semanal</p>
+          <h2 className="text-xl font-black text-foreground">Despesas Fixas</h2>
+          <p className="text-sm text-muted-foreground mt-1">Configure uma vez, acompanhe sempre.</p>
         </div>
-
-        {/* Botão salvar */}
-        <button
-          onClick={salvar}
-          disabled={saveStatus === 'saving' || !alterado}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
-            saveStatus === 'saved'
-              ? 'bg-[#3B6D11]/20 text-[#4ADE80] border border-[#3B6D11]/30'
-              : saveStatus === 'error'
-              ? 'bg-[#A32D2D]/20 text-[#E24B4A] border border-[#A32D2D]/30'
-              : alterado
-              ? 'bg-primary text-white hover:bg-primary/90'
-              : 'bg-secondary text-muted-foreground border border-border cursor-not-allowed'
-          }`}
-        >
-          {saveStatus === 'saving' ? (
-            <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
-          ) : saveStatus === 'saved' ? (
-            <><Check className="h-4 w-4" />Salvo</>
-          ) : saveStatus === 'error' ? (
-            <><XIcon className="h-4 w-4" />Erro</>
-          ) : (
-            <><Save className="h-4 w-4" />{alterado ? 'Salvar' : 'Salvo'}</>
-          )}
-        </button>
+        {isGeral && alterado && (
+          <button onClick={salvar} disabled={saveStatus === 'saving'}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0"
+            style={{ background: saveStatus === 'saved' ? '#1D9E75' : saveStatus === 'error' ? '#E24B4A' : 'var(--primary)' }}>
+            {saveStatus === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : saveStatus === 'saved' ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {saveStatus === 'saving' ? 'Salvando...' : saveStatus === 'saved' ? 'Salvo!' : 'Salvar'}
+          </button>
+        )}
       </div>
 
-      {alterado && (
-        <div className="p-3 rounded-lg bg-[#854F0B]/10 border border-[#854F0B]/30">
-          <p className="text-xs text-[#EF9F27]">Você tem alterações não salvas. Clique em <strong>Salvar</strong> para persistir.</p>
+      {!isGeral && (
+        <div className="p-3 rounded-xl bg-secondary/50 border border-border">
+          <p className="text-xs text-muted-foreground">Visualização somente leitura. Edições disponíveis no perfil <strong className="text-foreground">Geral</strong>.</p>
         </div>
       )}
 
-      {/* Etapa 1 — Salários */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center">1</span>
-            <Wallet className="h-4 w-4 text-primary" />
-            Salário do mês
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { label: 'Letícia', val: salLet, set: (v: number) => { setSalLet(v); marcarAlterado(); } },
-              { label: 'Giovanna', val: salGio, set: (v: number) => { setSalGio(v); marcarAlterado(); } },
-            ].map(s => (
-              <div key={s.label}>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">{s.label}</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">R$</span>
-                  <input
-                    type="number"
-                    value={s.val}
-                    onChange={e => s.set(parseFloat(e.target.value) || 0)}
-                    className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
+      {/* Abas */}
+      <div className="flex gap-1 p-1 bg-secondary rounded-xl w-fit">
+        {([
+          { id: 'configurar',  label: 'Configurar',  icon: Wallet },
+          { id: 'metodologia', label: 'Metodologia', icon: PiggyBank },
+          { id: 'semanas',     label: 'Semanas',      icon: CalendarDays },
+        ] as const).map(tab => {
+          const Icon = tab.icon;
+          const active = aba === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setAba(tab.id)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+              style={active ? { background: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' } : { color: 'var(--muted-foreground)' }}>
+              <Icon className="h-3.5 w-3.5" />{tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── CONFIGURAR ─── */}
+      {aba === 'configurar' && (
+        <div className="space-y-4">
+
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white" style={{ background: 'var(--primary)' }}>1</span>
+                Salários
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { label: 'Letícia',  cor: '#82a1fd', val: salLet, set: (v: number) => { setSalLet(v); mark(); } },
+                  { label: 'Giovanna', cor: '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } },
+                ].map(s => (
+                  <div key={s.label}>
+                    <label className="text-[10px] uppercase tracking-widest block mb-2 font-bold" style={{ color: s.cor }}>{s.label}</label>
+                    <div className="flex items-center gap-2 bg-secondary border border-border rounded-xl px-3 py-2">
+                      <span className="text-sm text-muted-foreground">R$</span>
+                      <input type="number" value={s.val || ''} disabled={!isGeral} onChange={e => s.set(parseFloat(e.target.value) || 0)} placeholder="0"
+                        className="flex-1 bg-transparent text-sm text-foreground focus:outline-none disabled:opacity-60" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="p-3 rounded-lg bg-secondary/50 border-l-2 border-primary flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Total combinado</span>
-            <span className="text-xl font-medium tabular-nums text-foreground">{fmt(salarioTotal)}</span>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/20">
+                <span className="text-xs text-muted-foreground">Total combinado</span>
+                <span className="text-xl font-black tabular-nums text-foreground">{fmt(salTotal)}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Etapa 2 — Investimento */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#3B6D11]/30 text-[#4ADE80] text-[10px] font-semibold flex items-center justify-center">2</span>
-            <TrendingUp className="h-4 w-4 text-[#4ADE80]" />
-            Investimento
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <input
-              type="range" min={0} max={30} step={1} value={pctInvestimento}
-              onChange={e => { setPctInvestimento(parseInt(e.target.value)); marcarAlterado(); }}
-              className="flex-1 accent-primary"
-            />
-            <span className="text-lg font-medium tabular-nums text-[#4ADE80] min-w-[40px]">{pctInvestimento}%</span>
-          </div>
-          <div className="p-3 rounded-lg bg-[#3B6D11]/10 border-l-2 border-[#3B6D11] flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Separar antes de qualquer gasto</p>
-            <span className="text-xl font-medium tabular-nums text-[#4ADE80]">{fmt(investimento)}</span>
-          </div>
-        </CardContent>
-      </Card>
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white bg-[#1D9E75]">2</span>
+                Investimento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-4">
+                <input type="range" min={0} max={30} step={1} value={pctInvest} disabled={!isGeral}
+                  onChange={e => { setPctInvest(parseInt(e.target.value)); mark(); }}
+                  className="flex-1 accent-[#1D9E75] disabled:opacity-60" />
+                <span className="text-2xl font-black tabular-nums text-[#4ADE80] min-w-[52px]">{pctInvest}%</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/20">
+                <p className="text-xs text-muted-foreground">Guardar antes de qualquer gasto</p>
+                <span className="text-xl font-black tabular-nums text-[#4ADE80]">{fmt(investimento)}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Etapa 3 — Despesas Fixas */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#A32D2D]/30 text-[#E24B4A] text-[10px] font-semibold flex items-center justify-center">3</span>
-            <Receipt className="h-4 w-4 text-[#E24B4A]" />
-            Despesas fixas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {contasFixas.map(conta => (
-            <div key={conta.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 group">
-              <span className="text-sm text-foreground flex-1">{conta.descricao}</span>
-              {editandoId === conta.id ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">R$</span>
-                  <input
-                    type="number" value={editValor}
-                    onChange={e => setEditValor(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && salvarEdicao(conta.id)}
-                    autoFocus
-                    className="w-24 bg-secondary border border-primary rounded px-2 py-1 text-sm text-foreground focus:outline-none"
-                  />
-                  <button onClick={() => salvarEdicao(conta.id)} className="text-[#3B6D11]"><Check className="h-4 w-4" /></button>
-                  <button onClick={() => setEditandoId(null)} className="text-muted-foreground"><XIcon className="h-4 w-4" /></button>
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white bg-[#E24B4A]">3</span>
+                Despesas Fixas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {contasFixas.map(conta => (
+                <div key={conta.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 group border border-transparent hover:border-border transition-colors">
+                  <span className="text-sm text-foreground flex-1">{conta.descricao}</span>
+                  {editandoId === conta.id ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">R$</span>
+                      <input type="number" value={editValor} autoFocus
+                        onChange={e => setEditValor(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && salvarEdicao(conta.id)}
+                        className="w-24 bg-secondary border border-primary rounded-lg px-2 py-1 text-sm focus:outline-none" />
+                      <button onClick={() => salvarEdicao(conta.id)} className="text-[#1D9E75]"><Check className="h-4 w-4" /></button>
+                      <button onClick={() => setEditandoId(null)} className="text-muted-foreground"><XIcon className="h-4 w-4" /></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold tabular-nums text-[#E24B4A]">{fmt(conta.valor)}</span>
+                      {isGeral && <>
+                        <button onClick={() => { setEditandoId(conta.id); setEditValor(conta.valor.toString()); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => { setContasFixas(prev => prev.filter(c => c.id !== conta.id)); mark(); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-[#E24B4A]">
+                          <XIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </>}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm tabular-nums text-[#E24B4A]">{fmt(conta.valor)}</span>
-                  <button onClick={() => iniciarEdicao(conta)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => removerConta(conta.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-[#E24B4A] text-xs">✕</button>
-                </div>
+              ))}
+
+              {isGeral && (
+                <>
+                  {adicionando ? (
+                    <div className="flex gap-2 pt-1">
+                      <input type="text" placeholder="Descrição" value={novaDesc} onChange={e => setNovaDesc(e.target.value)}
+                        className="flex-1 bg-secondary border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+                      <input type="number" placeholder="Valor" value={novoVal} onChange={e => setNovoVal(e.target.value)}
+                        className="w-28 bg-secondary border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+                      <button onClick={adicionarConta} className="px-3 py-2 rounded-xl bg-primary text-white text-sm font-bold">+</button>
+                      <button onClick={() => setAdicionando(false)} className="px-3 py-2 rounded-xl border border-border text-muted-foreground"><XIcon className="h-4 w-4" /></button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setAdicionando(true)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 pt-1">
+                      + Adicionar despesa fixa
+                    </button>
+                  )}
+                  <div className="flex items-center gap-3 pt-1">
+                    <button onClick={importarFixas} disabled={importando}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+                      {importando ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      Lançar fixas deste mês no dashboard
+                    </button>
+                    {importMsg && <span className={`text-xs ${importMsg.includes('Erro') ? 'text-[#E24B4A]' : 'text-[#1D9E75]'}`}>{importMsg}</span>}
+                  </div>
+                </>
               )}
-            </div>
-          ))}
 
-          {/* Botão importar fixas do mês */}
-          <div className="flex items-center gap-3 py-1">
-            <button
-              onClick={importarFixasMes}
-              disabled={importandoFixas}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-            >
-              {importandoFixas
-                ? <Loader2 className="h-3 w-3 animate-spin" />
-                : <RefreshCw className="h-3 w-3" />
-              }
-              Lançar fixas deste mês no dashboard
-            </button>
-            {importMsg && (
-              <span className={`text-xs ${importMsg.includes('Erro') ? 'text-[#E24B4A]' : 'text-[#3B6D11]'}`}>
-                {importMsg}
-              </span>
-            )}
-          </div>
-
-          {adicionando ? (
-            <div className="flex gap-2 pt-1">
-              <input type="text" placeholder="Descrição" value={novaDescricao}
-                onChange={e => setNovaDescricao(e.target.value)}
-                className="flex-1 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
-              <input type="text" placeholder="Valor" value={novoValor}
-                onChange={e => setNovoValor(e.target.value)}
-                className="w-28 bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
-              <button onClick={adicionarConta} className="px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">+</button>
-              <button onClick={() => setAdicionando(false)} className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary"><XIcon className="h-4 w-4" /></button>
-            </div>
-          ) : (
-            <button onClick={() => setAdicionando(true)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              + Adicionar despesa fixa
-            </button>
-          )}
-
-          <div className="p-3 rounded-lg bg-[#A32D2D]/10 border-l-2 border-[#A32D2D] flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">{Math.round(pctFixas)}% do salário comprometido</span>
-            <span className="text-xl font-medium tabular-nums text-[#E24B4A]">{fmt(totalFixas)}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Etapa 4 — Gastos Semanais */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#854F0B]/30 text-[#EF9F27] text-[10px] font-semibold flex items-center justify-center">4</span>
-            <CalendarDays className="h-4 w-4 text-[#EF9F27]" />
-            Orçamento semanal
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 rounded-lg bg-secondary/30 border border-border space-y-3">
-            {[
-              { label: 'Salário total', val: fmt(salarioTotal), cor: '' },
-              { label: `− Investimento (${pctInvestimento}%)`, val: `− ${fmt(investimento)}`, cor: 'text-[#4ADE80]' },
-              { label: '− Despesas fixas', val: `− ${fmt(totalFixas)}`, cor: 'text-[#E24B4A]' },
-            ].map(item => (
-              <div key={item.label} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span className={`tabular-nums ${item.cor || 'text-foreground'}`}>{item.val}</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#E24B4A]/10 border border-[#E24B4A]/20 mt-2">
+                <span className="text-xs text-muted-foreground">{Math.round(pctFixas)}% do salário</span>
+                <span className="text-xl font-black tabular-nums text-[#E24B4A]">{fmt(totalFixas)}</span>
               </div>
-            ))}
-            <div className="h-px bg-border" />
-            <div className="flex justify-between">
-              <span className="text-sm font-medium text-foreground">Para gastos variáveis</span>
-              <span className="text-lg font-medium tabular-nums text-[#EF9F27]">{fmt(disponivelGastos)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">Dividido em {semanas.length} semanas</span>
-              <span className="text-sm font-medium tabular-nums text-primary">{fmt(porSemana)}/semana</span>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-          {/* Barra de distribuição */}
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Distribuição do salário</p>
-            <div className="h-8 rounded-full overflow-hidden flex">
+      {/* ─── METODOLOGIA ─── */}
+      {aba === 'metodologia' && (
+        <div className="space-y-4">
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-foreground">Fluxo do dinheiro</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               {[
-                { w: pctInvestimento, bg: '#3B6D11', label: `${pctInvestimento}%` },
-                { w: pctFixas, bg: '#A32D2D', label: `${Math.round(pctFixas)}%` },
-                { w: pctGastos, bg: '#854F0B', label: `${Math.round(pctGastos)}%` },
-              ].map((seg, i) => (
-                <div key={i} className="h-full flex items-center justify-center text-[10px] font-medium text-white transition-all duration-500"
-                  style={{ width: `${seg.w}%`, background: seg.bg }}>
-                  {seg.w > 8 ? seg.label : ''}
+                { label: 'Salário total',                val: fmt(salTotal),     cor: 'var(--foreground)', bg: 'var(--secondary)', sinal: '' },
+                { label: `Investimento (${pctInvest}%)`, val: fmt(investimento), cor: '#4ADE80',           bg: '#1D9E7515',        sinal: '−' },
+                { label: 'Despesas fixas',               val: fmt(totalFixas),   cor: '#E24B4A',           bg: '#E24B4A15',        sinal: '−' },
+              ].map((item, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between p-3 rounded-xl border"
+                    style={{ background: item.bg, borderColor: `${item.cor}30` }}>
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
+                    <span className="text-base font-black tabular-nums" style={{ color: item.cor }}>{item.sinal}{item.val}</span>
+                  </div>
+                  {i < 2 && <div className="flex justify-center my-0.5"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground rotate-90" /></div>}
                 </div>
               ))}
+              <div className="flex items-center justify-between p-4 rounded-xl border-2 border-primary/40 bg-primary/10 mt-1">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest">Disponível para gastos</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{Math.round(pctGastos)}% do salário</p>
+                </div>
+                <span className="text-2xl font-black tabular-nums text-primary">{fmt(disponivel)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-foreground">Distribuição do salário</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="h-10 rounded-xl overflow-hidden flex">
+                {[
+                  { w: pctInvest, bg: '#1D9E75', label: `${pctInvest}% inv.` },
+                  { w: pctFixas,  bg: '#E24B4A', label: `${Math.round(pctFixas)}% fixas` },
+                  { w: pctGastos, bg: '#5330ff', label: `${Math.round(pctGastos)}% livre` },
+                ].map((seg, i) => (
+                  <div key={i} className="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-700"
+                    style={{ width: `${seg.w}%`, background: seg.bg }}>
+                    {seg.w > 10 ? seg.label : ''}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-4 flex-wrap">
+                {[{ cor: '#1D9E75', label: 'Investimento' }, { cor: '#E24B4A', label: 'Fixas' }, { cor: '#5330ff', label: 'Livre' }].map(item => (
+                  <span key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: item.cor }} />{item.label}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {indiv.map(p => (
+              <Card key={p.perfil} className="border-border bg-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold" style={{ color: p.cor }}>
+                    {p.nome} — {Math.round(p.prop * 100)}%
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {[
+                    { label: 'Salário',              val: fmt(p.sal),          cor: 'var(--foreground)' },
+                    { label: `Investimento (${pctInvest}%)`, val: `−${fmt(p.investimento)}`, cor: '#4ADE80' },
+                    { label: 'Parte das fixas',      val: `−${fmt(p.fixas)}`,  cor: '#E24B4A' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{item.label}</span>
+                      <span className="font-bold tabular-nums" style={{ color: item.cor }}>{item.val}</span>
+                    </div>
+                  ))}
+                  <div className="h-px bg-border my-1" />
+                  <div className="flex justify-between">
+                    <span className="text-sm font-bold text-foreground">Disponível</span>
+                    <span className="text-lg font-black tabular-nums" style={{ color: p.cor }}>{fmt(p.disponivel)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+            <Info className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Separe primeiro o <strong className="text-[#4ADE80]">investimento</strong>, depois pague as <strong className="text-[#E24B4A]">fixas</strong>, e o restante é o seu <strong className="text-primary">envelope livre</strong> para gastos variáveis.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ─── SEMANAS ─── */}
+      {aba === 'semanas' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border-2 border-primary/30 bg-primary/10 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                <Sun className="h-4 w-4 text-primary" />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Por dia</span>
+              </div>
+              <p className="text-3xl font-black tabular-nums text-primary">{fmt(porDia)}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{diasNoMes} dias no mês</p>
             </div>
-            <div className="flex gap-4 mt-2">
-              {[{ cor: '#3B6D11', label: 'Investimento' }, { cor: '#A32D2D', label: 'Fixas' }, { cor: '#854F0B', label: 'Gastos' }].map(item => (
-                <span key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: item.cor }} />
-                  {item.label}
-                </span>
-              ))}
+            <div className="p-4 rounded-xl border-2 border-[#ffa857]/30 bg-[#ffa857]/10 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                <CalendarDays className="h-4 w-4 text-[#ffa857]" />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Por semana</span>
+              </div>
+              <p className="text-3xl font-black tabular-nums text-[#ffa857]">{fmt(porSemana)}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{semanas.length} semanas no mês</p>
             </div>
           </div>
 
-          {/* Cards de semanas */}
+          <div className="p-3 rounded-xl bg-secondary/50 border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Base do cálculo</p>
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="font-black text-foreground">{fmt(salTotal)}</span>
+              <span className="text-muted-foreground">−</span>
+              <span className="font-black text-[#4ADE80]">{fmt(investimento)}</span>
+              <span className="text-muted-foreground">inv.</span>
+              <span className="text-muted-foreground">−</span>
+              <span className="font-black text-[#E24B4A]">{fmt(totalFixas)}</span>
+              <span className="text-muted-foreground">fixas</span>
+              <span className="text-muted-foreground">=</span>
+              <span className="font-black text-primary">{fmt(disponivel)}</span>
+              <span className="text-muted-foreground">÷ {semanas.length} sem.</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {semanas.map(semana => {
-              const isAtual = semana.numero === semanaAtual;
-              const isPast = semana.numero < semanaAtual;
+            {semanas.map(s => {
+              const isAtual = s.numero === semanaAtual;
+              const isPast  = s.numero < semanaAtual;
               return (
-                <div key={semana.numero} className={`p-4 rounded-lg border transition-all ${isAtual ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-secondary/30'} ${isPast ? 'opacity-60' : ''}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-foreground">Semana {semana.numero}</span>
-                    {isAtual && <span className="text-[9px] uppercase tracking-wider bg-primary text-white px-2 py-0.5 rounded-full">atual</span>}
-                    {isPast && <span className="text-[9px] uppercase tracking-wider text-muted-foreground">encerrada</span>}
+                <div key={s.numero} className="p-4 rounded-xl border transition-all"
+                  style={{ borderColor: isAtual ? 'var(--primary)' : 'var(--border)', background: isAtual ? 'rgb(from var(--primary) r g b / 0.08)' : 'var(--secondary)', opacity: isPast ? 0.55 : 1 }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-foreground">Semana {s.numero}</span>
+                      {isAtual && <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-black text-white" style={{ background: 'var(--primary)' }}>atual</span>}
+                      {isPast  && <span className="text-[9px] uppercase tracking-wider text-muted-foreground">encerrada</span>}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{s.label}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mb-2">{semana.label.split('—')[1]?.trim()}</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-medium tabular-nums text-primary">{fmt(porSemana)}</span>
-                    <span className="text-xs text-muted-foreground">disponível</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Semana</p>
+                      <p className="text-xl font-black tabular-nums" style={{ color: 'var(--primary)' }}>{fmt(porSemana)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Por dia</p>
+                      <p className="text-xl font-black tabular-nums text-[#ffa857]">{fmt(porDia)}</p>
+                    </div>
                   </div>
+                  {indiv.map(p => (
+                    <div key={p.perfil} className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
+                      <span className="text-[10px] font-bold" style={{ color: p.cor }}>{p.nome}</span>
+                      <div className="flex items-center gap-3 text-[10px]">
+                        <span className="text-muted-foreground">{fmt(p.porSemana)}/sem</span>
+                        <span className="font-bold" style={{ color: p.cor }}>{fmt(p.porDia)}/dia</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               );
             })}
           </div>
 
-          <div className="flex gap-3 p-3 rounded-lg bg-secondary/50 border border-border">
+          <div className="flex gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
             <Info className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               O que sobrar de uma semana pode ser usado na seguinte ou poupado. O acompanhamento real aparece na aba <strong className="text-foreground">Gastos</strong>.
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Resumo final */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { corBg: '#3B6D11', corTexto: '#4ADE80', icon: TrendingUp, label: 'Investimento mensal', val: fmt(investimento), sub: `${pctInvestimento}% do salário total` },
-          { corBg: '#A32D2D', corTexto: '#E24B4A', icon: Receipt, label: 'Comprometido em fixas', val: fmt(totalFixas), sub: `${Math.round(pctFixas)}% do salário total` },
-          { corBg: 'D4537E', corTexto: '#D4537E', icon: PiggyBank, label: 'Envelope semanal', val: fmt(porSemana), sub: `${Math.round(pctGastos)}% do salário · ${semanas.length} semanas` },
-        ].map((card, i) => (
-          <div key={i} className="p-4 rounded-xl border" style={{ background: `${card.corBg}1A`, borderColor: `${card.corBg}33` }}>
-            <div className="flex items-center gap-2 mb-2">
-              <card.icon className="h-4 w-4" style={{ color: card.corTexto }} />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{card.label}</span>
-            </div>
-            <p className="text-2xl font-medium tabular-nums" style={{ color: card.corTexto }}>{card.val}</p>
-            <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Botão salvar fixo no rodapé mobile */}
-      {alterado && (
-        <div className="fixed bottom-4 right-4 z-50 sm:hidden">
-          <button
-            onClick={salvar}
-            disabled={saveStatus === 'saving'}
-            className="flex items-center gap-2 px-5 py-3 rounded-full bg-primary text-white text-sm font-medium shadow-lg hover:bg-primary/90 transition-all"
-          >
-            {saveStatus === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar alterações
-          </button>
         </div>
       )}
+
     </div>
   );
 }
