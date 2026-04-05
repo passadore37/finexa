@@ -21,9 +21,10 @@ interface ProjecaoBarProps {
   onAjustarLimite?: (valor: number) => void;
   perfilGeral?: boolean;
   fixas?: number;
+  corPerfil?: string;
 }
 
-export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0 }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0, corPerfil }: ProjecaoBarProps) {
   const router = useRouter();
 const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteRaw } = dados;
 const limite = typeof limiteRaw === 'number' && !isNaN(limiteRaw) ? limiteRaw : 0;
@@ -60,7 +61,7 @@ const projecaoComFixas = projecao + valorFixas;
   const getCorGasto = () => {
     if (pctGasto >= 90) return '#E24B4A';
     if (pctGasto >= 70) return '#EF9F27';
-    return '#D4537E';
+    return corPerfil || '#D4537E';
   };
 
   const corGasto = getCorGasto();

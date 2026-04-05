@@ -213,13 +213,11 @@ export function Dashboard() {
         {/* Projeção + Evolução */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ProjecaoBar
-            dados={{ ...projecaoBar, limite }}
-            onAjustarLimite={async (v) => {
-              await fetch('/api/limite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perfil: usuariaAtiva, limite: v }) });
-              mutate();
-            }}
+             dados={{ ...projecaoBar, limite }}
+            onAjustarLimite={async (v) => { ... }}
             perfilGeral={usuariaAtiva === 'casal'}
             fixas={fixas}
+            corPerfil={perfilConfig.cor}
           />
           <EvolucaoChart
             dados={evolucaoGrafico}
