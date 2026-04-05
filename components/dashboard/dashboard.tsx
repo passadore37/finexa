@@ -15,7 +15,7 @@ import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
-import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
+import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle, Bell } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
@@ -112,16 +112,14 @@ export function Dashboard() {
   const saldoLivre = isPerfil ? perfilDados!.saldoLivre : indicadores.metodologia.saldoLivre;
   const categorias = isPerfil ? perfilDados!.categorias : indicadores.despesasPorCategoria;
 
+  const _salarios = { leticia: dados.salarioLeticia, giovanna: dados.salarioGiovanna };
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter(t => {
         if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
-        if (t.recorrente) return true;                                          // fixas sempre
-        if (t.divisao === 'pessoal') return t.responsavel === usuariaAtiva;     // pessoal: só do perfil
-        if (t.responsavel === usuariaAtiva) return true;                        // gasto próprio
-        if (t.divisao === '50/50') return true;                                 // dividido
-        if (!t.responsavel || t.responsavel === 'casal') return true;           // casal
-        if (t.totalParcelas && t.totalParcelas > 1) return true;               // parceladas
-        return false;
+        return transacaoVisivel(
+          { valor: t.valor, perfil: t.responsavel, responsavel: t.responsavel, divisao: t.divisao, recorrente: t.recorrente, totalParcelas: t.totalParcelas },
+          usuariaAtiva, _salarios
+        );
       })
     : dados.transacoes;
 
@@ -136,11 +134,17 @@ export function Dashboard() {
   const evolucaoMensal = isPerfil ? calcularEvolucaoMensal(transacoesVisiveis) : indicadores.evolucaoMensal;
 
   const projecaoBar = isPerfil
-    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', perfilDados!.proporcaoRenda)
+    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
     : calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas);
 
   const parceladas = isPerfil
-    ? calcularParceladas(transacoesVisiveis, new Date(mesSel.ano, mesSel.mes, 1), usuariaAtiva, perfilDados!.proporcaoRenda)
+    ? calcularParceladas(
+        dados.transacoes,
+        new Date(mesSel.ano, mesSel.mes, 1),
+        usuariaAtiva as 'leticia' | 'giovanna',
+        dados.salarioLeticia,
+        dados.salarioGiovanna,
+      )
     : indicadores.parceladas;
 
   const comprometimentoTotal = isPerfil
