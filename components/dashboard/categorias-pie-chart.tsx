@@ -22,7 +22,6 @@ const CORES: Record<string, string> = {
 // Cores que precisam de texto ESCURO quando usadas como fundo (amarelos, verdes claros)
 const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
 
-function getCor(cat: string) { return (getCorProp ? getCorProp(cat) : CORES[cat]) || '#888780'; }
 
 // Retorna cor do texto sobre o fundo da categoria — funciona em light e dark
 function getTextSobreCor(cor: string): string {
@@ -49,31 +48,32 @@ function ActiveShape(props: any) {
   );
 }
 
-// Tooltip customizado com nome da categoria
-function CustomTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0].payload as DespesaPorCategoria;
-  const cor = getCor(d.categoria);
-  return (
-    <div style={{
-      background: 'var(--card)',
-      border: `1.5px solid ${cor}`,
-      borderRadius: 10,
-      padding: '8px 12px',
-      fontSize: 12,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <div style={{ width: 10, height: 10, borderRadius: 2, background: cor, flexShrink: 0 }} />
-        <span style={{ fontWeight: 700, color: 'var(--foreground)', fontSize: 13 }}>{d.categoria}</span>
-      </div>
-      <div style={{ color: 'var(--foreground)', fontWeight: 700, fontSize: 15 }}>{fmt(d.valor)}</div>
-      <div style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{Math.round(d.percentual)}% do total</div>
-    </div>
-  );
-}
 
-export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, getCor: getCorProp }: Props) {
+
+export function CategoriasPieChart({
+  // Resolver cor — usa prop getCor (para categorias custom) ou fallback para mapa local
+  function resolverCor(cat: string): string {
+    return (getCorProp ? getCorProp(cat) : null) || CORES[cat] || '#888780';
+  }
+
+  // Tooltip interno (precisa de resolverCor em escopo)
+  function CustomTooltipInterno({ active, payload }: any) {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload as DespesaPorCategoria;
+    const cor = resolverCor(d.categoria);
+    return (
+      <div style={{ background: 'var(--card)', border: `1.5px solid ${cor}`, borderRadius: 10, padding: '8px 12px', fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: cor, flexShrink: 0 }} />
+          <span style={{ fontWeight: 700, color: 'var(--foreground)', fontSize: 13 }}>{d.categoria}</span>
+        </div>
+        <div style={{ color: 'var(--foreground)', fontWeight: 700, fontSize: 15 }}>{fmt(d.valor)}</div>
+        <div style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{Math.round(d.percentual)}% do total</div>
+      </div>
+    );
+  }
+
+ dados, onCategoriaSelect, categoriaAtiva, getCor: getCorProp }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
@@ -139,14 +139,14 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, g
                   {dados.map((entry) => (
                     <Cell
                       key={entry.categoria}
-                      fill={getCor(entry.categoria)}
+                      fill={resolverCor(entry.categoria)}
                       opacity={categoriaAtiva && categoriaAtiva !== entry.categoria ? 0.18 : 1}
                       stroke="var(--card)"
                       strokeWidth={2}
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltipInterno />} />
               </PieChart>
             </ResponsiveContainer>
 
@@ -155,7 +155,7 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, g
           {/* Legenda clicável */}
           <div className="flex-1 w-full space-y-1 min-w-0">
             {dados.map((d) => {
-              const cor = getCor(d.categoria);
+              const cor = resolverCor(d.categoria);
               const isActive = categoriaAtiva === d.categoria;
               const isHover = hoverLegenda === d.categoria;
               const isDimmed = !!categoriaAtiva && !isActive;
