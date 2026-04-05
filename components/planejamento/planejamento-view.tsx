@@ -392,22 +392,6 @@ export function PlanejamentoView() {
               </Card>
             ))}
           </div>
-                  </div>
-                  <div className="flex gap-3 mt-1.5 flex-wrap">
-                    {[
-                      { cor: '#1D9E75', label: `Investimento ${p.pct}%` },
-                      { cor: '#E24B4A', label: `Fixas ${Math.round(p.pctFixas)}%` },
-                      { cor: p.cor,     label: `Livre ${Math.round(p.pctGastos)}%` },
-                    ].map(item => (
-                      <span key={item.label} className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                        <span className="w-2.5 h-2.5 rounded-sm" style={{ background: item.cor }} />{item.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
 
           {/* Níveis de saúde financeira */}
           <Card className="border-border bg-card">
