@@ -57,6 +57,7 @@ export function PlanejamentoView() {
   const [importMsg, setImportMsg]     = useState('');
   const [transacoes, setTransacoes]   = useState<any[]>([]);
 
+  const { mes: mesGlobal, ano: anoGlobal } = useMesContext();
   const semanas    = useMemo(() => getSemanasDoMes(mesGlobal, anoGlobal), [mesGlobal, anoGlobal]);
   const hoje       = new Date();
   const diaHoje    = mesGlobal === hoje.getMonth() && anoGlobal === hoje.getFullYear() ? hoje.getDate() : 32;
@@ -67,7 +68,6 @@ export function PlanejamentoView() {
   const MESES_NOMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const mesLabel = `${MESES_NOMES_PT[mesGlobal]} ${anoGlobal}`;
 
-  const { mes: mesGlobal, ano: anoGlobal } = useMesContext();
 
   useEffect(() => {
     if (aba === 'orcamento') {
