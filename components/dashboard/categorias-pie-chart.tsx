@@ -73,7 +73,7 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
-export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva , getCor: getCorProp }): Props) {
+export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, getCor: getCorProp }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
