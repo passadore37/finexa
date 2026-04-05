@@ -40,6 +40,8 @@ export interface DadosPlanilha {
   salarioGiovanna: number;
   percentualInvestimento: number;
   contasFixasConfig: ContaFixaConfig[];
+  mesAlvo?: number;   // mês sendo visualizado (0-11)
+  anoAlvo?: number;   // ano sendo visualizado
 }
 
 export interface EvolucaoMensal {

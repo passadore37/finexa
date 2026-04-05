@@ -41,10 +41,6 @@ export function calcularEvolucaoMensal(
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
     const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
 
-    // Label com mês e ano curto para evitar ambiguidade (ex: Mar/24 vs Mar/25)
-    const mesLabel = `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
-    const ehMesAtual = d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
-
     if (perfil && propPerfil !== undefined) {
       const receitas = tsMes
         .filter(t => t.tipo === 'receita' && t.responsavel === perfil)
@@ -52,27 +48,26 @@ export function calcularEvolucaoMensal(
       const despesas = tsMes
         .filter(t => t.tipo === 'despesa')
         .reduce((acc, t) => acc + calcularValorParaPerfil(t, perfil, propPerfil), 0);
-      return { mes: ehMesAtual ? `${MESES[d.getMonth()]} ●` : mesLabel, receitas, despesas, saldo: receitas - despesas };
+      return { mes: MESES[d.getMonth()], receitas, despesas, saldo: receitas - despesas };
     }
 
     const tot = calcularTotais(tsMes);
-    return {
-      mes: ehMesAtual ? `${MESES[d.getMonth()]} ●` : mesLabel,
-      receitas: tot.receitas,
-      despesas: tot.despesas,
-      saldo: tot.receitas - tot.despesas
-    };
+    return { mes: MESES[d.getMonth()], receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
   });
 }
 
 function calcularDespesasPorCategoria(
   ts: Transacao[],
-  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>
+  contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
+  mesRef?: number,
+  anoRef?: number,
 ): DespesaPorCategoria[] {
 
   const hoje = new Date();
+  const mesUsar = mesRef !== undefined ? mesRef : hoje.getMonth();
+  const anoUsar = anoRef !== undefined ? anoRef : hoje.getFullYear();
 
-  const despesas = filtrarPorMes(ts, hoje.getMonth(), hoje.getFullYear())
+  const despesas = filtrarPorMes(ts, mesUsar, anoUsar)
     .filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário');
 
   const porCat: Record<string, number> = {};
@@ -275,7 +270,7 @@ export function calcularParceladas(
         totalParcelas,
         parcelasRestantes,
         comprometimentoFuturo,
-        mesTermino: `${MESES[fim.getMonth()]}/${String(fim.getFullYear()).slice(2)}`,
+        mesTermino: `${MESES[fim.getMonth()]}/${fim.getFullYear()}`,
       };
     })
     .filter(p => p.parcelasRestantes > 0)
@@ -504,7 +499,7 @@ function calcularProjecao(ts: Transacao[]): ProjecaoFinanceira[] {
     saldo += media;
 
     return {
-      mes: `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
+      mes: MESES[d.getMonth()],
       saldoProjetado: saldo,
       saldoOtimista: saldo + media * 0.2 * (i + 1),
       saldoPessimista: saldo - media * 0.3 * (i + 1)
@@ -686,15 +681,18 @@ export function gerarAlertas(
     });
   }
 
-  const proxMesDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
-  const proxMesLabel = `${MESES[proxMesDate.getMonth()]}/${String(proxMesDate.getFullYear()).slice(2)}`;
+  const proxMes =
+    MESES[new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1
+    ).getMonth()];
 
   parceladas.forEach(p => {
-    if (p.mesTermino.startsWith(proxMesLabel.split('/')[0]) || p.mesTermino.startsWith(proxMesLabel)) {
+    if (p.mesTermino.startsWith(proxMes)) {
       alertas.push({
         id: `fim-${p.descricao}`,
         tipo: 'sucesso',
-        titulo: `${p.descricao} termina em ${proxMesLabel}`,
+        titulo: `${p.descricao} termina em ${proxMes}`,
         mensagem: `R$ ${p.valorParcela.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} liberados no próximo mês.`
       });
     }
@@ -782,12 +780,15 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     percentualInvestimento,
     contasFixasConfig,
     salarioLeticia,
-    salarioGiovanna
+    salarioGiovanna,
+    mesAlvo,
+    anoAlvo,
   } = dados;
 
+  // Usar o mês/ano dos dados (pode ser histórico), não necessariamente hoje
   const hoje = new Date();
-  const mes = hoje.getMonth();
-  const ano = hoje.getFullYear();
+  const mes = mesAlvo !== undefined ? mesAlvo : hoje.getMonth();
+  const ano = anoAlvo !== undefined ? anoAlvo : hoje.getFullYear();
 
   const tsMes = filtrarPorMes(transacoes, mes, ano);
 
@@ -827,7 +828,7 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
       : 0;
 
   const despesasPorCategoria =
-    calcularDespesasPorCategoria(transacoes, contasFixasConfig);
+    calcularDespesasPorCategoria(transacoes, contasFixasConfig, mes, ano);
 
   const catsAnt = (() => {
 
@@ -898,7 +899,9 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     salarioGiovanna,
     contasFixasConfig,
     parceladas,
-    percentualInvestimento
+    percentualInvestimento,
+    mes,
+    ano,
   );
 
   const perfilGiovanna = calcularIndicadoresPerfil(
@@ -909,7 +912,9 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     salarioGiovanna,
     contasFixasConfig,
     parceladas,
-    percentualInvestimento
+    percentualInvestimento,
+    mes,
+    ano,
   );
 
   return {

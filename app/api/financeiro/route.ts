@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { fetchDadosPlanilha, gerarDadosDemo } from '@/lib/supabase-data';
 import { calcularTodosIndicadores } from '@/lib/indicadores';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+function getAdmin() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
 import { authGuard } from '@/lib/auth-guard';
 
 export async function GET(req: Request) {
@@ -18,7 +21,7 @@ export async function GET(req: Request) {
     const dados = await fetchDadosPlanilha(family_id!, mes, ano);
     const indicadores = calcularTodosIndicadores(dados);
 
-    const { data: limitesData } = await supabase
+    const { data: limitesData } = await getAdmin()
       .from('limites_financeiros').select('*').eq('family_id', family_id);
 
     const limites = {

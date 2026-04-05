@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 import { authGuard } from '@/lib/auth-guard';
 
 function dataLocalHoje() {
@@ -18,7 +25,7 @@ export async function GET(req: Request) {
     const ano = searchParams.get('ano') !== null ? parseInt(searchParams.get('ano')!) : hoje.getFullYear();
     const inicio = new Date(ano, mes, 1).toISOString().split('T')[0];
     const fim    = new Date(ano, mes + 1, 0).toISOString().split('T')[0];
-    const { data, error: err } = await supabase.from('transacoes').select('*')
+    const { data, error: err } = await getAdmin().from('transacoes').select('*')
       .eq('family_id', family_id)
       .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false }).limit(500);
@@ -34,7 +41,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, tipo, data, responsavel } = body;
     if (!valor || !categoria) return NextResponse.json({ success: false, error: 'Valor e categoria obrigatórios' }, { status: 400 });
-    const { data: result, error: err } = await supabase.from('transacoes').insert({
+    const { data: result, error: err } = await getAdmin().from('transacoes').insert({
       data: data || dataLocalHoje(),
       valor: Number(valor), categoria,
       descricao: descricao || categoria,
@@ -58,7 +65,7 @@ export async function PATCH(req: Request) {
   try {
     const { id, valor, categoria, descricao } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: 'ID obrigatório' }, { status: 400 });
-    const { data, error: err } = await supabase.from('transacoes')
+    const { data, error: err } = await getAdmin().from('transacoes')
       .update({ valor: Number(valor), categoria, descricao })
       .eq('id', id).eq('family_id', family_id).select().single();
     if (err) throw err;
@@ -72,7 +79,7 @@ export async function DELETE(req: Request) {
   try {
     const id = new URL(req.url).searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, error: 'ID obrigatório' }, { status: 400 });
-    await supabase.from('transacoes').delete().eq('id', id).eq('family_id', family_id);
+    await getAdmin().from('transacoes').delete().eq('id', id).eq('family_id', family_id);
     return NextResponse.json({ success: true });
   } catch { return NextResponse.json({ success: false, error: 'Erro ao deletar' }, { status: 500 }); }
 }
