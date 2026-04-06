@@ -2,6 +2,7 @@
 
 import { Logo } from '@/components/logo';
 import { TabNav } from '@/components/tab-nav';
+import { FeedbackModal } from '@/components/beta/feedback-modal';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
       <TabNav />
       <main className="pb-20 sm:pb-0">{children}</main>
+      <FeedbackModal />
     </>
   );
 }

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const { family_id, user, error } = await authGuard(req);
   if (error) return error;
   try {
-    const { plano_id } = await req.json();
+    const { plano_id, preco_override } = await req.json();
     const plano = getPlano(plano_id);
 
     // Buscar nome da família
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           description: `Assinatura mensal Finexa ${plano.nome}`,
           quantity:    1,
           currency_id: 'BRL',
-          unit_price:  plano.preco,
+          unit_price:  preco_override ?? plano.preco,
         }],
         payer: {
           email: user.email,
