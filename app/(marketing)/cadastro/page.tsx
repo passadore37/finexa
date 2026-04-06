@@ -2,79 +2,61 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, User, Users, Home, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, User, Users, Home, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
-
-const Logo = () => (
-  <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-lg transition-transform hover:scale-105"
-    style={{ background: '#5330ff', border: '2px solid #82a1fd', boxShadow: '2px 2px 0px 0px #82a1fd' }}>
-    F
-  </div>
-);
 
 const PLANOS = [
-  { id: 'individual', nome: 'Individual', preco: 24, Icon: User, cor: '#01b695', desc: '1 usuário · Controle pessoal completo' },
-  { id: 'casal', nome: 'Casal', preco: 34, Icon: Users, cor: '#5330ff', desc: '2 usuários · Divisão proporcional ao salário', destaque: true },
-  { id: 'familia', nome: 'Família', preco: 44, Icon: Home, cor: '#ffa857', desc: 'Até 4 usuários · Visão consolidada da família' },
+  { id: 'individual', nome: 'Individual', preco: 24, Icon: User,  cor: '#01b695', desc: '1 usuário · Controle pessoal completo' },
+  { id: 'casal',      nome: 'Casal',      preco: 34, Icon: Users, cor: '#5330ff', desc: '2 usuários · Divisão proporcional ao salário', destaque: true },
+  { id: 'familia',    nome: 'Família',    preco: 44, Icon: Home,  cor: '#ffa857', desc: 'Até 4 usuários · Visão consolidada da família' },
 ];
 
 function CadastroForm() {
-  const params = useSearchParams();
+  const params  = useSearchParams();
   const [step, setStep]       = useState(1);
   const [plano, setPlano]     = useState(params.get('plano') || 'casal');
   const [nome, setNome]       = useState('');
-  const [email, setEmail]     = useState('');
+  const [email, setEmail]     = useState(params.get('email') || '');
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro]       = useState('');
-
-  const planoSel = PLANOS.find(p => p.id === plano) || PLANOS[1];
+  const planoSel    = PLANOS.find(p => p.id === plano) || PLANOS[1];
+  const conviteToken = params.get('convite');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (senha.length < 8) { setErro('A senha deve ter pelo menos 8 caracteres.'); return; }
-    setLoading(true);
-    setErro('');
+    setLoading(true); setErro('');
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: senha,
-        options: {
-          data: {
-            nome,
-            plano,
-            role: 'membro', // trigger criará família nova automaticamente
-          },
-        },
+      const res  = await fetch('/api/auth/cadastro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha, nome, plano }),
       });
-      if (error) throw error;
-      // Redirecionar para página de plano (pagamento)
-      window.location.href = `/plano?id=${plano}`;
-    } catch (err: any) {
-      if (err.message?.includes('already registered')) {
-        setErro('Este e-mail já está cadastrado. Tente entrar.');
-      } else {
-        setErro(err.message || 'Erro ao criar conta. Tente novamente.');
+      const data = await res.json();
+      if (!res.ok) { setErro(data.error || 'Erro ao criar conta. Tente novamente.'); return; }
+      if (conviteToken && data.user_id) {
+        await fetch('/api/convite', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
+        });
       }
-    } finally {
-      setLoading(false);
-    }
+      window.location.href = '/verificar-email';
+    } catch {
+      setErro('Erro de conexão. Tente novamente.');
+    } finally { setLoading(false); }
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#5330ff]/10 rounded-full blur-[100px] -z-10" />
       <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#01b695]/10 rounded-full blur-[100px] -z-10" />
-
       <div className="w-full max-w-lg">
-        <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium mb-8 transition-colors text-sm">
+        <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-8">
           <ArrowLeft size={16} /> Voltar ao início
         </Link>
-
-        {/* Steps */}
         <div className="flex items-center gap-3 mb-8">
           {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-3">
@@ -85,16 +67,14 @@ function CadastroForm() {
               {s < 2 && <div className={`h-0.5 w-16 transition-all ${step > s ? 'bg-[#5330ff]' : 'bg-border'}`} />}
             </div>
           ))}
-          <span className="text-sm text-muted-foreground font-medium ml-1">
-            {step === 1 ? 'Escolha o plano' : 'Crie sua conta'}
-          </span>
+          <span className="text-sm text-muted-foreground font-medium ml-1">{step === 1 ? 'Escolha o plano' : 'Crie sua conta'}</span>
         </div>
-
         <div className="nb-card bg-card p-8">
           {step === 1 ? (
             <>
               <div className="flex items-center gap-3 mb-6">
-                <Logo />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-lg"
+                  style={{ background: '#5330ff', border: '2px solid #82a1fd', boxShadow: '2px 2px 0 #82a1fd' }}>F</div>
                 <div>
                   <h1 className="text-2xl font-black text-foreground">Escolha seu plano</h1>
                   <p className="text-sm text-muted-foreground">14 dias grátis · Sem cartão agora</p>
@@ -105,13 +85,9 @@ function CadastroForm() {
                   const sel = plano === p.id;
                   return (
                     <button key={p.id} onClick={() => setPlano(p.id)}
-                      className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all cursor-pointer"
-                      style={{
-                        borderColor: sel ? p.cor : 'var(--border)',
-                        background: sel ? `${p.cor}12` : 'transparent',
-                        boxShadow: sel ? `3px 3px 0 ${p.cor}50` : 'none',
-                        transform: sel ? 'translate(-1px,-1px)' : 'none',
-                      }}>
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
+                      style={{ borderColor: sel ? p.cor : 'var(--border)', background: sel ? `${p.cor}12` : 'transparent',
+                               boxShadow: sel ? `3px 3px 0 ${p.cor}50` : 'none', transform: sel ? 'translate(-1px,-1px)' : 'none' }}>
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: `${p.cor}20`, border: `2px solid ${p.cor}60` }}>
                         <p.Icon size={22} style={{ color: p.cor }} />
@@ -119,9 +95,7 @@ function CadastroForm() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-black text-lg text-foreground">{p.nome}</span>
-                          {p.destaque && (
-                            <span className="text-[10px] font-black bg-[#ff64ca] text-white px-2 py-0.5 rounded-full">POPULAR</span>
-                          )}
+                          {(p as any).destaque && <span className="text-[10px] font-black bg-[#ff64ca] text-white px-2 py-0.5 rounded-full">POPULAR</span>}
                         </div>
                         <span className="text-sm text-muted-foreground">{p.desc}</span>
                       </div>
@@ -142,25 +116,23 @@ function CadastroForm() {
           ) : (
             <>
               <div className="flex items-center gap-3 mb-6">
-                <Logo />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-lg"
+                  style={{ background: '#5330ff', border: '2px solid #82a1fd', boxShadow: '2px 2px 0 #82a1fd' }}>F</div>
                 <div className="flex-1">
                   <h1 className="text-2xl font-black text-foreground">Crie sua conta</h1>
                   <p className="text-sm text-muted-foreground">Plano {planoSel.nome} · R${planoSel.preco}/mês</p>
                 </div>
-                <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground transition-colors">
-                  <ArrowLeft size={18} />
-                </button>
+                <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground"><ArrowLeft size={18} /></button>
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 {[
                   { label: 'Seu nome', value: nome, set: setNome, type: 'text', placeholder: 'Como prefere ser chamada', auto: 'name' },
-                  { label: 'E-mail', value: email, set: setEmail, type: 'email', placeholder: 'voce@exemplo.com', auto: 'email' },
+                  { label: 'E-mail',   value: email, set: setEmail, type: 'email', placeholder: 'voce@exemplo.com', auto: 'email' },
                 ].map(f => (
                   <div key={f.label}>
                     <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">{f.label}</label>
-                    <input type={f.type} value={f.value} onChange={e => f.set(e.target.value)} required
-                      placeholder={f.placeholder} autoComplete={f.auto}
-                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/50 font-medium focus:outline-none focus:border-[#5330ff] transition-colors" />
+                    <input type={f.type} value={f.value} onChange={e => f.set(e.target.value)} required placeholder={f.placeholder} autoComplete={f.auto}
+                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
                   </div>
                 ))}
                 <div>
@@ -168,24 +140,23 @@ function CadastroForm() {
                   <div className="relative">
                     <input type={mostrar ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} required
                       placeholder="Mínimo 8 caracteres" autoComplete="new-password"
-                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground/50 font-medium focus:outline-none focus:border-[#5330ff] transition-colors" />
+                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 pr-12 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
                     <button type="button" onClick={() => setMostrar(!mostrar)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                      {mostrar ? <EyeOff size={18} /> : <Eye size={18} />}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {mostrar ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
                   </div>
                 </div>
-                {erro && (
-                  <div className="border-2 border-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">{erro}</div>
-                )}
+                {erro && <div className="border-2 border-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">{erro}</div>}
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Ao criar sua conta você concorda com os{' '}
                   <Link href="/termos" className="text-[#5330ff] font-bold hover:underline">Termos de Uso</Link> e a{' '}
                   <Link href="/privacidade" className="text-[#5330ff] font-bold hover:underline">Política de Privacidade</Link>.
                 </p>
                 <button type="submit" disabled={loading}
-                  className="nb-btn bg-[#5330ff] text-white py-4 font-black text-base w-full mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="nb-btn bg-[#5330ff] text-white py-4 font-black text-base w-full mt-1 disabled:opacity-60 flex items-center justify-center gap-2"
                   style={{ borderColor: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {loading ? 'Criando conta...' : 'Criar conta grátis — 14 dias'}
                 </button>
               </form>
@@ -202,9 +173,5 @@ function CadastroForm() {
 }
 
 export default function CadastroPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <CadastroForm />
-    </Suspense>
-  );
+  return <Suspense fallback={<div className="min-h-screen bg-background" />}><CadastroForm /></Suspense>;
 }
