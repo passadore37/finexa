@@ -1,83 +1,75 @@
-// middleware.ts — proteção de rotas + propagação de sessão Supabase
+// middleware.ts — proteção de rotas + verificação de trial/assinatura
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+const PUBLIC_ROUTES  = ['/', '/login', '/cadastro', '/plano', '/convite', '/termos', '/privacidade'];
+const AUTH_ROUTES    = ['/login', '/cadastro'];
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Rotas de arquivos estáticos e API — deixar passar
+  if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
+    return NextResponse.next();
+  }
+
+  const res = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
+    { cookies: {
+        get: (name) => req.cookies.get(name)?.value,
+        set: (name, value, opts) => { res.cookies.set({ name, value, ...opts }); },
+        remove: (name, opts) => { res.cookies.set({ name, value: '', ...opts }); },
+    }},
   );
 
-  // IMPORTANTE: getUser() renova o token se necessário
-  // Não usar getSession() aqui — é menos seguro
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAppRoute   = pathname.startsWith('/dashboard') || pathname.startsWith('/lancar') ||
+                       pathname.startsWith('/metas')     || pathname.startsWith('/planejamento');
 
-  const { pathname } = request.nextUrl;
+  // 1. Rota do app sem sessão → login
+  if (isAppRoute && !session) {
+    return NextResponse.redirect(new URL(`/login?redirect=${pathname}`, req.url));
+  }
 
-  // Arquivos estáticos — liberar sempre sem verificação
-  const isStatic =
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/public/') ||
-    /\.(svg|png|jpg|jpeg|gif|webp|ico|json|txt|xml)$/.test(pathname);
+  // 2. Já logado tentando acessar login/cadastro → dashboard
+  if (AUTH_ROUTES.some(r => pathname.startsWith(r)) && session) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
 
-  if (isStatic) return supabaseResponse;
+  // 3. Rota do app com sessão → verificar email + assinatura
+  if (isAppRoute && session) {
+    const { data: familia } = await supabase
+      .from('familias').select('assinatura_status, trial_ends_at, plano')
+      .eq('id', session.user.user_metadata?.family_id ?? '')
+      .single();
 
-  // Rotas públicas de marketing — liberar sempre
-  const isMarketing =
-    pathname === '/' ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/cadastro') ||
-    pathname.startsWith('/plano') ||
-    pathname.startsWith('/termos') ||
-    pathname.startsWith('/privacidade');
-
-  if (isMarketing) return supabaseResponse;
-
-  // API routes — verificar sessão e adicionar family_id no header
-  if (pathname.startsWith('/api/')) {
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado. Faça login para continuar.' },
-        { status: 401 }
-      );
+    // Email não confirmado
+    if (!session.user.email_confirmed_at) {
+      return NextResponse.redirect(new URL('/verificar-email', req.url));
     }
-    // Propagar user id para as API routes via header
-    supabaseResponse.headers.set('x-user-id', user.id);
-    return supabaseResponse;
+
+    // Trial ou assinatura expirada
+    if (familia) {
+      const { assinatura_status, trial_ends_at } = familia;
+      const trialExpirou = assinatura_status === 'trial' &&
+        trial_ends_at && new Date(trial_ends_at) < new Date();
+      const assinaturaExpirou = assinatura_status === 'expirada' || assinatura_status === 'cancelada';
+
+      if (trialExpirou || assinaturaExpirou) {
+        if (!pathname.startsWith('/plano')) {
+          return NextResponse.redirect(new URL(`/plano?id=${familia.plano}&expired=true`, req.url));
+        }
+      }
+    }
   }
 
-  // Todas as outras rotas (dashboard, lancar, metas, planejamento) — exigir sessão
-  if (!user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
+  return res;
 }
 
 export const config = {
-  matcher: [
-    // Proteger tudo exceto arquivos estáticos do Next.js
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

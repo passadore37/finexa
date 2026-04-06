@@ -3,206 +3,152 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Check, Lock, ArrowLeft, Shield, LogIn } from 'lucide-react';
+import { Check, Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
-
-const Logo = () => (
-  <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-lg"
-    style={{ background: '#5330ff', border: '2px solid #82a1fd', boxShadow: '2px 2px 0px 0px #82a1fd' }}>
-    F
-  </div>
-);
-
-const PLANOS: Record<string, any> = {
-  individual: {
-    nome: 'Individual', preco_mensal: 24, preco_anual: 20, cor: '#01b695',
-    features: ['1 usuário', 'Dashboard completo', 'Metas pessoais', 'Histórico 12 meses', 'PWA nativo'],
-  },
-  casal: {
-    nome: 'Casal', preco_mensal: 34, preco_anual: 28, cor: '#5330ff',
-    features: ['2 usuários', 'Divisão proporcional ao salário', 'Dashboard individual + geral', 'Metas conjuntas', 'Orçamento semanal', 'Telegram'],
-  },
-  familia: {
-    nome: 'Família', preco_mensal: 44, preco_anual: 36, cor: '#ffa857',
-    features: ['Até 4 usuários', 'Tudo do plano Casal', 'Perfis independentes', 'Visão consolidada', '+R$7/mês por extra'],
-  },
-};
+import { getPlano } from '@/lib/planos';
 
 function PlanoForm() {
-  const params = useSearchParams();
-  const planoId = params.get('id') || 'casal';
-  const cicloInicial = (params.get('ciclo') as 'mensal' | 'anual') || 'mensal';
-  const plano = PLANOS[planoId] || PLANOS.casal;
+  const params   = useSearchParams();
+  const planoId  = params.get('id') || 'casal';
+  const expired  = params.get('expired') === 'true';
+  const pendente = params.get('pendente') === 'true';
+  const plano    = getPlano(planoId);
 
-  const [ciclo, setCiclo]         = useState<'mensal' | 'anual'>(cicloInicial);
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading]         = useState(false);
   const [autenticado, setAutenticado] = useState<boolean | null>(null);
-
-  const preco = ciclo === 'anual' ? plano.preco_anual : plano.preco_mensal;
-  const economia = (plano.preco_mensal - plano.preco_anual) * 12;
+  const [erro, setErro]               = useState('');
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAutenticado(!!session);
-    });
+    createClient().auth.getSession()
+      .then(({ data: { session } }) => setAutenticado(!!session));
   }, []);
 
   async function handleAssinar() {
     if (!autenticado) {
-      window.location.href = `/login?redirect=/plano?id=${planoId}&ciclo=${ciclo}`;
+      window.location.href = `/login?redirect=/plano?id=${planoId}`;
       return;
     }
     setLoading(true);
+    setErro('');
     try {
-      // TODO: Stripe Checkout
-      // const res = await fetch('/api/stripe/checkout', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ plano: planoId, ciclo }),
-      // });
-      // const { url } = await res.json();
-      // window.location.href = url;
-      await new Promise(r => setTimeout(r, 1200));
-      window.location.href = '/dashboard';
+      const res  = await fetch('/api/mercadopago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plano_id: planoId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setErro(data.error ?? 'Erro ao criar pagamento. Tente novamente.');
+      }
+    } catch {
+      setErro('Erro de conexão. Tente novamente.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 relative overflow-hidden">
-      <div className="absolute -top-20 -left-20 w-80 h-80 bg-[#5330ff]/8 rounded-full blur-[120px] -z-10" />
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+      <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full blur-[100px] -z-10"
+        style={{ background: `${plano.cor}15` }} />
 
-      <div className="max-w-5xl mx-auto">
-        <Link href="/cadastro" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium mb-8 transition-colors text-sm">
+      <div className="w-full max-w-md space-y-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm transition-colors">
           <ArrowLeft size={16} /> Voltar
         </Link>
 
-        <div className="flex items-center gap-3 mb-10">
-          <Logo />
-          <div>
-            <h1 className="text-2xl font-black text-foreground">Assinar plano {plano.nome}</h1>
-            <p className="text-sm text-muted-foreground">14 dias grátis · Cancele quando quiser</p>
+        {/* Banners de status */}
+        {expired && (
+          <div className="p-4 rounded-xl border border-[#EF9F27]/30 bg-[#EF9F27]/10 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-[#EF9F27] flex-shrink-0" />
+            <p className="text-sm text-[#EF9F27] font-bold">Seu trial expirou. Assine para continuar usando o Finexa.</p>
           </div>
-        </div>
-
-        {/* Aviso se não autenticado */}
-        {autenticado === false && (
-          <div className="nb-card bg-[#fff245] border-foreground mb-6 p-4 flex items-center gap-3"
-            style={{ boxShadow: '4px 4px 0 var(--foreground)' }}>
-            <LogIn size={20} className="text-foreground flex-shrink-0" />
-            <div>
-              <p className="font-black text-sm text-foreground">Você precisa estar logado para assinar</p>
-              <p className="text-xs text-foreground/70">Clique em "Começar 14 dias grátis" para ser redirecionada.</p>
-            </div>
+        )}
+        {pendente && (
+          <div className="p-4 rounded-xl border border-primary/30 bg-primary/10 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
+            <p className="text-sm text-primary font-bold">Pagamento em análise. Você receberá um email de confirmação.</p>
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Resumo */}
-          <div className="nb-card bg-card p-8">
-            <h2 className="text-xl font-black text-foreground mb-6">Resumo do pedido</h2>
+        {/* Card do plano */}
+        <div className="p-6 rounded-2xl border-2 border-border bg-card space-y-5"
+          style={{ borderColor: `${plano.cor}30` }}>
 
-            <div className="flex gap-3 mb-8">
-              {(['mensal', 'anual'] as const).map(c => (
-                <button key={c} onClick={() => setCiclo(c)}
-                  className="flex-1 py-3 rounded-xl border-2 font-black text-sm uppercase tracking-wide transition-all cursor-pointer"
-                  style={{
-                    borderColor: ciclo === c ? plano.cor : 'var(--border)',
-                    background: ciclo === c ? `${plano.cor}15` : 'transparent',
-                    color: ciclo === c ? plano.cor : 'var(--muted-foreground)',
-                    boxShadow: ciclo === c ? `3px 3px 0 ${plano.cor}40` : 'none',
-                    transform: ciclo === c ? 'translate(-1px,-1px)' : 'none',
-                  }}>
-                  {c === 'mensal' ? 'Mensal' : 'Anual −20%'}
-                </button>
-              ))}
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Assinar agora</p>
+            <h1 className="text-2xl font-black" style={{ color: plano.cor }}>Finexa {plano.nome}</h1>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-4xl font-black text-foreground">R${plano.preco}</span>
+              <span className="text-base font-medium text-muted-foreground">/mês</span>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">14 dias grátis · Cancele quando quiser</p>
+          </div>
 
-            <div className="p-4 rounded-xl border-2 mb-6"
-              style={{ borderColor: plano.cor, background: `${plano.cor}08` }}>
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-black text-lg text-foreground">Finexa {plano.nome}</span>
-                <div className="text-right">
-                  <span className="font-black text-2xl text-foreground">R${preco}</span>
-                  <span className="text-sm text-muted-foreground">/mês</span>
+          {/* Features */}
+          <ul className="space-y-2 py-2 border-t border-border">
+            {plano.features.map(f => (
+              <li key={f} className="flex items-center gap-2.5 text-sm text-foreground">
+                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${plano.cor}20` }}>
+                  <Check className="h-2.5 w-2.5" style={{ color: plano.cor }} />
                 </div>
-              </div>
-              {ciclo === 'anual' && (
-                <span className="text-xs font-black bg-[#01b695] text-white px-2 py-0.5 rounded-full">
-                  VOCÊ ECONOMIZA R${economia}/ANO
+                {f}
+              </li>
+            ))}
+          </ul>
+
+          {/* Métodos aceitos */}
+          <div className="p-3 rounded-xl bg-secondary/50 border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Formas de pagamento aceitas</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              {['PIX', 'Visa', 'Mastercard', 'Elo', 'American Express'].map(m => (
+                <span key={m} className="text-xs font-bold text-foreground bg-secondary px-2 py-1 rounded-lg border border-border">
+                  {m}
                 </span>
-              )}
-            </div>
-
-            <ul className="space-y-3 mb-8">
-              {plano.features.map((f: string) => (
-                <li key={f} className="flex items-center gap-3 text-sm font-medium text-foreground">
-                  <Check size={16} className="flex-shrink-0" style={{ color: plano.cor }} />{f}
-                </li>
               ))}
-            </ul>
-
-            <div className="p-4 bg-[#fff245] border-2 border-foreground rounded-xl">
-              <p className="font-black text-sm text-foreground">✦ 14 dias completamente grátis</p>
-              <p className="text-xs text-foreground/70 mt-1">
-                Não cobramos nada hoje. O plano começa após o trial.
-              </p>
             </div>
+            <p className="text-[10px] text-muted-foreground mt-2">Processado com segurança pelo MercadoPago</p>
           </div>
 
-          {/* Pagamento */}
-          <div className="nb-card bg-card p-8">
-            <h2 className="text-xl font-black text-foreground mb-6 flex items-center gap-2">
-              <Lock size={18} className="text-[#5330ff]" /> Dados de pagamento
-            </h2>
-
-            <div className="p-6 bg-secondary border-2 border-dashed border-border rounded-xl mb-6 text-center">
-              <Lock size={28} className="mx-auto mb-3 text-muted-foreground" />
-              <p className="font-bold text-muted-foreground text-sm">Pagamento processado pelo Stripe</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Ambiente seguro com SSL e criptografia</p>
+          {erro && (
+            <div className="p-3 rounded-xl border border-red-400/30 bg-red-50 dark:bg-red-900/20">
+              <p className="text-sm font-bold text-red-600 dark:text-red-400">{erro}</p>
             </div>
+          )}
 
-            <div className="flex flex-col gap-4 mb-6 opacity-50 pointer-events-none">
-              <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Número do cartão</label>
-                <input type="text" placeholder="1234 5678 9012 3456" disabled
-                  className="w-full bg-secondary border-2 border-border rounded-xl px-4 py-3.5 text-muted-foreground font-medium cursor-not-allowed" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Validade</label>
-                  <input type="text" placeholder="MM/AA" disabled
-                    className="w-full bg-secondary border-2 border-border rounded-xl px-4 py-3.5 text-muted-foreground font-medium cursor-not-allowed" />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">CVV</label>
-                  <input type="text" placeholder="123" disabled
-                    className="w-full bg-secondary border-2 border-border rounded-xl px-4 py-3.5 text-muted-foreground font-medium cursor-not-allowed" />
-                </div>
-              </div>
-            </div>
+          <button onClick={handleAssinar} disabled={loading || autenticado === null}
+            className="w-full py-4 rounded-xl font-black text-base text-white transition-all
+                       disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+            style={{ background: plano.cor, boxShadow: `4px 4px 0 ${plano.cor}50` }}>
+            {loading
+              ? <><Loader2 className="h-5 w-5 animate-spin" />Redirecionando...</>
+              : `Assinar Plano ${plano.nome} →`
+            }
+          </button>
 
-            <p className="text-xs text-muted-foreground text-center mb-4">
-              Integração Stripe em desenvolvimento. O acesso é liberado após o cadastro.
+          {!autenticado && autenticado !== null && (
+            <p className="text-center text-xs text-muted-foreground">
+              Você será redirecionada para criar sua conta antes do pagamento.
             </p>
+          )}
+        </div>
 
-            <button onClick={handleAssinar} disabled={loading || autenticado === null}
-              className="nb-btn bg-[#5330ff] text-white py-4 font-black text-base w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ borderColor: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
-              {loading ? 'Processando...' : autenticado === false
-                ? <><LogIn size={18} /> Entrar para assinar</>
-                : <><Shield size={18} /> Começar 14 dias grátis</>
-              }
-            </button>
+        <div className="text-center space-y-1">
+          <p className="text-xs text-muted-foreground">🔒 Pagamento 100% seguro via MercadoPago</p>
+          <p className="text-xs text-muted-foreground">Sem fidelidade · Cancele com 1 clique</p>
+        </div>
 
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground/40 flex-wrap">
-              <span className="flex items-center gap-1"><Lock size={11} /> SSL</span>
-              <span>·</span><span>Stripe Payments</span>
-              <span>·</span><span>Cancele quando quiser</span>
-            </div>
-          </div>
+        {/* Trocar plano */}
+        <div className="flex justify-center gap-4">
+          {['individual', 'casal', 'familia'].filter(p => p !== planoId).map(p => (
+            <Link key={p} href={`/plano?id=${p}`}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors capitalize">
+              Ver plano {p === 'familia' ? 'Família' : p.charAt(0).toUpperCase() + p.slice(1)}
+            </Link>
+          ))}
         </div>
       </div>
     </div>

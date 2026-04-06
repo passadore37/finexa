@@ -1,0 +1,48 @@
+'use client';
+
+import { useState } from 'react';
+import { Mail, Loader2, Check } from 'lucide-react';
+import { createClient } from '@/lib/supabase';
+
+export default function VerificarEmailPage() {
+  const [reenviando, setReenviando] = useState(false);
+  const [reenviado, setReenviado]   = useState(false);
+
+  async function reenviar() {
+    setReenviando(true);
+    const { data: { session } } = await createClient().auth.getSession();
+    if (!session?.user?.email) { setReenviando(false); return; }
+    await fetch('/api/auth/reenviar-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: session.user.email }),
+    });
+    setReenviado(true); setReenviando(false);
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-[#5330ff]/15 flex items-center justify-center mx-auto">
+          <Mail className="h-8 w-8 text-[#5330ff]" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-foreground mb-2">Confirme seu email</h1>
+          <p className="text-sm text-muted-foreground">Enviamos um link para o seu email. Clique nele para ativar sua conta e iniciar o trial de 14 dias.</p>
+        </div>
+        {reenviado ? (
+          <div className="p-4 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/30 flex items-center gap-2 justify-center">
+            <Check className="h-4 w-4 text-[#1D9E75]" />
+            <p className="text-sm font-bold text-[#1D9E75]">Email reenviado!</p>
+          </div>
+        ) : (
+          <button onClick={reenviar} disabled={reenviando}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-border text-sm font-bold text-muted-foreground hover:text-foreground transition-all disabled:opacity-50">
+            {reenviando && <Loader2 className="h-4 w-4 animate-spin" />}
+            {reenviando ? 'Enviando...' : 'Reenviar email de confirmação'}
+          </button>
+        )}
+        <p className="text-xs text-muted-foreground">Verifique também a pasta de spam.</p>
+      </div>
+    </div>
+  );
+}
