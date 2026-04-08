@@ -1,7 +1,7 @@
 // app/api/auth/reset-senha/route.ts — enviar email de reset via Resend
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { enviarEmailSenha } from '@/lib/resend';
+import { enviarEmailSenha } from '@/lib/mailer';
 
 export async function POST(req: Request) {
   try {

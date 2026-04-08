@@ -1,7 +1,7 @@
 // app/api/auth/reenviar-email/route.ts — reenviar email de confirmação
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { enviarEmailBoasVindas } from '@/lib/resend';
+import { enviarEmailBoasVindas } from '@/lib/mailer';
 
 export async function POST(req: Request) {
   try {

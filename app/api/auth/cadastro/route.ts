@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { enviarEmailBoasVindas } from '@/lib/resend';
+import { enviarEmailBoasVindas } from '@/lib/mailer';
 
 function getAdmin() {
   return createClient(

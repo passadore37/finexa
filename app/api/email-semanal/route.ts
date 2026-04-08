@@ -2,7 +2,7 @@
 // Vercel Cron: "0 8 * * 1"
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { enviarEmailSemanal } from '@/lib/resend';
+import { enviarEmailSemanal } from '@/lib/mailer';
 
 function getAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
