@@ -1,4 +1,3 @@
-// hooks/use-auth.ts — hook de autenticação e perfil
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -21,23 +20,17 @@ export function useAuth() {
   const supabase = createClient();
 
   const carregarPerfil = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('perfis')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data } = await supabase.from('perfis').select('*').eq('id', userId).single();
     if (data) setPerfil(data as PerfilUsuario);
   }, [supabase]);
 
   useEffect(() => {
-    // Sessão inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) carregarPerfil(session.user.id);
       setLoading(false);
     });
 
-    // Listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null);
@@ -54,8 +47,14 @@ export function useAuth() {
   }, [carregarPerfil, supabase.auth]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    try {
+      await supabase.auth.signOut();
+    } catch {}
+    // Forçar redirect limpando sessão e indo para home
+    document.cookie.split(';').forEach(c => {
+      document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+    });
+    window.location.replace('/');
   };
 
   return { user, perfil, loading, signOut };
