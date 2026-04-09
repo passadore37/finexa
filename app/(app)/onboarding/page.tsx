@@ -30,7 +30,7 @@ export default function OnboardingPage() {
   const [linkConvite, setLinkConvite] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [membros, setMembros]     = useState<MembroFamilia[]>([{ email: '', podeVerGeral: true, podeVerOutros: true }]);
-  const [linksGerados, setLinksGerados] = useState<string[]>([]);
+  const [linksGerados, setLinksGerados] = useState<{email: string; url: string}[]>([]);
 
   // Passo atual
   const [passo, setPasso] = useState(0);
@@ -113,14 +113,14 @@ export default function OnboardingPage() {
     // Gerar links para família
     if (etapaAtual === 'convites') {
       setSalvando(true);
-      const links: string[] = [];
+      const links: {email: string; url: string}[] = [];
       for (const m of membros.filter(m => m.email)) {
         const url = await gerarLinkConvite(m.email);
-        links.push(url);
+        links.push({ email: m.email, url });
       }
       setLinksGerados(links);
       setSalvando(false);
-      if (links.length > 0) return; // ficar para mostrar os links
+      if (links.length > 0) return;
     }
 
     if (etapaAtual === 'pronto') {
@@ -367,15 +367,19 @@ export default function OnboardingPage() {
               </>
             ) : (
               <div className="space-y-3">
-                {linksGerados.map((link, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/20">
-                    <p className="text-xs font-bold text-[#1D9E75] mb-1">✓ {membros[i]?.email}</p>
+                {linksGerados.map((item, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/20 space-y-2">
+                    <p className="text-xs font-bold text-[#1D9E75]">✓ {item.email}</p>
+                    <p className="text-[10px] text-muted-foreground break-all bg-secondary/50 rounded-lg px-2 py-1.5 select-all">
+                      {item.url}
+                    </p>
                     <div className="flex gap-2">
-                      <button onClick={() => copiarLink(link, i)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border hover:bg-secondary transition-colors">
-                        <Copy className="h-3 w-3" />Copiar
+                      <button onClick={() => { navigator.clipboard.writeText(item.url); setLinkCopiado(true); setTimeout(() => setLinkCopiado(false), 2000); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border hover:bg-secondary transition-colors"
+                        style={linkCopiado ? { background: '#1D9E75', color: 'white', borderColor: '#1D9E75' } : {}}>
+                        <Copy className="h-3 w-3" />{linkCopiado ? 'Copiado!' : 'Copiar'}
                       </button>
-                      <a href={`mailto:${membros[i]?.email}?subject=Convite Finexa&body=Acesse: ${link}`}
+                      <a href={`mailto:${item.email}?subject=Convite%20Finexa&body=Acesse%20o%20link%20para%20entrar%20no%20Finexa:%20${encodeURIComponent(item.url)}`}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#5330ff] text-white">
                         <Mail className="h-3 w-3" />Email
                       </a>
