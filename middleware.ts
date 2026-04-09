@@ -27,8 +27,11 @@ export async function middleware(req: NextRequest) {
   );
 
   const { data: { session } } = await supabase.auth.getSession();
-  const isAppRoute   = pathname.startsWith('/dashboard') || pathname.startsWith('/lancar') ||
-                       pathname.startsWith('/metas')     || pathname.startsWith('/planejamento');
+  const isAppRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/lancar') ||
+                     pathname.startsWith('/metas')      || pathname.startsWith('/planejamento');
+
+  // Página raiz sempre livre — não redirecionar mesmo logado
+  if (pathname === '/') return res;
 
   // 1. Rota do app sem sessão → login
   if (isAppRoute && !session) {
@@ -36,7 +39,9 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Já logado tentando acessar login/cadastro → dashboard
-  if (AUTH_ROUTES.some(r => pathname.startsWith(r)) && session) {
+  // Não redirecionar '/' — permite que usuário logado acesse a landing (ex: após logout)
+  const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
+  if (isAuthRoute && session) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
