@@ -44,8 +44,8 @@ export function PlanejamentoView() {
   const [aba, setAba] = useState<Aba>('configurar');
   const [salLet, setSalLet]     = useState(0);
   const [salGio, setSalGio]     = useState(0);
-  const [pctLet, setPctLet]     = useState(10); // investimento individual Letícia
-  const [pctGio, setPctGio]     = useState(10); // investimento individual Giovanna
+  const [pctLet, setPctLet]     = useState(10); // investimento individual membro 1
+  const [pctGio, setPctGio]     = useState(10); // investimento individual membro 2
   const [contasFixas, setContasFixas] = useState<ContaFixa[]>([]);
   const [editandoId, setEditandoId]   = useState<string | null>(null);
   const [editValor, setEditValor]     = useState('');
@@ -229,8 +229,8 @@ export function PlanejamentoView() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { label: 'Letícia',  cor: '#82a1fd', val: salLet, set: (v: number) => { setSalLet(v); mark(); } },
-                  { label: 'Giovanna', cor: '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } },
+                  { label: membros[0]?.nome ?? 'Membro 1', cor: membros[0]?.cor ?? '#82a1fd', val: salLet, set: (v: number) => { setSalLet(v); mark(); } },
+                  { label: membros[1]?.nome ?? 'Membro 2', cor: membros[1]?.cor ?? '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } },
                 ].map(s => (
                   <div key={s.label}>
                     <label className="text-[10px] uppercase tracking-widest block mb-2 font-bold" style={{ color: s.cor }}>{s.label}</label>
@@ -517,8 +517,8 @@ export function PlanejamentoView() {
               // Rateio por perfil
               let vLet = 0, vGio = 0;
               if (div === 'pessoal') {
-                if (perf === 'leticia')  vLet = val;
-                else if (perf === 'giovanna') vGio = val;
+                if (perf === (membros[0]?.role ?? 'leticia'))  vLet = val;
+                else if (perf === (membros[1]?.role ?? 'giovanna')) vGio = val;
                 else { vLet = val * propLet; vGio = val * propGio; }
               } else if (div === '50/50') {
                 vLet = val / 2; vGio = val / 2;
@@ -583,7 +583,7 @@ export function PlanejamentoView() {
                       <div key={dia}
                         className="w-7 h-7 rounded-md flex flex-col items-center justify-center relative text-center"
                         style={{ background: bg, opacity: isFuturo ? 0.3 : 1 }}
-                        title={gastos ? `Let: ${fmt(gastos.leticia)} | Gio: ${fmt(gastos.giovanna)}` : ''}>
+                        title={gastos ? `${membros[0]?.nome ?? 'M1'}: ${fmt(gastos.leticia)} | ${membros[1]?.nome ?? 'M2'}: ${fmt(gastos.giovanna)}` : ''}>
                         <span className="text-[9px] font-bold leading-none"
                           style={{ color: isHoje2 ? '#fff' : 'var(--foreground)' }}>
                           {dia}
@@ -620,7 +620,7 @@ export function PlanejamentoView() {
                       <span className="w-[4px] h-[4px] rounded-full bg-[#82a1fd]" />
                       <span className="w-[4px] h-[4px] rounded-full bg-[#ff64ca]" />
                     </span>
-                    Letícia · Giovanna
+                    {membros[0]?.nome ?? 'Membro 1'} · {membros[1]?.nome ?? 'Membro 2'}
                   </span>
                 </div>
               </div>
@@ -646,7 +646,7 @@ export function PlanejamentoView() {
                   const val = Number(t.valor);
                   const div = t.divisao || 'pessoal';
                   const perf = t.perfil || 'casal';
-                  if (div === 'pessoal') return acc + (perf === 'leticia' ? val : 0);
+                  if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'leticia') ? val : 0);
                   if (div === '50/50') return acc + val / 2;
                   return acc + val * propLet;
                 }, 0);
@@ -661,7 +661,7 @@ export function PlanejamentoView() {
                   const val = Number(t.valor);
                   const div = t.divisao || 'pessoal';
                   const perf = t.perfil || 'casal';
-                  if (div === 'pessoal') return acc + (perf === 'giovanna' ? val : 0);
+                  if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'giovanna') ? val : 0);
                   if (div === '50/50') return acc + val / 2;
                   return acc + val * propGio;
                 }, 0);

@@ -17,7 +17,7 @@ interface MembroFamilia {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { perfil } = useAuth();
+  const { perfil, reloadPerfil } = useAuth();
   const [salvando, setSalvando] = useState(false);
 
   // Dados do onboarding
@@ -77,6 +77,8 @@ export default function OnboardingPage() {
           plano, is_master: true,
         }),
       });
+      // Recarregar perfil para o header mostrar o nome correto
+      await reloadPerfil?.();
       setSalvando(false);
     }
 
@@ -220,14 +222,14 @@ export default function OnboardingPage() {
             {plano !== 'individual' && (
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                  Salário estimado do parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
+                  Salário estimado do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
                 </label>
                 <div className="flex items-center gap-2 bg-background border-2 border-border rounded-xl px-4 py-3 focus-within:border-[#5330ff] transition-colors">
                   <span className="text-sm text-muted-foreground">R$</span>
                   <input type="number" value={salParceiro} onChange={e => setSalParceiro(e.target.value)} placeholder="0"
                     className="flex-1 bg-transparent text-foreground focus:outline-none" />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">Usado para divisão proporcional. O parceiro(a) confirma o valor no próprio onboarding.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Usado para divisão proporcional. O cônjuge/parceiro(a) confirma o valor no próprio onboarding.</p>
               </div>
             )}
           </div>
@@ -263,14 +265,14 @@ export default function OnboardingPage() {
         {/* ── PASSO: CONVITE CASAL ── */}
         {etapaAtual === 'convite' && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <h2 className="text-lg font-black text-foreground">Convide seu parceiro(a)</h2>
+            <h2 className="text-lg font-black text-foreground">Convide seu cônjuge/parceiro(a)</h2>
             <p className="text-sm text-muted-foreground">
-              {linkConvite ? 'Link gerado! Compartilhe com seu parceiro(a).' : 'Digite o email para gerar o link de convite.'}
+              {linkConvite ? 'Link gerado! Compartilhe com seu cônjuge/parceiro(a).' : 'Digite o email para gerar o link de acesso.'}
             </p>
 
             {!linkConvite ? (
               <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Email do parceiro(a)</label>
+                <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Email do cônjuge/parceiro(a)</label>
                 <input type="email" value={emailParceiro} onChange={e => setEmailParceiro(e.target.value)}
                   placeholder="parceiro@email.com"
                   className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
