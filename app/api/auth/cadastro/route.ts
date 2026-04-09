@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { enviarEmailBoasVindas } from '@/lib/mailer';
+import { enviarEmailBoasVindas } from '@/lib/resend';
 
 function getAdmin() {
   return createClient(
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: 'signup',
       email,
-      options: { redirectTo: `https://finexa-one.vercel.app/dashboard` },
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding` },
     });
 
     if (!linkError && linkData?.properties?.action_link) {
