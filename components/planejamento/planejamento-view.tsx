@@ -6,6 +6,7 @@ import { Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check,
          TrendingUp, Zap, Shield, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { useMembros } from '@/hooks/use-membros';
 import { useMesContext } from '@/hooks/use-mes-context';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -39,6 +40,7 @@ function getSemanasDoMes(mes?: number, ano?: number) {
 export function PlanejamentoView() {
   const { usuariaAtiva } = useUsuarioContext();
   const isGeral = usuariaAtiva === 'casal';
+  const { membros } = useMembros();
   const [aba, setAba] = useState<Aba>('configurar');
   const [salLet, setSalLet]     = useState(0);
   const [salGio, setSalGio]     = useState(0);
@@ -100,10 +102,17 @@ export function PlanejamentoView() {
   const propGio      = 1 - propLet;
 
   // ── Cálculos individuais ──
-  const indiv = [
-    { perfil: 'leticia',  nome: 'Letícia',  cor: '#82a1fd', sal: salLet, pct: pctLet, setPct: setPctLet, prop: propLet },
-    { perfil: 'giovanna', nome: 'Giovanna', cor: '#ff64ca', sal: salGio, pct: pctGio, setPct: setPctGio, prop: propGio },
-  ].map(p => {
+  const membrosBase = membros.length >= 2
+    ? [
+        { perfil: membros[0].role, nome: membros[0].nome, cor: membros[0].cor, sal: salLet, pct: pctLet, setPct: setPctLet, prop: propLet },
+        { perfil: membros[1].role, nome: membros[1].nome, cor: membros[1].cor, sal: salGio, pct: pctGio, setPct: setPctGio, prop: propGio },
+      ]
+    : [
+        { perfil: 'membro1', nome: 'Membro 1', cor: '#82a1fd', sal: salLet, pct: pctLet, setPct: setPctLet, prop: propLet },
+        { perfil: 'membro2', nome: 'Membro 2', cor: '#ff64ca', sal: salGio, pct: pctGio, setPct: setPctGio, prop: propGio },
+      ];
+
+  const indiv = membrosBase.map(p => {
     const invest     = p.sal * (p.pct / 100);
     const fixas      = totalFixas * p.prop;
     const disponivel = Math.max(0, p.sal - invest - fixas);
