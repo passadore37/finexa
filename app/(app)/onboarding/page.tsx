@@ -88,16 +88,19 @@ export default function OnboardingPage() {
         .filter(f => f.descricao && parseFloat(f.valor) > 0)
         .map(f => ({ id: Date.now().toString() + Math.random(), descricao: f.descricao, valor: parseFloat(f.valor), categoria: 'Outros' }));
       setSalvando(true);
-      await fetch('/api/planejamento', {
+      await fetch('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salario_leticia: parseFloat(salario) || 0,
-          salario_giovanna: parseFloat(salParceiro) || 0,
-          percentual_investimento: 10,
+          nome,
+          salario: parseFloat(salario) || 0,
+          salario_parceiro: parseFloat(salParceiro) || 0,
           contas_fixas: contasFixas,
+          plano,
+          is_master: true,
         }),
       });
+      await reloadPerfil?.();
       setSalvando(false);
     }
 

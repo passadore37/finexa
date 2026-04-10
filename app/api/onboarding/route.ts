@@ -23,12 +23,17 @@ export async function POST(req: Request) {
 
     const admin = getAdmin();
 
-    // 1. Atualizar nome e marcar onboarding como feito
-    await admin.from('perfis').update({
-      nome,
-      onboarding_done: true,
-      is_master: is_master ?? false,
-    }).eq('id', user.id);
+    // 1. Atualizar nome no perfil E no user_metadata do auth
+    await Promise.all([
+      admin.from('perfis').update({
+        nome,
+        onboarding_done: true,
+        is_master: is_master ?? false,
+      }).eq('id', user.id),
+      admin.auth.admin.updateUserById(user.id, {
+        user_metadata: { nome },
+      }),
+    ]);
 
     // 2. Salvar planejamento financeiro
     const { data: existing } = await admin.from('planejamento')
