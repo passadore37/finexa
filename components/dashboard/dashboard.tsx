@@ -23,7 +23,6 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, AlertCircle } f
 import type { IndicadoresFinanceiros, DadosPlanilha, Transacao } from '@/lib/types';
 import { HistoricoView } from '@/components/historico/historico-view';
 import { calcularEvolucaoMensal, calcularProjecaoBar, calcularParceladas, gerarAlertas, gerarSugestoes } from '@/lib/indicadores';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 interface APIResponse {
   success: boolean;
@@ -182,7 +181,6 @@ export function Dashboard() {
           <MesNavegador mes={mesSel.mes} ano={mesSel.ano} onChange={navegarMes} />
           <div className="flex items-center gap-2">
 
-            <ThemeToggle />
           </div>
         </div>
       </div>
