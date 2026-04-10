@@ -57,6 +57,7 @@ export default function OnboardingPage() {
   async function gerarLinkConvite(email: string): Promise<string> {
     const res = await fetch('/api/convite', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
@@ -70,6 +71,7 @@ export default function OnboardingPage() {
       setSalvando(true);
       await fetch('/api/onboarding', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome, salario: parseFloat(salario) || 0,
@@ -90,6 +92,7 @@ export default function OnboardingPage() {
       setSalvando(true);
       await fetch('/api/onboarding', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome,
