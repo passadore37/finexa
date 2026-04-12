@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase';
 function LoginForm() {
   const params   = useSearchParams();
   const redirect = params.get('redirect') || '/dashboard';
-  const [email, setEmail]     = useState('');
+  const [email, setEmail]     = useState(params.get('email') || ''); // Inicializa com o e-mail da URL
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);
   const [loading, setLoading] = useState(false);
