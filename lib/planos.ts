@@ -19,7 +19,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     features: ['Tudo do Individual', 'Divisão proporcional ao salário', 'Dashboard consolidado do casal', 'Convite para 1 parceiro(a)'],
   },
   familia: {
-    id: 'família', nome: 'Família', preco: 39, maxMembros: 4, cor: '#ffa857',
+    id: 'familia', nome: 'Família', preco: 39, maxMembros: 4, cor: '#ffa857',
     features: ['Tudo do Casal', 'Até 4 membros inclusos', 'Controle de privacidade', 'R$7 por membro extra'],
   },
 };

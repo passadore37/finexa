@@ -37,11 +37,11 @@ function CadastroForm() {
       const data = await res.json();
       if (!res.ok) { setErro(data.error || 'Erro ao criar conta. Tente novamente.'); return; }
       if (conviteToken && data.user_id) {
-        await fetch('/api/convite', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
-        });
+      await fetch('/api/convite', {
+        method: 'PATCH',
+       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
+  });
       }
       window.location.href = '/verificar-email';
     } catch {
