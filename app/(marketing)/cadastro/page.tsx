@@ -43,7 +43,7 @@ function CadastroForm() {
       body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
   });
       }
-      window.location.href = '/verificar-email';
+      window.location.href = `/verificar-email?email=${encodeURIComponent(email)}`;
     } catch {
       setErro('Erro de conexão. Tente novamente.');
     } finally { setLoading(false); }
