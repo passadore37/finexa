@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: 'signup',
       email,
-      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding` },
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/onboarding` },
     });
 
     if (!linkError && linkData?.properties?.action_link) {

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/nova-senha` },
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/nova-senha` },
     });
     if (!error && data?.properties?.action_link) {
       const nome = user?.user_metadata?.nome ?? 'usuária';

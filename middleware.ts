@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PUBLIC_ROUTES  = ['/', '/login', '/cadastro', '/plano', '/convite', '/termos', '/privacidade'];
+const PUBLIC_ROUTES  = ['/', '/login', '/cadastro', '/plano', '/convite', '/termos', '/privacidade', '/auth/callback', '/verificar-email', '/nova-senha'];
 const AUTH_ROUTES    = ['/login', '/cadastro'];
 
 export async function middleware(req: NextRequest) {
