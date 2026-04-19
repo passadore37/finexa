@@ -65,7 +65,7 @@ export function Dashboard() {
   );
 
   useEffect(() => { aplicarCorPerfil(usuariaAtiva); }, [usuariaAtiva]);
-  useEffect(() => { setCategoriaAtiva(null); setDiaAtivo(null); }, [usuariaAtiva, mesSel]);
+  useEffect(() => { setCategoriaAtiva(null); setDiaAtivo(null); }, [usuariaAtiva, mesSel.mes, mesSel.ano]);
   useEffect(() => {
     const handler = () => mutate();
     window.addEventListener('planejamento-atualizado', handler);
