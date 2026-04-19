@@ -13,7 +13,7 @@ function primeiroValido(...vals: (number | string | null | undefined)[]): number
   for (const v of vals) {
     if (v === null || v === undefined) continue;
     const n = Number(v);
-    if (!isNaN(n) && isFinite(n) && n > 0) return n;
+    if (!isNaN(n) && isFinite(n) && n >= 0) return n;
   }
   return 0;
 }
@@ -68,7 +68,7 @@ export async function fetchDadosPlanilha(
 
   const salarioLeticia  = primeiroValido(pl?.salario_leticia, config?.salario_leticia, process.env.SALARIO_LETICIA);
   const salarioGiovanna = primeiroValido(pl?.salario_giovanna, config?.salario_giovanna, process.env.SALARIO_GIOVANNA);
-  const percentualInvestimento = primeiroValido(pl?.percentual_investimento, 10);
+  const percentualInvestimento = primeiroValido(pl?.percentual_investimento, 0);
   const limiteMensal    = primeiroValido(config?.limite, 9000);
   const contasFixasConfig: ContaFixaConfig[] = Array.isArray(pl?.contas_fixas) ? pl.contas_fixas : [];
 
@@ -121,6 +121,6 @@ export function gerarDadosDemo(): DadosPlanilha {
       { id: 'ant-sal-gio', data: ant, descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
       { id: 'ant-alim', data: ant, descricao: 'Alimentação', categoria: 'Alimentação', tipo: 'despesa', valor: 920, responsavel: 'casal', divisao: '50/50' },
     ],
-    limiteMensal: 9000, metaEmergencia: 30000, orcamentoCategoria: {}, salarioLeticia: 8500, salarioGiovanna: 6500, percentualInvestimento: 10, contasFixasConfig: [], mesAlvo: mes, anoAlvo: ano,
+    limiteMensal: 9000, metaEmergencia: 30000, orcamentoCategoria: {}, salarioLeticia: 8500, salarioGiovanna: 6500, percentualInvestimento: 0, contasFixasConfig: [], mesAlvo: mes, anoAlvo: ano,
   };
 }

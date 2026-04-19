@@ -44,8 +44,8 @@ export function PlanejamentoView() {
   const [aba, setAba] = useState<Aba>('configurar');
   const [salLet, setSalLet]     = useState(0);
   const [salGio, setSalGio]     = useState(0);
-  const [pctLet, setPctLet]     = useState(10); // investimento individual membro 1
-  const [pctGio, setPctGio]     = useState(10); // investimento individual membro 2
+  const [pctLet, setPctLet]     = useState(0); // investimento individual membro 1
+  const [pctGio, setPctGio]     = useState(0); // investimento individual membro 2
   const [contasFixas, setContasFixas] = useState<ContaFixa[]>([]);
   const [editandoId, setEditandoId]   = useState<string | null>(null);
   const [editValor, setEditValor]     = useState('');
@@ -86,8 +86,8 @@ export function PlanejamentoView() {
       if (res.success && res.data) {
         setSalLet(res.data.salario_leticia || 0);
         setSalGio(res.data.salario_giovanna || 0);
-        setPctLet(res.data.percentual_investimento || 10);
-        setPctGio(res.data.percentual_investimento || 10);
+        setPctLet(res.data.percentual_investimento ?? 0);
+        setPctGio(res.data.percentual_investimento ?? 0);
         if (res.data.contas_fixas?.length > 0) setContasFixas(res.data.contas_fixas);
       }
     }).finally(() => setCarregando(false));
