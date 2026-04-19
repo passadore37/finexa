@@ -3,76 +3,95 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  ArrowRight, Check, ShieldCheck, ChevronDown, Menu, X,
-  // Planos
+  ArrowRight, Check, ShieldCheck, ChevronDown,
   User, Heart, Home,
-  // Diferenciais
-  Scale, UserCircle, Target, CalendarDays, Zap, Smartphone,
-  // Problema
-  HelpCircle, Receipt, TrendingDown,
-  // Como funciona
+  Brain, PieChart, TrendingUp, Target, CalendarDays, Smartphone,
+  TableProperties, HelpCircle, Receipt, Wallet,
   Settings2, ClipboardList, Rocket,
-  // CTA
   Sparkles,
 } from 'lucide-react';
 import { Navbar, Footer } from '@/components/landing-layout';
 
-// ─── Dados ────────────────────────────────────────────────────────────────────
-
 const PLANOS = [
   {
-    id: 'individual', nome: 'Individual', preco: 19, Icon: User,
-    desc: 'Para quem quer controle total das próprias finanças',
-    cor: '#01b695', corText: 'text-[#01b695]', corBg: 'bg-[#01b695]',
-    destaque: false,
-    features: ['1 usuário', 'Dashboard completo', 'Metas pessoais', 'Histórico 12 meses', 'PWA nativo'],
+    id: 'individual', nome: 'Individual', preco: 24, Icon: User,
+    desc: 'Para quem quer largar a planilha e ter clareza real das próprias finanças',
+    cor: '#01b695', destaque: false,
+    features: ['1 usuário', 'Dashboard com projeção mensal', 'Metas e reserva de emergência', 'Mapeamento por categoria', 'Orçamento semanal', 'PWA nativo'],
   },
   {
-    id: 'casal', nome: 'Casal', preco: 29, Icon: Heart,
-    desc: 'O mais escolhido. Divisão justa, visão individual + geral',
-    cor: '#5330ff', corText: 'text-[#5330ff]', corBg: 'bg-[#5330ff]',
-    destaque: true,
-    features: ['2 usuários', 'Divisão proporcional ao salário', 'Dashboard individual + geral', 'Metas conjuntas', 'Orçamento semanal', 'Lançamento via Telegram'],
+    id: 'casal', nome: 'Casal', preco: 34, Icon: Heart,
+    desc: 'O mais escolhido. Divisão justa, sem planilha, sem discussão',
+    cor: '#5330ff', destaque: true,
+    features: ['2 usuários', 'Divisão proporcional ao salário', 'Painel individual + geral', 'Sugestões da IA por perfil', 'Metas conjuntas', 'Planejamento semanal compartilhado'],
   },
   {
     id: 'familia', nome: 'Família', preco: 44, Icon: Home,
-    desc: 'Em breve — para famílias que querem clareza',
-    cor: '#ffa857', corText: 'text-[#ffa857]', corBg: 'bg-[#ffa857]',
-    destaque: false, emBreve: true,
-    features: ['Até 4 usuários', 'Tudo do plano Casal', 'Perfis independentes', 'Visão consolidada', 'Relatório mensal', '+R$7/mês por extra'],
+    desc: 'Em breve — para famílias que querem clareza sem complicação',
+    cor: '#ffa857', destaque: false, emBreve: true,
+    features: ['Até 4 usuários', 'Tudo do plano Casal', 'Perfis independentes', 'Visão consolidada', '+R$7/mês por membro extra'],
   },
 ];
 
 const DIFERENCIAIS = [
-  { Icon: Scale,        titulo: 'Divisão proporcional', desc: 'Quem ganha mais, contribui mais. Calculado automaticamente pela proporção de renda.', cor: '#01b695' },
-  { Icon: UserCircle,   titulo: 'Perfis individuais',   desc: 'Cada pessoa vê seus próprios gastos, envelope e metas — sem expor o que não precisa.', cor: '#82a1fd' },
-  { Icon: Target,       titulo: 'Metas conjuntas',      desc: 'Viagem, reserva, entrada do apê. Acompanhe o progresso junto, em tempo real.', cor: '#ff64ca' },
-  { Icon: CalendarDays, titulo: 'Orçamento semanal',    desc: 'O salário vira envelopes semanais. Você sabe exatamente quanto pode gastar essa semana.', cor: '#ffa857' },
-  { Icon: Zap,          titulo: 'Lançamento fácil',     desc: 'App em 3 toques ou Telegram em linguagem natural. Claude interpreta e categoriza.', cor: '#fff245' },
-  { Icon: Smartphone,   titulo: 'PWA nativo',           desc: 'Instala direto na tela do celular. Sem App Store. Abre como app de verdade.', cor: '#5330ff' },
+  {
+    Icon: TableProperties,
+    titulo: 'Adeus, planilha',
+    desc: 'Chega de abas, fórmulas e dados desatualizados. O Finexa substitui qualquer planilha com dashboard em tempo real — sem você precisar digitar nada duas vezes.',
+    cor: '#01b695',
+  },
+  {
+    Icon: Brain,
+    titulo: 'Sugestões da IA',
+    desc: 'O painel de IA analisa seus padrões e dá recomendações personalizadas: onde cortar, onde investir mais, e o que fazer para bater suas metas mais rápido.',
+    cor: '#5330ff',
+  },
+  {
+    Icon: TrendingUp,
+    titulo: 'Projeção de gasto mensal',
+    desc: 'Veja para onde o mês está indo antes de acabar. A projeção calcula seu ritmo de gastos e estima o total ao fim do mês — com tempo para ajustar.',
+    cor: '#ff64ca',
+  },
+  {
+    Icon: PieChart,
+    titulo: 'Mapeamento por categoria',
+    desc: 'Moradia, alimentação, lazer, assinaturas. Cada gasto classificado automaticamente. Você vê de uma vez onde o dinheiro foi — sem fazer nada.',
+    cor: '#82a1fd',
+  },
+  {
+    Icon: Target,
+    titulo: 'Metas e reserva de emergência',
+    desc: 'Viagem, entrada do apê, reserva de 6 meses. Crie metas com valor e prazo, acompanhe o progresso e saiba exatamente quanto aportar por mês.',
+    cor: '#ffa857',
+  },
+  {
+    Icon: CalendarDays,
+    titulo: 'Planejamento semanal',
+    desc: 'O salário vira envelopes semanais. Você sabe exatamente quanto pode gastar essa semana — e vê no calendário os dias em que gastou mais.',
+    cor: '#fff245',
+  },
 ];
 
 const PROBLEMAS = [
-  { Icon: HelpCircle,   t: 'Quanto gastamos?',   d: 'No fim do mês, ninguém sabe ao certo. O dinheiro foi embora e ninguém sabe para onde.', top: '#ff64ca' },
-  { Icon: Receipt,      t: 'Quem pagou o quê?',  d: 'Contas divididas no feeling, discussões sobre quem deve mais. Toda hora.', top: '#ffa857' },
-  { Icon: TrendingDown, t: 'Por que não sobra?', d: 'Os salários caem, as contas consomem tudo. Nunca sobra para o que importa.', top: '#fff245' },
+  { Icon: TableProperties, t: 'Planilha desatualizada', d: 'Você abre, atualiza, fecha. Na semana seguinte está errada de novo. Controle financeiro não pode depender de disciplina manual.', top: '#ff64ca' },
+  { Icon: HelpCircle,      t: 'Quanto gastamos?',       d: 'No fim do mês, ninguém sabe ao certo. O dinheiro foi embora e a sensação é de que não sobrou nada.', top: '#ffa857' },
+  { Icon: Receipt,         t: 'Divisão no feeling',     d: 'Quem pagou o quê, quem deve mais. Sem proporção ao salário, a divisão sempre parece injusta para alguém.', top: '#fff245' },
 ];
 
 const COMO_FUNCIONA = [
-  { n: '01', Icon: Settings2,     t: 'Configure os salários', d: 'Informe o salário de cada um. O Finexa calcula a proporção e divide tudo automaticamente.', cor: '#01b695' },
-  { n: '02', Icon: ClipboardList, t: 'Cadastre as fixas',     d: 'Aluguel, condomínio, assinaturas. Cada um vê sua parte proporcional, sem discussão.', cor: '#5330ff' },
-  { n: '03', Icon: Rocket,        t: 'Lance e acompanhe',     d: 'App em 3 toques ou Telegram. O dashboard atualiza em tempo real para os dois.', cor: '#ff64ca' },
+  { n: '01', Icon: Settings2,     t: 'Configure em 2 minutos', d: 'Informe os salários, cadastre as contas fixas. O Finexa calcula a proporção e organiza tudo automaticamente.', cor: '#01b695' },
+  { n: '02', Icon: ClipboardList, t: 'Lance seus gastos',       d: 'App em 3 toques. Cada gasto é categorizado, rateado e aparece no dashboard de ambos na hora.', cor: '#5330ff' },
+  { n: '03', Icon: Rocket,        t: 'A IA trabalha por você',  d: 'Projeções, sugestões, alertas. O Finexa analisa seus padrões e aponta o que fazer para sobrar mais no fim do mês.', cor: '#ff64ca' },
 ];
 
 const FAQ = [
-  { q: 'O parceiro precisa instalar algo?', r: 'Não. O Finexa é um PWA — é só acessar o link pelo celular e adicionar na tela inicial. Funciona em iPhone e Android.' },
+  { q: 'Substitui planilha de verdade?', r: 'Sim. O Finexa foi construído para quem usa planilha mas cansou de manter. Dashboard em tempo real, categorização automática, histórico de 12 meses — sem você digitar fórmula nenhuma.' },
   { q: 'O que é divisão proporcional ao salário?', r: 'Se você ganha R$8.500 e seu parceiro R$6.500, o total é R$15.000. O aluguel de R$2.200 é dividido: você paga R$1.247 (57%) e seu parceiro R$953 (43%). Automático, sem negociação.' },
-  { q: 'Funciona offline?', r: 'O dashboard fica disponível offline. Para lançar novos gastos, é necessária conexão. Os dados sincronizam assim que você volta online.' },
+  { q: 'Como funciona a reserva de emergência?', r: 'Você define a meta (geralmente 6 meses de gastos fixos). O Finexa acompanha o saldo atual, calcula quanto falta e sugere o aporte mensal ideal para chegar lá.' },
+  { q: 'O que a IA recomenda exatamente?', r: 'A IA analisa seus padrões de gasto e aponta: categorias acima da média, projeção de estouro do orçamento, quanto sobra para metas e onde dá para economizar sem mudar muito a rotina.' },
   { q: 'Posso cancelar quando quiser?', r: 'Sim. Sem fidelidade, sem multa. Cancela com um clique. Os dados ficam disponíveis por 30 dias para exportação.' },
   { q: 'Meus dados são seguros?', r: 'Sim. Os dados ficam no Supabase com Row Level Security ativo — cada conta só acessa os próprios dados. Nunca vendemos informações.' },
 ];
-
-// ─── Componentes ──────────────────────────────────────────────────────────────
 
 function Badge({ children, cor = '#5330ff' }: { children: React.ReactNode; cor?: string }) {
   return (
@@ -85,26 +104,30 @@ function Badge({ children, cor = '#5330ff' }: { children: React.ReactNode; cor?:
 
 function AppMockup() {
   return (
-    <div className="relative w-[260px] aspect-[9/19] bg-[#08080f] dark:bg-white/5 border-4 border-foreground/20 dark:border-white/20 rounded-[3rem] shadow-2xl overflow-hidden mx-auto">
+    <div className="relative w-[260px] aspect-[9/19] bg-[#08080f] dark:bg-white/5 border-4 border-foreground/20 rounded-[3rem] shadow-2xl overflow-hidden mx-auto">
       <div className="absolute inset-0 p-4 flex flex-col gap-3">
         <div className="flex justify-between items-center mt-4 px-1">
           <span className="text-[10px] text-white font-bold">9:41</span>
           <div className="w-16 h-4 bg-white/10 rounded-full" />
-          <div className="flex gap-1">{[1,2,3].map(i => <div key={i} className="w-1 h-1 rounded-full bg-white/30" />)}</div>
         </div>
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-[#5330ff] flex items-center justify-center text-white text-xs font-black">F</div>
             <span className="text-white text-xs font-bold">Finexa</span>
           </div>
-          <div className="w-6 h-6 rounded-full bg-[#ffa857]/20 border border-[#ffa857]/40 flex items-center justify-center text-[8px] text-[#ffa857] font-bold">L</div>
+          <div className="w-6 h-6 rounded-full bg-[#ffa857]/20 border border-[#ffa857]/40 flex items-center justify-center text-[8px] text-[#ffa857] font-bold">A</div>
+        </div>
+        {/* IA Badge */}
+        <div className="bg-[#5330ff]/30 rounded-xl p-2 border border-[#5330ff]/40">
+          <div className="text-[7px] text-[#82a1fd] font-black uppercase mb-1">💡 Sugestão da IA</div>
+          <div className="text-[8px] text-white/80">Alimentação 23% acima. Cortar R$180 bate a meta da viagem em março.</div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { l: 'Receitas', v: 'R$15k', c: '#01b695' },
-            { l: 'Despesas', v: 'R$4,7k', c: '#ff64ca' },
-            { l: 'Saldo',    v: 'R$10k',  c: '#82a1fd' },
-            { l: 'Livre',    v: 'R$8,7k', c: '#fff245' },
+            { l: 'Projeção', v: 'R$4,2k', c: '#ff64ca' },
+            { l: 'Livre',    v: 'R$2,1k', c: '#01b695' },
+            { l: 'Metas',    v: '68%',    c: '#82a1fd' },
+            { l: 'Semana',   v: 'R$420',  c: '#ffa857' },
           ].map(k => (
             <div key={k.l} className="bg-white/5 rounded-xl p-2" style={{ borderTop: `2px solid ${k.c}` }}>
               <div className="text-[8px] text-white/40 uppercase">{k.l}</div>
@@ -115,9 +138,9 @@ function AppMockup() {
         <div className="bg-white/5 rounded-xl p-3 flex-1">
           <div className="text-[8px] text-white/40 uppercase mb-2">Por categoria</div>
           {[
-            { n: 'Moradia',      p: 77, c: '#5330ff' },
-            { n: 'Alimentação',  p: 14, c: '#ff64ca' },
-            { n: 'Transporte',   p: 9,  c: '#82a1fd' },
+            { n: 'Moradia',     p: 68, c: '#5330ff' },
+            { n: 'Alimentação', p: 23, c: '#ff64ca' },
+            { n: 'Transporte',  p: 9,  c: '#82a1fd' },
           ].map(cat => (
             <div key={cat.n} className="mb-1.5">
               <div className="flex justify-between mb-0.5">
@@ -139,21 +162,16 @@ function FaqItem({ q, r }: { q: string; r: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="nb-card bg-card overflow-hidden">
-      <button onClick={() => setOpen(!open)}
-        className="w-full flex justify-between items-center text-left p-6 gap-4">
+      <button onClick={() => setOpen(!open)} className="w-full flex justify-between items-center text-left p-6 gap-4">
         <span className="font-black text-base text-foreground">{q}</span>
         <ChevronDown className={`h-5 w-5 text-[#5330ff] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="px-6 pb-6 text-sm text-muted-foreground leading-relaxed border-t border-border pt-4">
-          {r}
-        </div>
+        <div className="px-6 pb-6 text-sm text-muted-foreground leading-relaxed border-t border-border pt-4">{r}</div>
       )}
     </div>
   );
 }
-
-// ─── Landing Page ─────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [anual, setAnual] = useState(false);
@@ -161,36 +179,35 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
       <Navbar />
-
       <main className="flex-grow pt-20">
 
-        {/* ── HERO ── */}
+        {/* HERO */}
         <section className="grid-bg relative min-h-[90vh] flex items-center">
-          <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-[#5330ff]/8 blur-[120px] rounded-full -z-10 dark:bg-[#5330ff]/15" />
-          <div className="absolute top-[20%] right-[-5%] w-[350px] h-[350px] bg-[#ff64ca]/8 blur-[100px] rounded-full -z-10 dark:bg-[#ff64ca]/12" />
+          <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-[#5330ff]/8 blur-[120px] rounded-full -z-10" />
+          <div className="absolute top-[20%] right-[-5%] w-[350px] h-[350px] bg-[#ff64ca]/8 blur-[100px] rounded-full -z-10" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full grid md:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <Badge cor="#01b695">
-                <Sparkles className="h-3 w-3" /> Controle Financeiro Para Casais
+                <Sparkles className="h-3 w-3" /> Adeus planilha
               </Badge>
 
               <h1 className="text-5xl md:text-7xl font-black leading-[1.0] tracking-tighter text-foreground">
-                Seu dinheiro,{' '}<br />
+                Controle real,{' '}<br />
                 <span className="text-[#5330ff]" style={{ textShadow: '4px 4px 0 #82a1fd50' }}>
-                  com clareza.
+                  sem planilha.
                 </span>
               </h1>
 
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed font-medium">
-                O único app que divide as contas{' '}
-                <strong className="text-foreground">proporcionalmente ao salário</strong>{' '}
-                de cada um. Para casais e famílias que querem controle real.
+                Dashboard inteligente com <strong className="text-foreground">projeção de gastos</strong>,{' '}
+                <strong className="text-foreground">sugestões da IA</strong> e divisão automática proporcional ao salário.
+                Para quem quer clareza — sem trabalho.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/cadastro">
-                  <button className="nb-btn bg-[#5330ff] text-white px-8 py-4 text-base font-black uppercase tracking-wide flex items-center gap-2 animate-glow">
+                  <button className="nb-btn bg-[#5330ff] text-white px-8 py-4 text-base font-black uppercase tracking-wide flex items-center gap-2">
                     Começar grátis <ArrowRight className="h-5 w-5" />
                   </button>
                 </Link>
@@ -205,9 +222,9 @@ export default function LandingPage() {
 
               <div className="flex gap-6 pt-2">
                 {[
-                  { n: '14 dias', l: 'trial grátis' },
-                  { n: '3 planos', l: 'para cada fase' },
-                  { n: '100%',    l: 'privado' },
+                  { n: '0 planilhas', l: 'necessárias' },
+                  { n: 'IA inclusa', l: 'em todos os planos' },
+                  { n: '100%', l: 'privado' },
                 ].map(m => (
                   <div key={m.l}>
                     <div className="text-xl font-black text-[#5330ff]">{m.n}</div>
@@ -218,26 +235,26 @@ export default function LandingPage() {
             </div>
 
             <div className="flex justify-center relative">
-              <div className="absolute -top-4 -right-4 nb-card bg-[#01b695] text-[#08080f] p-3 animate-float z-10">
-                <div className="text-[10px] font-black uppercase">Economia este mês</div>
-                <div className="text-lg font-black">+R$ 1.240</div>
+              <div className="absolute -top-4 -right-4 nb-card bg-[#01b695] text-[#08080f] p-3 z-10">
+                <div className="text-[10px] font-black uppercase">Meta da viagem</div>
+                <div className="text-lg font-black">68% atingida</div>
               </div>
-              <div className="absolute -bottom-4 -left-4 nb-card bg-[#fff245] text-[#08080f] p-3 animate-float-slow z-10">
-                <div className="text-[10px] font-black uppercase">Meta viagem</div>
-                <div className="text-lg font-black flex items-center gap-1">75% <ArrowRight className="h-3 w-3" /></div>
+              <div className="absolute -bottom-4 -left-4 nb-card bg-[#fff245] text-[#08080f] p-3 z-10">
+                <div className="text-[10px] font-black uppercase">Semana atual</div>
+                <div className="text-lg font-black flex items-center gap-1">R$420 livre <ArrowRight className="h-3 w-3" /></div>
               </div>
               <AppMockup />
             </div>
           </div>
         </section>
 
-        {/* ── PROBLEMA ── */}
+        {/* PROBLEMA */}
         <section className="py-24 bg-foreground/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <Badge>O problema</Badge>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
-                Você sabe quanto<br />gastou esse mês?
+                Planilha não é<br />controle financeiro.
               </h2>
               <p className="text-muted-foreground mt-4 text-lg max-w-lg mx-auto">Reconhece alguma dessas situações?</p>
             </div>
@@ -256,19 +273,19 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── COMO FUNCIONA ── */}
+        {/* COMO FUNCIONA */}
         <section id="como-funciona" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <Badge cor="#ffa857">Como funciona</Badge>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
-                Simples assim.
+                Configure uma vez,<br />use para sempre.
               </h2>
             </div>
-            <div className="grid md:grid-cols-3 gap-8 relative">
+            <div className="grid md:grid-cols-3 gap-8">
               {COMO_FUNCIONA.map(s => (
                 <div key={s.n} className="relative">
-                  <div className="text-7xl font-black text-foreground/5 dark:text-white/5 mb-4">{s.n}</div>
+                  <div className="text-7xl font-black text-foreground/5 mb-4">{s.n}</div>
                   <div className="nb-card bg-card p-6 -mt-8">
                     <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center"
                       style={{ background: `${s.cor}20`, border: `2px solid ${s.cor}40` }}>
@@ -284,18 +301,18 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── DIFERENCIAIS ── */}
+        {/* DIFERENCIAIS */}
         <section id="diferenciais" className="py-24 bg-foreground/[0.02] grid-bg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <Badge cor="#ff64ca">Diferenciais</Badge>
+              <Badge cor="#ff64ca">O que você ganha</Badge>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter mt-4 text-foreground">
-                Feito para quem<br />divide a vida.
+                Tudo que a planilha<br />nunca teve.
               </h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {DIFERENCIAIS.map(d => (
-                <div key={d.titulo} className="nb-card bg-card p-6 cursor-default">
+                <div key={d.titulo} className="nb-card bg-card p-6">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                     style={{ background: `${d.cor}15`, border: `2px solid ${d.cor}30` }}>
                     <d.Icon className="h-6 w-6" style={{ color: d.cor }} />
@@ -308,7 +325,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── PLANOS ── */}
+        {/* PLANOS */}
         <section id="planos" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
@@ -319,7 +336,6 @@ export default function LandingPage() {
               <p className="text-muted-foreground mt-3">14 dias grátis em todos os planos. Sem cartão de crédito.</p>
             </div>
 
-            {/* Toggle */}
             <div className="flex items-center justify-center gap-4 mb-12">
               <span className={`text-sm font-bold ${!anual ? 'text-foreground' : 'text-muted-foreground'}`}>Mensal</span>
               <button onClick={() => setAnual(!anual)}
@@ -335,21 +351,24 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-3 gap-6 items-start">
               {PLANOS.map(p => {
                 const preco = anual ? Math.round(p.preco * 0.8) : p.preco;
+                const emBreve = (p as any).emBreve;
                 return (
                   <div key={p.id}
-                    className={`nb-card bg-card p-8 relative ${p.destaque ? 'border-[#5330ff]' : ''}`}
+                    className={`nb-card bg-card p-8 relative ${p.destaque ? 'border-[#5330ff]' : ''} ${emBreve ? 'opacity-70' : ''}`}
                     style={p.destaque ? { borderColor: '#5330ff', boxShadow: '6px 6px 0 #5330ff30' } : {}}>
-                    {(p as any).emBreve && (
+
+                    {emBreve && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black"
                         style={{ background: '#ffa857', color: '#000' }}>
                         EM BREVE
                       </div>
                     )}
-                    {p.destaque && !((p as any).emBreve) && (
+                    {p.destaque && !emBreve && (
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 nb-btn bg-[#5330ff] text-white text-xs font-black px-4 py-1.5 uppercase tracking-wider flex items-center gap-1">
                         <Sparkles className="h-3 w-3" /> Mais popular
                       </div>
                     )}
+
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
                       style={{ background: `${p.cor}15`, border: `2px solid ${p.cor}40` }}>
                       <p.Icon className="h-6 w-6" style={{ color: p.cor }} />
@@ -359,7 +378,7 @@ export default function LandingPage() {
                     <div className="mb-6">
                       <span className="text-5xl font-black text-foreground">R${preco}</span>
                       <span className="text-muted-foreground text-sm">/mês</span>
-                      {anual && <div className="text-xs text-[#01b695] font-bold mt-1">R${preco * 12}/ano · 20% de desconto</div>}
+                      {anual && !emBreve && <div className="text-xs text-[#01b695] font-bold mt-1">R${preco * 12}/ano · 20% de desconto</div>}
                     </div>
                     <ul className="space-y-3 mb-8">
                       {p.features.map(f => (
@@ -372,12 +391,21 @@ export default function LandingPage() {
                         </li>
                       ))}
                     </ul>
-                    <Link href={`/plano?id=${p.id}&ciclo=mensal`}>
-                      <button className="nb-btn w-full py-4 font-black uppercase tracking-wide text-sm"
-                        style={p.destaque ? { background: '#5330ff', color: '#fff', borderColor: '#5330ff' } : { background: 'var(--secondary)', color: 'var(--foreground)' }}>
-                        Começar grátis
-                      </button>
-                    </Link>
+
+                    {emBreve ? (
+                      <div className="w-full py-4 font-black text-sm text-center rounded-xl border-2 border-dashed border-[#ffa857]/40 text-[#ffa857]/60 cursor-not-allowed">
+                        Em breve
+                      </div>
+                    ) : (
+                      <Link href={`/cadastro?plano=${p.id}`}>
+                        <button className="nb-btn w-full py-4 font-black uppercase tracking-wide text-sm"
+                          style={p.destaque
+                            ? { background: '#5330ff', color: '#fff', borderColor: '#5330ff' }
+                            : { background: 'var(--secondary)', color: 'var(--foreground)' }}>
+                          Começar grátis — 14 dias
+                        </button>
+                      </Link>
+                    )}
                   </div>
                 );
               })}
@@ -385,7 +413,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── FAQ ── */}
+        {/* FAQ */}
         <section id="faq" className="py-24 bg-foreground/[0.02]">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
@@ -400,16 +428,16 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── CTA FINAL ── */}
+        {/* CTA FINAL */}
         <section className="py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="nb-card bg-[#5330ff] p-16 text-center relative overflow-hidden"
               style={{ borderColor: '#82a1fd', boxShadow: '8px 8px 0 #3a1fd4' }}>
               <div className="absolute top-0 right-0 text-[200px] leading-none font-black text-white/5 select-none">F</div>
               <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 relative z-10">
-                Comece hoje.<br />Sem cartão.
+                Feche a planilha.<br />Abra o Finexa.
               </h2>
-              <p className="text-white/70 text-lg mb-8 relative z-10">14 dias grátis. Depois, a partir de R$19/mês.</p>
+              <p className="text-white/70 text-lg mb-8 relative z-10">14 dias grátis. Sem cartão. Sem compromisso.</p>
               <Link href="/cadastro" className="relative z-10">
                 <button className="nb-btn bg-[#fff245] text-[#08080f] px-12 py-5 text-lg font-black uppercase tracking-wide flex items-center gap-2 mx-auto"
                   style={{ borderColor: '#08080f', boxShadow: '4px 4px 0 #08080f' }}>
@@ -421,7 +449,6 @@ export default function LandingPage() {
         </section>
 
       </main>
-
       <Footer />
     </div>
   );
