@@ -21,12 +21,19 @@ export async function GET(req: Request) {
     const dados = await fetchDadosPlanilha(family_id!, mes, ano);
     const indicadores = calcularTodosIndicadores(dados);
 
-    const { data: limitesData } = await getAdmin()
-      .from('limites_financeiros').select('*').eq('family_id', family_id);
+    const [{ data: limitesData }, { data: perfisData }] = await Promise.all([
+      getAdmin().from('limites_financeiros').select('*').eq('family_id', family_id),
+      getAdmin().from('perfis').select('id, role, nome').eq('family_id', family_id)
+        .order('criado_em', { ascending: true }),
+    ]);
+
+    // Mapear roles reais para roles lógicos
+    const p0role = perfisData?.[0]?.role ?? 'leticia';
+    const p1role = perfisData?.[1]?.role ?? 'giovanna';
 
     const limites = {
-      leticia:  limitesData?.find(l => l.perfil === 'leticia')?.limite  ?? 0,
-      giovanna: limitesData?.find(l => l.perfil === 'giovanna')?.limite ?? 0,
+      leticia:  limitesData?.find(l => l.perfil === 'leticia' || l.perfil === p0role)?.limite ?? 0,
+      giovanna: limitesData?.find(l => l.perfil === 'giovanna' || l.perfil === p1role)?.limite ?? 0,
     };
 
     return NextResponse.json(

@@ -16,6 +16,7 @@ import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { useMembros } from '@/hooks/use-membros';
 import { useMesContext } from '@/hooks/use-mes-context';
 import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
 import { useCategorias } from '@/hooks/use-categorias';
@@ -42,6 +43,10 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
+  const { membros } = useMembros();
+  // Mapear role real para role lógico
+  const role0 = membros[0]?.role ?? 'leticia';
+  const role1 = membros[1]?.role ?? 'giovanna';
   const { getCor } = useCategorias();
 
   // Mês visualizado — compartilhado globalmente via hook
@@ -96,10 +101,10 @@ export function Dashboard() {
   }
 
   const { indicadores, dados, limites } = data;
-  const isPerfil = usuariaAtiva === 'leticia' || usuariaAtiva === 'giovanna';
+  const isPerfil = usuariaAtiva !== 'casal' && usuariaAtiva !== 'geral';
   const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
   const perfilDados = isPerfil
-    ? indicadores[usuariaAtiva === 'leticia' ? 'perfilLeticia' : 'perfilGiovanna']
+    ? indicadores[usuariaAtiva === role0 ? 'perfilLeticia' : 'perfilGiovanna']
     : null;
 
   const receitas   = isPerfil ? perfilDados!.salario : indicadores.receitasMes;
@@ -125,10 +130,10 @@ export function Dashboard() {
     return d.getMonth() === mesSel.mes && d.getFullYear() === mesSel.ano;
   });
 
-  const limite  = usuariaAtiva === 'casal' ? limites.leticia + limites.giovanna : limites[usuariaAtiva as 'leticia' | 'giovanna'] || 9000;
+  const limite  = (usuariaAtiva === 'casal' || usuariaAtiva === 'geral') ? limites.leticia + limites.giovanna : (usuariaAtiva === role0 ? limites.leticia : limites.giovanna) || 9000;
   const fixas   = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(dados.transacoes, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
+    ? calcularEvolucaoMensal(dados.transacoes, (usuariaAtiva === role0 ? 'leticia' : 'giovanna') as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
     : indicadores.evolucaoMensal;
 
   const parceladas = isPerfil
