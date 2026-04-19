@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { PERFIL_CONFIG } from '@/lib/perfil-config';
 import { useCategorias } from '@/hooks/use-categorias';
 import { ModalNovaCategoria } from './modal-nova-categoria';
+import { getTextSobreCor } from '@/lib/types';
 
 type Status = 'idle' | 'saving' | 'success' | 'error';
 type ModoDivisao = 'pessoal' | '5050' | 'proporcional' | 'membros';
@@ -150,7 +151,7 @@ export function LancarView() {
             return (
               <button key={cat.nome} onClick={() => setCategoria(cat.nome)}
                 className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 border"
-                style={selected ? { background: cat.cor, color: 'white', borderColor: cat.cor } : { background: `${cat.cor}18`, color: cat.cor, borderColor: `${cat.cor}44` }}
+                style={selected ? { background: cat.cor, color: getTextSobreCor(cat.cor), borderColor: cat.cor } : { background: `${cat.cor}18`, color: cat.cor, borderColor: `${cat.cor}44` }}
               >{cat.nome}</button>
             );
           })}

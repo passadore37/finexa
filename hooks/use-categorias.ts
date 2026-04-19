@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CATEGORIAS_DISPONIVEIS } from '@/lib/types';
+import { CATEGORIAS_DISPONIVEIS, getCorCategoria } from '@/lib/types';
 
 export interface CategoriaCustom {
   id: string;
@@ -11,13 +11,6 @@ export interface CategoriaCustom {
   perfis: string[]; // quais perfis veem na aba lançar. [] = todos
   criada_por: string;
 }
-
-export const CORES_CAT_PADRAO: Record<string, string> = {
-  'Alimentação': '#D4537E', 'Transporte': '#378ADD', 'Lazer': '#EF9F27',
-  'Casa': '#1D9E75', 'Assinaturas': '#7F77DD', 'Saúde': '#E24B4A',
-  'Gatos': '#C4843E', 'Moradia': '#4A90A4', 'Compras': '#A85D32',
-  'Educação': '#2D6B9A', 'Energia': '#854F0B', 'Gás': '#5A7A52', 'Outros': '#666666',
-};
 
 export function useCategorias(perfilAtivo?: string) {
   const [customizadas, setCustomizadas] = useState<CategoriaCustom[]>([]);
@@ -37,7 +30,7 @@ export function useCategorias(perfilAtivo?: string) {
   // Categorias padrão — sempre visíveis para todos
   const categoriasPadrao = CATEGORIAS_DISPONIVEIS.map(nome => ({
     nome,
-    cor: CORES_CAT_PADRAO[nome] || '#666666',
+    cor: getCorCategoria(nome),
     customizada: false,
     perfis: [] as string[],
   }));
@@ -61,10 +54,9 @@ export function useCategorias(perfilAtivo?: string) {
 
   // Cor de qualquer categoria (padrão ou custom)
   function getCor(nome: string): string {
-    const padrao = CORES_CAT_PADRAO[nome];
-    if (padrao) return padrao;
     const custom = customizadas.find(c => c.nome === nome);
-    return custom?.cor || '#666666';
+    if (custom) return custom.cor;
+    return getCorCategoria(nome);
   }
 
   async function criarCategoria(nome: string, cor: string, perfis: string[], criada_por: string) {
