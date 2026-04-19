@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CATEGORIAS_DISPONIVEIS } from '@/lib/types';
+import { CATEGORIAS_DISPONIVEIS, getCorCategoria } from '@/lib/types';
 
 interface Transacao {
   id: string;
@@ -23,13 +23,6 @@ interface Props {
   mes?: number;
   ano?: number;
 }
-
-const CORES_CAT: Record<string, string> = {
-  Alimentação: '#ff64ca', Transporte: '#82a1fd', Lazer: '#ffa857',
-  Casa: '#01b695', Assinaturas: '#7f77dd', Saúde: '#e24b4a',
-  Gatos: '#dffd6e', Moradia: '#5330ff', Compras: '#de7ed1',
-  Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
-};
 
 function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -124,8 +117,8 @@ export function HistoricoView({ categoriaFiltro, diaFiltro, mes, ano }: Props) {
               <span
                 className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                 style={{
-                  background: CORES_CAT[categoriaFiltro] || '#888',
-                  color: ['#dffd6e','#fff245','#ffa857'].includes(CORES_CAT[categoriaFiltro]) ? '#000' : '#fff',
+                  background: getCorCategoria(categoriaFiltro || ''),
+                  color: ['#dffd6e','#fff245','#ffa857'].includes(getCorCategoria(categoriaFiltro || '')) ? '#000' : '#fff',
                 }}
               >
                 {categoriaFiltro}
@@ -149,7 +142,7 @@ export function HistoricoView({ categoriaFiltro, diaFiltro, mes, ano }: Props) {
         ) : (
           <div className="divide-y divide-border overflow-y-auto max-h-[32rem] custom-scrollbar">
             {transacoes.map(t => {
-              const cor = CORES_CAT[t.categoria] || '#888';
+              const cor = getCorCategoria(t.categoria);
               const matchCat = !categoriaFiltro || t.categoria === categoriaFiltro;
               const matchDia = !diaFiltro || getDataTransacao(t.data) === diaFiltro;
               const isDestacado = matchCat && matchDia;
@@ -174,8 +167,8 @@ export function HistoricoView({ categoriaFiltro, diaFiltro, mes, ano }: Props) {
                         <button key={cat} onClick={() => setEditCategoria(cat)}
                           className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all"
                           style={editCategoria === cat
-                            ? { background: CORES_CAT[cat] || '#888', color: '#000' }
-                            : { background: `${CORES_CAT[cat] || '#888'}20`, color: CORES_CAT[cat] || '#888' }
+                            ? { background: getCorCategoria(cat), color: ['#dffd6e','#fff245','#ffa857'].includes(getCorCategoria(cat)) ? '#000' : '#fff' }
+                            : { background: `${getCorCategoria(cat)}20`, color: getCorCategoria(cat) }
                           }>
                           {cat}
                         </button>

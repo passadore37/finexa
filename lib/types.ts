@@ -60,9 +60,34 @@ export interface DespesaPorCategoria {
 export const CATEGORIAS_DISPONIVEIS = [
   'Alimentação', 'Assinaturas', 'Casa', 'Compras', 'Educação',
   'Energia', 'Gás', 'Gatos', 'Lazer', 'Moradia', 'Saúde', 'Transporte', 'Outros',
+  'Vestuário', 'Beleza', 'Higiene', 'Pets', 'Viagem', 'Presentes', 'Eletrônicos',
+  'Serviços', 'Impostos', 'Dívidas', 'Investimentos', 'Seguro', 'Cuidados', 
+  'Academia', 'Trabalho', 'Carro', 'Farmácia'
 ] as const;
 
 export type CategoriaFinanceira = typeof CATEGORIAS_DISPONIVEIS[number];
+
+export const CORES_CATEGORIAS: Record<string, string> = {
+  Alimentação: '#ff64ca', Transporte: '#82a1fd', Lazer: '#ffa857',
+  Casa: '#01b695', Assinaturas: '#7f77dd', Saúde: '#e24b4a',
+  Gatos: '#dffd6e', Moradia: '#5330ff', Compras: '#de7ed1',
+  Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
+  Vestuário: '#FF3366', Beleza: '#9933FF', Higiene: '#00C4B5',
+  Pets: '#FF9933', Viagem: '#4D4DFF', Presentes: '#FF3399',
+  Eletrônicos: '#33CCFF', Serviços: '#669999', Impostos: '#CC3300',
+  Dívidas: '#990000', Investimentos: '#009933', Seguro: '#3366CC',
+  Cuidados: '#FF66B2', Academia: '#FF5050', Trabalho: '#8C66FF',
+  Carro: '#FFB366', Farmácia: '#00E673'
+};
+
+export function getCorCategoria(cat: string): string {
+  if (!cat) return '#888780';
+  if (CORES_CATEGORIAS[cat]) return CORES_CATEGORIAS[cat];
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+  const colors = Object.values(CORES_CATEGORIAS).filter(c => c !== '#888780');
+  return colors[Math.abs(hash) % colors.length];
+}
 
 export interface ProjecaoFinanceira {
   mes: string;

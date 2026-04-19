@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { DespesaPorCategoria } from '@/lib/types';
+import { getCorCategoria, type DespesaPorCategoria } from '@/lib/types';
 
 interface Props {
   dados: DespesaPorCategoria[];
@@ -11,13 +11,6 @@ interface Props {
   categoriaAtiva?: string | null;
   getCor?: (nome: string) => string; // prop para categorias customizadas
 }
-
-const CORES: Record<string, string> = {
-  Alimentação: '#ff64ca', Transporte: '#82a1fd', Lazer: '#ffa857',
-  Casa: '#01b695', Assinaturas: '#7f77dd', Saúde: '#e24b4a',
-  Gatos: '#dffd6e', Moradia: '#5330ff', Compras: '#de7ed1',
-  Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
-};
 
 const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
 
@@ -42,9 +35,9 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, g
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [hoverLegenda, setHoverLegenda] = useState<string | null>(null);
 
-  // Resolver cor: usa prop getCor (custom) ou mapa padrão
+  // Resolver cor: usa prop getCor (custom) ou função global
   function resolverCor(cat: string): string {
-    return (getCorProp ? getCorProp(cat) : null) || CORES[cat] || '#888780';
+    return (getCorProp ? getCorProp(cat) : null) || getCorCategoria(cat);
   }
 
   // Tooltip interno (precisa de resolverCor em escopo)

@@ -4,8 +4,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sankey, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Network } from 'lucide-react';
-
-import type { DespesaPorCategoria } from '@/lib/types';
+import { getCorCategoria, type DespesaPorCategoria } from '@/lib/types';
 
 interface SankeyProps {
   receitas: number;
@@ -14,15 +13,6 @@ interface SankeyProps {
   categoriaAtiva?: string | null;
   onCategoriaSelect?: (cat: string | null) => void;
 }
-
-const CORES_CAT: Record<string, string> = {
-  Alimentação: '#ff64ca', Transporte: '#82a1fd', Lazer: '#ffa857',
-  Casa: '#01b695', Assinaturas: '#7f77dd', Saúde: '#e24b4a',
-  Gatos: '#dffd6e', Moradia: '#5330ff', Compras: '#de7ed1',
-  Educação: '#378add', Energia: '#fff245', Gás: '#008257', Outros: '#888780',
-};
-
-
 
 // Componente para exibir os valores do Tooltip apropriadamente
 const CustomTooltip = ({ active, payload }: any) => {
@@ -92,7 +82,7 @@ export function SankeyDirecionamento({ receitas, fixas, categorias, categoriaAti
 
       // Capilaridade das categorias partindo das variáveis
       catAtivas.forEach(cat => {
-        nodes.push({ name: cat.categoria, cor: CORES_CAT[cat.categoria] || '#888', isCategoria: true });
+        nodes.push({ name: cat.categoria, cor: getCorCategoria(cat.categoria), isCategoria: true });
         const idxC = nodeIdx++;
         links.push({ source: idxVar, target: idxC, value: cat.valor });
       });

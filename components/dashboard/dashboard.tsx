@@ -233,7 +233,7 @@ export function Dashboard() {
             fixas={fixas}
             categorias={categorias}
             categoriaAtiva={categoriaAtiva}
-            onCategoriaSelect={(cat) => setCategoriaAtiva(prev => prev === cat ? null : cat)}
+            onCategoriaSelect={setCategoriaAtiva}
           />
         </div>
 
@@ -244,7 +244,7 @@ export function Dashboard() {
           <CategoriasPieChart
             dados={categorias}
             categoriaAtiva={categoriaAtiva}
-            onCategoriaSelect={(cat) => setCategoriaAtiva(prev => prev === cat ? null : cat)}
+            onCategoriaSelect={setCategoriaAtiva}
             getCor={getCor}
           />
           <ParceladasPanel parceladas={parceladas} comprometimentoTotal={comprometimentoTotal} />
