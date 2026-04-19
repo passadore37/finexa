@@ -130,10 +130,6 @@ export function Dashboard() {
     ? calcularEvolucaoMensal(dados.transacoes, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
     : indicadores.evolucaoMensal;
 
-  const projecaoBar = isPerfil
-    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
-    : calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas);
-
   const parceladas = isPerfil
     ? calcularParceladas(
         dados.transacoes,
@@ -143,6 +139,10 @@ export function Dashboard() {
         dados.salarioGiovanna,
       )
     : indicadores.parceladas;
+
+  const projecaoBar = isPerfil
+    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, parceladas)
+    : calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, undefined, undefined, undefined, parceladas);
 
   const comprometimentoTotal = isPerfil
     ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)

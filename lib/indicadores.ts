@@ -208,17 +208,28 @@ export function calcularProjecaoBar(
   perfil?: 'leticia' | 'giovanna',
   salarioLeticia = 0,
   salarioGiovanna = 0,
+  parceladasAtivas?: Parcelada[]
 ): DadosProjecaoBar {
   const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
   const hoje = new Date();
   const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa' && !t.recorrente);
 
-  const gastoAtual = tsMes.reduce((acc, t) => {
+  const gastoAtualTransacoes = tsMes.reduce((acc, t) => {
+    // Se recebemos parceladasAtivas, evitamos duplicar as compras parceladas efetuadas neste mês
+    if (parceladasAtivas && t.totalParcelas && t.totalParcelas > 1) {
+      return acc;
+    }
     const val = perfil
       ? calcularValorParMembro({ valor: t.valor, perfil: t.responsavel, responsavel: t.responsavel, divisao: t.divisao, recorrente: t.recorrente }, perfil, salarios)
       : t.valor;
     return acc + val;
-  }, 0) + fixas;
+  }, 0);
+
+  const gastoParceladas = parceladasAtivas 
+    ? parceladasAtivas.reduce((acc, p) => acc + p.valorParcela, 0)
+    : 0;
+
+  const gastoAtual = gastoAtualTransacoes + gastoParceladas + fixas;
 
   const mesAtual = hoje.getMonth();
   const anoAtual = hoje.getFullYear();
@@ -451,11 +462,11 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
   const projecao             = calcularProjecao(transacoes);
   const metodologia          = calcularMetodologia(transacoes, mes, ano, percentualInvestimento, contasFixasConfig);
 
-  const contasFixasTotal = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
-  const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal, contasFixasTotal);
-
   const parceladas = calcularParceladas(transacoes, new Date(ano, mes, 1));
   const comprometimentoTotal = parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0);
+
+  const contasFixasTotal = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
+  const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal, contasFixasTotal, undefined, 0, 0, parceladas);
 
   const perfilLeticia = calcularIndicadoresPerfil(
     transacoes, 'leticia', salarioLeticia, salarioLeticia, salarioGiovanna,
