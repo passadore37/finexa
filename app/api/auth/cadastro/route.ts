@@ -11,7 +11,7 @@ function getAdmin() {
 
 export async function POST(req: Request) {
   try {
-    const { email, senha, nome, plano } = await req.json();
+    const { email, senha, nome, plano, is_invitee } = await req.json();
     if (!email || !senha || !nome || !plano)
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
     if (senha.length < 8)
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       email,
       password: senha,
       email_confirm: false,
-      user_metadata: { nome, plano, role: 'membro' },
+      user_metadata: { nome, plano, role: 'membro', is_invitee: is_invitee ?? false },
     });
 
     if (error) {

@@ -31,9 +31,18 @@ export async function GET(req: Request) {
   if (code) {
     // OAuth / magic link com code
     await supabase.auth.exchangeCodeForSession(code);
+    return NextResponse.redirect(new URL(next, req.url));
   } else if (token_hash && type) {
-    // Email confirmation com token_hash
-    await supabase.auth.verifyOtp({ token_hash, type: type as any });
+    // Email confirmation com token_hash (cadastro inicial ou update)
+    const { data } = await supabase.auth.verifyOtp({ token_hash, type: type as any });
+    
+    // Regra: Não deixar logado caso seja signup/email confirm.
+    // Usuário deve digitar a senha na tela de login a pedido do produto.
+    if ((type === 'signup' || type === 'email') && data.session) {
+      const email = data.user?.email || '';
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL(`/login?email=${encodeURIComponent(email)}&confirmado=true&redirect=${next}`, req.url));
+    }
   }
 
   return NextResponse.redirect(new URL(next, req.url));

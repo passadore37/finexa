@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase';
 function LoginForm() {
   const params   = useSearchParams();
   const redirect = params.get('redirect') || '/dashboard';
+  const confirmado = params.get('confirmado') === 'true';
   const [email, setEmail]     = useState(params.get('email') || ''); // Inicializa com o e-mail da URL
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);
@@ -73,6 +74,12 @@ function LoginForm() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              {confirmado && (
+                <div className="p-3 mb-1 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/30 text-center">
+                  <p className="text-sm font-bold text-[#1D9E75]">E-mail confirmado com sucesso! ✓</p>
+                  <p className="text-xs text-muted-foreground mt-1">Por segurança, digite sua senha para entrar.</p>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">E-mail</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} required

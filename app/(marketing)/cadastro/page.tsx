@@ -32,7 +32,7 @@ function CadastroForm() {
       const res  = await fetch('/api/auth/cadastro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha, nome, plano }),
+        body: JSON.stringify({ email, senha, nome, plano, is_invitee: !!conviteToken }),
       });
       const data = await res.json();
       if (!res.ok) { setErro(data.error || 'Erro ao criar conta. Tente novamente.'); return; }

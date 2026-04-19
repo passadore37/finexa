@@ -17,8 +17,9 @@ interface MembroFamilia {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { perfil, reloadPerfil } = useAuth();
+  const { perfil, user, reloadPerfil } = useAuth();
   const [salvando, setSalvando] = useState(false);
+  const isInvitee = user?.user_metadata?.is_invitee || false;
 
   // Dados do onboarding
   const [plano, setPlano]         = useState<Plano>('casal');
@@ -31,6 +32,7 @@ export default function OnboardingPage() {
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [membros, setMembros]     = useState<MembroFamilia[]>([{ email: '', podeVerGeral: true, podeVerOutros: true }]);
   const [linksGerados, setLinksGerados] = useState<{email: string; url: string}[]>([]);
+  const [privacidade, setPrivacidade] = useState('aberta');
 
   // Passo atual
   const [passo, setPasso] = useState(0);
@@ -42,14 +44,15 @@ export default function OnboardingPage() {
     }
   }, [perfil]);
 
-  // Passos por plano
+  // Passos por perfil
   const passos = {
     individual: ['plano', 'perfil', 'fixas', 'pronto'],
     casal:      ['plano', 'perfil', 'fixas', 'convite', 'pronto'],
     familia:    ['plano', 'perfil', 'fixas', 'privacidade', 'convites', 'pronto'],
+    convidado:  ['perfil', 'pronto']
   };
 
-  const etapas = passos[plano];
+  const etapas = passos[isInvitee ? 'convidado' : plano];
   const etapaAtual = etapas[passo];
   const isUltimo = passo === etapas.length - 1;
   const totalPassos = etapas.length - 1; // sem contar 'pronto'
@@ -75,8 +78,9 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome, salario: parseFloat(salario) || 0,
-          salario_parceiro: parseFloat(salParceiro) || 0,
-          plano, is_master: true,
+          salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
+          plano: isInvitee ? undefined : plano, 
+          is_master: !isInvitee,
         }),
       });
       // Recarregar perfil para o header mostrar o nome correto
@@ -97,13 +101,24 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           nome,
           salario: parseFloat(salario) || 0,
-          salario_parceiro: parseFloat(salParceiro) || 0,
+          salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
           contas_fixas: contasFixas,
-          plano,
-          is_master: true,
+          plano: isInvitee ? undefined : plano,
+          is_master: !isInvitee,
         }),
       });
       await reloadPerfil?.();
+      setSalvando(false);
+    }
+
+    // Salvar modo de privacidade Família
+    if (etapaAtual === 'privacidade') {
+      setSalvando(true);
+      await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_master: true, privacidade }),
+      });
       setSalvando(false);
     }
 
@@ -225,7 +240,7 @@ export default function OnboardingPage() {
                   className="flex-1 bg-transparent text-foreground focus:outline-none" />
               </div>
             </div>
-            {plano !== 'individual' && (
+            {!isInvitee && plano !== 'individual' && (
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
                   Salário estimado do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
@@ -326,8 +341,9 @@ export default function OnboardingPage() {
               ] as const).map(op => {
                 const Icon = op.icon;
                 return (
-                  <button key={op.id} className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all border-border hover:border-[#5330ff]/40"
-                    onClick={() => {}}>
+                  <button key={op.id} className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all hover:border-[#5330ff]/40"
+                    style={{ borderColor: privacidade === op.id ? op.cor : 'var(--border)', background: privacidade === op.id ? `${op.cor}12` : 'transparent' }}
+                    onClick={() => setPrivacidade(op.id)}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                       style={{ background: `${op.cor}20` }}>
                       <Icon className="h-4 w-4" style={{ color: op.cor }} />
