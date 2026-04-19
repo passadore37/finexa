@@ -3,19 +3,13 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCorCategoria, type DespesaPorCategoria } from '@/lib/types';
+import { getCorCategoria, getTextSobreCor, type DespesaPorCategoria } from '@/lib/types';
 
 interface Props {
   dados: DespesaPorCategoria[];
   onCategoriaSelect?: (categoria: string | null) => void;
   categoriaAtiva?: string | null;
   getCor?: (nome: string) => string; // prop para categorias customizadas
-}
-
-const FUNDO_CLARO = new Set(['#dffd6e', '#fff245', '#ffa857', '#f2f8db']);
-
-function getTextSobreCor(cor: string): string {
-  return FUNDO_CLARO.has(cor) ? '#1a1a1a' : '#ffffff';
 }
 
 const fmt = (v: number) =>
@@ -150,7 +144,7 @@ export function CategoriasPieChart({ dados, onCategoriaSelect, categoriaAtiva, g
                     {d.categoria}
                   </span>
                   <span className="text-[11px] font-medium w-8 text-right tabular-nums"
-                    style={{ color: isActive ? (FUNDO_CLARO.has(cor) ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)') : 'var(--muted-foreground)' }}>
+                    style={{ color: isActive ? (textoSobreCor === '#1a1a1a' ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)') : 'var(--muted-foreground)' }}>
                     {Math.round(d.percentual)}%
                   </span>
                   <span className="text-sm font-bold tabular-nums"

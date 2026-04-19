@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CATEGORIAS_DISPONIVEIS, getCorCategoria } from '@/lib/types';
+import { CATEGORIAS_DISPONIVEIS, getCorCategoria, getTextSobreCor } from '@/lib/types';
 
 interface Transacao {
   id: string;
@@ -118,7 +118,7 @@ export function HistoricoView({ categoriaFiltro, diaFiltro, mes, ano }: Props) {
                 className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                 style={{
                   background: getCorCategoria(categoriaFiltro || ''),
-                  color: ['#dffd6e','#fff245','#ffa857'].includes(getCorCategoria(categoriaFiltro || '')) ? '#000' : '#fff',
+                  color: getTextSobreCor(getCorCategoria(categoriaFiltro || '')),
                 }}
               >
                 {categoriaFiltro}
@@ -167,7 +167,7 @@ export function HistoricoView({ categoriaFiltro, diaFiltro, mes, ano }: Props) {
                         <button key={cat} onClick={() => setEditCategoria(cat)}
                           className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all"
                           style={editCategoria === cat
-                            ? { background: getCorCategoria(cat), color: ['#dffd6e','#fff245','#ffa857'].includes(getCorCategoria(cat)) ? '#000' : '#fff' }
+                            ? { background: getCorCategoria(cat), color: getTextSobreCor(getCorCategoria(cat)) }
                             : { background: `${getCorCategoria(cat)}20`, color: getCorCategoria(cat) }
                           }>
                           {cat}
