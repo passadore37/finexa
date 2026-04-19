@@ -35,10 +35,10 @@ const PLANOS = [
     features: ['2 usuários', 'Divisão proporcional ao salário', 'Dashboard individual + geral', 'Metas conjuntas', 'Orçamento semanal', 'Lançamento via Telegram'],
   },
   {
-    id: 'familia', nome: 'Família', preco: 39, Icon: Home,
-    desc: 'Para famílias que querem clareza sem complicação',
+    id: 'familia', nome: 'Família', preco: 44, Icon: Home,
+    desc: 'Em breve — para famílias que querem clareza',
     cor: '#ffa857', corText: 'text-[#ffa857]', corBg: 'bg-[#ffa857]',
-    destaque: false,
+    destaque: false, emBreve: true,
     features: ['Até 4 usuários', 'Tudo do plano Casal', 'Perfis independentes', 'Visão consolidada', 'Relatório mensal', '+R$7/mês por extra'],
   },
 ];
@@ -339,7 +339,13 @@ export default function LandingPage() {
                   <div key={p.id}
                     className={`nb-card bg-card p-8 relative ${p.destaque ? 'border-[#5330ff]' : ''}`}
                     style={p.destaque ? { borderColor: '#5330ff', boxShadow: '6px 6px 0 #5330ff30' } : {}}>
-                    {p.destaque && (
+                    {(p as any).emBreve && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black"
+                        style={{ background: '#ffa857', color: '#000' }}>
+                        EM BREVE
+                      </div>
+                    )}
+                    {p.destaque && !((p as any).emBreve) && (
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 nb-btn bg-[#5330ff] text-white text-xs font-black px-4 py-1.5 uppercase tracking-wider flex items-center gap-1">
                         <Sparkles className="h-3 w-3" /> Mais popular
                       </div>

@@ -17,7 +17,7 @@ type ModoDivisao = 'pessoal' | '5050' | 'proporcional' | 'membros';
 export function LancarView() {
   const { usuariaAtiva } = useUsuarioContext();
   const { perfil: perfilAuth } = useAuth();
-  const { plano, temDivisao, temDivisaoMembros } = usePlano();
+  const { plano, temDivisao } = usePlano();
   const { membros } = useMembros();
 
   // Membros dinâmicos para o seletor de divisão
@@ -40,8 +40,6 @@ export function LancarView() {
   const { categoriasPadrao, categoriasCustom, getCor, criarCategoria } = useCategorias(usuariaAtiva);
   const todasCategorias = [...categoriasPadrao, ...categoriasCustom];
   const ehIndividual = plano === 'individual';
-  const ehFamilia    = plano === 'familia';
-  const ehCasal      = !ehIndividual && !ehFamilia;
 
   const [valor,       setValor]       = useState('');
   const [categoria,   setCategoria]   = useState('');
@@ -194,7 +192,7 @@ export function LancarView() {
           <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-3">Como dividir?</label>
 
           {/* CASAL: 3 opções */}
-          {!temDivisaoMembros && temDivisao && (
+          {temDivisao && (
             <div className="grid grid-cols-3 gap-2">
               {([
                 { id: 'pessoal',      label: 'Só meu',       sub: '100% de um',       icon: User },
@@ -221,7 +219,7 @@ export function LancarView() {
           )}
 
           {/* FAMÍLIA: 2 opções */}
-          {temDivisaoMembros && (
+          {false && (
             <div className="grid grid-cols-2 gap-2">
               {([
                 { id: 'pessoal', label: 'Só meu',          sub: 'Gasto individual', icon: User },

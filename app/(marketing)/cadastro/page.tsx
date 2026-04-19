@@ -2,13 +2,12 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, User, Users, Home, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, User, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 const PLANOS = [
   { id: 'individual', nome: 'Individual', preco: 24, Icon: User,  cor: '#01b695', desc: '1 usuário · Controle pessoal completo' },
   { id: 'casal',      nome: 'Casal',      preco: 34, Icon: Users, cor: '#5330ff', desc: '2 usuários · Divisão proporcional ao salário', destaque: true },
-  { id: 'familia',    nome: 'Família',    preco: 44, Icon: Home,  cor: '#ffa857', desc: 'Até 4 usuários · Visão consolidada da família' },
 ];
 
 function CadastroForm() {

@@ -15,9 +15,10 @@ export function UsuarioSelector({ usuarioAtivo, onChangeUsuario }: Props) {
   if (carregando) return <div className="h-8 w-40 bg-secondary rounded-lg animate-pulse" />;
   if (perfisVisiveis.length === 0) return null;
 
-  // Individual: selecionar automaticamente o único perfil
+  // Individual: badge fixo sem clique
   if (plano === 'individual') {
     const p = perfisVisiveis[0];
+    if (!p) return null;
     return (
       <div className="flex gap-1.5">
         <div className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
@@ -28,16 +29,18 @@ export function UsuarioSelector({ usuarioAtivo, onChangeUsuario }: Props) {
     );
   }
 
+  // Casal: Geral + 2 individuais
   return (
     <div className="flex gap-1.5 flex-wrap">
       {perfisVisiveis.map(op => {
-        const active  = usuarioAtivo === op.role;
-        const isSlot  = op.role.startsWith('slot'); // slot vazio
+        const active = usuarioAtivo === op.role;
+        const isSlot = op.role.startsWith('slot');
         return (
           <button key={op.role}
             onClick={() => !isSlot && onChangeUsuario(op.role)}
             disabled={isSlot}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border disabled:opacity-40 disabled:cursor-default"
+            title={isSlot ? 'Aguardando convite ser aceito' : undefined}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border disabled:opacity-40 disabled:cursor-not-allowed"
             style={active
               ? { background: op.cor, color: '#000', borderColor: op.cor }
               : { background: `${op.cor}18`, color: op.cor, borderColor: `${op.cor}40` }
