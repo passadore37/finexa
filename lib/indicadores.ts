@@ -35,6 +35,7 @@ export function calcularEvolucaoMensal(
   perfil?: 'leticia' | 'giovanna',
   salarioLeticia = 0,
   salarioGiovanna = 0,
+  categoriaFiltro?: string | null,
 ): EvolucaoMensal[] {
   const hoje = new Date();
   const salarios = { leticia: salarioLeticia, giovanna: salarioGiovanna };
@@ -54,7 +55,7 @@ export function calcularEvolucaoMensal(
         .reduce((acc, t) => acc + t.valor, 0);
 
       const despesas = tsMes
-        .filter(t => t.tipo !== 'receita')
+        .filter(t => t.tipo !== 'receita' && (!categoriaFiltro || t.categoria === categoriaFiltro))
         .reduce((acc, t) => {
           return acc + calcularValorParMembro(
             { valor: t.valor, perfil: t.responsavel, responsavel: t.responsavel, divisao: t.divisao, recorrente: t.recorrente },
@@ -65,8 +66,11 @@ export function calcularEvolucaoMensal(
       return { mes: label, receitas, despesas, saldo: receitas - despesas };
     }
 
-    // Geral: somar tudo bruto
-    const tot = calcularTotais(tsMes);
+    // Geral: somar tudo bruto (usando filtro de categoria, se presente)
+    const tsFiltradas = categoriaFiltro
+      ? tsMes.filter(t => t.tipo === 'receita' || t.categoria === categoriaFiltro)
+      : tsMes;
+    const tot = calcularTotais(tsFiltradas);
     return { mes: label, receitas: tot.receitas, despesas: tot.despesas, saldo: tot.receitas - tot.despesas };
   });
 }

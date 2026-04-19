@@ -60,7 +60,7 @@ export function Dashboard() {
 
   // Histórico completo para o gráfico de evolução
   const { data: evolucaoData } = useSWR<{ evolucao: EvolucaoItem[] }>(
-    '/api/evolucao', fetcher,
+    `/api/evolucao?categoria=${encodeURIComponent(categoriaAtiva || '')}`, fetcher,
     { revalidateOnFocus: false }
   );
 
@@ -127,7 +127,7 @@ export function Dashboard() {
   const limite  = usuariaAtiva === 'casal' ? limites.leticia + limites.giovanna : limites[usuariaAtiva as 'leticia' | 'giovanna'] || 9000;
   const fixas   = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(dados.transacoes, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna)
+    ? calcularEvolucaoMensal(dados.transacoes, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
     : indicadores.evolucaoMensal;
 
   const parceladas = isPerfil
@@ -222,6 +222,7 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 min-h-[300px]">
           <HeatmapGastos
             transacoes={transacoesMesAtual}
+            categoriaFiltro={categoriaAtiva}
             diaAtivo={diaAtivo}
             onDiaSelect={(d) => setDiaAtivo(prev => prev === d ? null : d)}
             mes={mesSel.mes}

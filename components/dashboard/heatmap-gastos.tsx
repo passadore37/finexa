@@ -17,9 +17,10 @@ interface HeatmapGastosProps {
   onDiaSelect?: (dia: number) => void;
   mes?: number;
   ano?: number;
+  categoriaFiltro?: string | null;
 }
 
-export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: HeatmapGastosProps) {
+export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano, categoriaFiltro }: HeatmapGastosProps) {
   const { dias, maxValor, mesAtualNome, celulas } = useMemo(() => {
     const hoje = new Date();
     const anoAlvo = ano !== undefined ? ano : hoje.getFullYear();
@@ -35,6 +36,7 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano }: H
     // Filtrar apenas despesas deste mês
     const tsMes = transacoes.filter(t => {
       if (t.tipo !== 'despesa') return false;
+      if (categoriaFiltro && t.categoria !== categoriaFiltro) return false;
       const tDate = new Date(typeof t.data === 'string' && t.data.length === 10 ? t.data + 'T12:00:00' : t.data);
       return tDate.getMonth() === mesAlvo && tDate.getFullYear() === anoAlvo;
     });

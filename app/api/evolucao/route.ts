@@ -19,8 +19,11 @@ export async function GET(req: Request) {
 
     const salarioTotal = Number(pl?.salario_leticia || 0) + Number(pl?.salario_giovanna || 0);
 
+    const { searchParams } = new URL(req.url);
+    const categoriaFiltro = searchParams.get('categoria');
+
     const { data: transacoes } = await adminClient.from('transacoes')
-      .select('data, valor, tipo')
+      .select('data, valor, tipo, categoria')
       .eq('family_id', family_id)
       .order('data', { ascending: true });
 
@@ -34,7 +37,11 @@ export async function GET(req: Request) {
       const ano = d.getFullYear();
       const key = `${ano}-${String(mes).padStart(2,'0')}`;
       if (!mesesMap[key]) mesesMap[key] = { mes, ano, despesas: 0 };
-      if (t.tipo !== 'receita') mesesMap[key].despesas += Number(t.valor);
+      if (t.tipo !== 'receita') {
+        if (!categoriaFiltro || t.categoria === categoriaFiltro) {
+          mesesMap[key].despesas += Number(t.valor);
+        }
+      }
     });
 
     const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
