@@ -87,7 +87,7 @@ function calcularCategorias(
   salarioGiovanna = 0,
 ): DespesaPorCategoria[] {
   const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
-  const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário');
+  const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário' && !t.recorrente);
 
   const porCat: Record<string, number> = {};
   let total = 0;

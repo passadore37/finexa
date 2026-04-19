@@ -29,8 +29,11 @@ export async function GET(req: Request) {
       .eq('family_id', family_id)
       .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false }).limit(500);
-    if (err) throw err;
-    return NextResponse.json({ success: true, data });
+    const dataTratada = data?.map(t => ({
+      ...t,
+      categoria: t.recorrente ? 'Despesas Fixas' : t.categoria
+    })) || [];
+    return NextResponse.json({ success: true, data: dataTratada });
   } catch { return NextResponse.json({ success: false, error: 'Erro ao buscar' }, { status: 500 }); }
 }
 

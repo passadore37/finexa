@@ -77,7 +77,7 @@ export async function fetchDadosPlanilha(
       id: row.id,
       data: new Date(row.data + 'T12:00:00'),
       descricao: row.descricao,
-      categoria: row.categoria,
+      categoria: (row.recorrente && row.tipo !== 'receita') ? 'Despesas Fixas' : row.categoria,
       tipo: 'despesa' as const,
       valor: Number(row.valor),
       responsavel: row.perfil || undefined,
