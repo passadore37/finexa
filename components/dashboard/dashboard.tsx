@@ -16,6 +16,7 @@ import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useMesContext } from '@/hooks/use-mes-context';
 import { aplicarCorPerfil, PERFIL_CONFIG, transacaoVisivel } from '@/lib/perfil-config';
@@ -43,10 +44,12 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
+  const { plano, perfisVisiveis } = usePlano();
   const { membros } = useMembros();
-  // Mapear role real para role lógico
+  // Mapeia role real → role lógico para os cálculos
   const role0 = membros[0]?.role ?? 'leticia';
   const role1 = membros[1]?.role ?? 'giovanna';
+  const roleLogico = (r: string) => r === role0 ? 'leticia' : r === role1 ? 'giovanna' : r;
   const { getCor } = useCategorias();
 
   // Mês visualizado — compartilhado globalmente via hook
@@ -102,9 +105,12 @@ export function Dashboard() {
 
   const { indicadores, dados, limites } = data;
   const isPerfil = usuariaAtiva !== 'casal' && usuariaAtiva !== 'geral';
-  const perfilConfig = PERFIL_CONFIG[usuariaAtiva];
+  const membroAtivo = membros.find(m => m.role === usuariaAtiva);
+  const perfilConfig = membroAtivo
+    ? { cor: membroAtivo.cor, corSecundaria: membroAtivo.corSecundaria, corBg: membroAtivo.corBg, nome: membroAtivo.nome, emoji: '' }
+    : (PERFIL_CONFIG[usuariaAtiva] ?? PERFIL_CONFIG['casal']);
   const perfilDados = isPerfil
-    ? indicadores[usuariaAtiva === role0 ? 'perfilLeticia' : 'perfilGiovanna']
+    ? indicadores[roleLogico(usuariaAtiva) === 'leticia' ? 'perfilLeticia' : 'perfilGiovanna']
     : null;
 
   const receitas   = isPerfil ? perfilDados!.salario : indicadores.receitasMes;
@@ -116,10 +122,10 @@ export function Dashboard() {
   const _salarios = { leticia: dados.salarioLeticia, giovanna: dados.salarioGiovanna };
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter(t => {
-        if (t.tipo === 'receita') return t.responsavel === usuariaAtiva;
+        if (t.tipo === 'receita') return t.responsavel === roleLogico(usuariaAtiva) || t.responsavel === usuariaAtiva;
         return transacaoVisivel(
           { valor: t.valor, perfil: t.responsavel, responsavel: t.responsavel, divisao: t.divisao, recorrente: t.recorrente, totalParcelas: t.totalParcelas },
-          usuariaAtiva, _salarios
+          roleLogico(usuariaAtiva), _salarios
         );
       })
     : dados.transacoes;
@@ -130,10 +136,12 @@ export function Dashboard() {
     return d.getMonth() === mesSel.mes && d.getFullYear() === mesSel.ano;
   });
 
-  const limite  = (usuariaAtiva === 'casal' || usuariaAtiva === 'geral') ? limites.leticia + limites.giovanna : (usuariaAtiva === role0 ? limites.leticia : limites.giovanna) || 9000;
+  const limite = (usuariaAtiva === 'casal' || usuariaAtiva === 'geral')
+    ? limites.leticia + limites.giovanna
+    : (limites[roleLogico(usuariaAtiva) as 'leticia' | 'giovanna'] || 9000);
   const fixas   = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(dados.transacoes, (usuariaAtiva === role0 ? 'leticia' : 'giovanna') as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
+    ? calcularEvolucaoMensal(dados.transacoes, roleLogico(usuariaAtiva) as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
     : indicadores.evolucaoMensal;
 
   const parceladas = isPerfil

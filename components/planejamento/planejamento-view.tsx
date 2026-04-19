@@ -6,6 +6,7 @@ import { Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check,
          TrendingUp, Zap, Shield, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useMesContext } from '@/hooks/use-mes-context';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -39,6 +40,8 @@ function getSemanasDoMes(mes?: number, ano?: number) {
 
 export function PlanejamentoView() {
   const { usuariaAtiva } = useUsuarioContext();
+  const { plano: planoAtivo } = usePlano();
+  const ehIndividual = planoAtivo === 'individual';
   const isGeral = usuariaAtiva === 'casal';
   const { membros } = useMembros();
   const [aba, setAba] = useState<Aba>('configurar');
@@ -230,7 +233,7 @@ export function PlanejamentoView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { label: membros[0]?.nome ?? 'Membro 1', cor: membros[0]?.cor ?? '#82a1fd', val: salLet, set: (v: number) => { setSalLet(v); mark(); } },
-                  { label: membros[1]?.nome ?? 'Membro 2', cor: membros[1]?.cor ?? '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } },
+                  ...(!ehIndividual ? [{ label: membros[1]?.nome ?? 'Membro 2', cor: membros[1]?.cor ?? '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } }] : []),
                 ].map(s => (
                   <div key={s.label}>
                     <label className="text-[10px] uppercase tracking-widest block mb-2 font-bold" style={{ color: s.cor }}>{s.label}</label>

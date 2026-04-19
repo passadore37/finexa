@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus } from 'lucide-react';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
-import { PERFIL_CONFIG, CORES_PERFIL } from '@/lib/perfil-config';
+import { PERFIL_CONFIG } from '@/lib/perfil-config';
+import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useCategorias } from '@/hooks/use-categorias';
 import { ModalNovaCategoria } from './modal-nova-categoria';
@@ -16,27 +17,25 @@ type ModoDivisao = 'pessoal' | '5050' | 'proporcional' | 'membros';
 export function LancarView() {
   const { usuariaAtiva } = useUsuarioContext();
   const { perfil: perfilAuth } = useAuth();
+  const { plano, temDivisao, temDivisaoMembros } = usePlano();
   const { membros } = useMembros();
 
-  // Membros reais do banco — fallback para compatibilidade
+  // Membros dinâmicos para o seletor de divisão
   const MEMBROS_CASAL = membros.length >= 2
-    ? membros.map((m, i) => ({ id: m.role, nome: m.nome, cor: m.cor }))
+    ? membros.map(m => ({ id: m.role, nome: m.nome, cor: m.cor }))
     : [
         { id: 'leticia',  nome: 'Membro 1', cor: '#82a1fd' },
         { id: 'giovanna', nome: 'Membro 2', cor: '#ff64ca' },
       ];
 
-  // Role lógico do usuário ativo
   const role0 = membros[0]?.role ?? 'leticia';
   const role1 = membros[1]?.role ?? 'giovanna';
 
-  // perfilConfig — usar cor do membro ativo ou fallback
+  // perfilConfig com cor real do membro ativo
   const membroAtivo = membros.find(m => m.role === usuariaAtiva);
   const perfilConfig = membroAtivo
     ? { cor: membroAtivo.cor, corSecundaria: membroAtivo.corSecundaria, corBg: membroAtivo.corBg, nome: membroAtivo.nome, emoji: '' }
     : (PERFIL_CONFIG[usuariaAtiva] ?? PERFIL_CONFIG['casal']);
-
-  const plano = perfilAuth?.plano ?? 'casal';
   const [modalCategoria, setModalCategoria] = useState(false);
   const { categoriasPadrao, categoriasCustom, getCor, criarCategoria } = useCategorias(usuariaAtiva);
   const todasCategorias = [...categoriasPadrao, ...categoriasCustom];
@@ -61,7 +60,6 @@ export function LancarView() {
     setModoDivisao(ehIndividual ? 'pessoal' : '5050');
   }, [usuariaAtiva, ehIndividual]);
 
-  // Mapeia role real para role lógico (leticia/giovanna) para salvar no banco
   function normalizarRole(role: string): string {
     if (role === 'casal' || role === 'geral') return 'casal';
     if (role === role0) return 'leticia';
@@ -78,8 +76,8 @@ export function LancarView() {
     if (modoDivisao === '5050') return { perfil: 'casal', divisao: '50/50' };
     if (modoDivisao === 'proporcional') return { perfil: 'casal', divisao: 'proporcional' };
     if (modoDivisao === 'membros') {
-      if (membrosSelecionados.length === 0) return { perfil: normalizarRole(responsavel), divisao: 'pessoal' };
-      if (membrosSelecionados.length === 1) return { perfil: normalizarRole(membrosSelecionados[0]), divisao: 'pessoal' };
+      if (membrosSelecionados.length === 0) return { perfil: responsavel, divisao: 'pessoal' };
+      if (membrosSelecionados.length === 1) return { perfil: membrosSelecionados[0], divisao: 'pessoal' };
       return { perfil: 'casal', divisao: '50/50' };
     }
     return { perfil: 'casal', divisao: '50/50' };
@@ -141,7 +139,7 @@ export function LancarView() {
       <div>
         <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Novo lançamento</p>
         <h2 className="text-xl font-medium text-foreground">
-          {(usuariaAtiva === 'casal' || usuariaAtiva === 'geral') ? 'Lançar gasto' : `${perfilConfig.nome}, qual foi o gasto?`}
+          {usuariaAtiva === 'casal' ? 'Lançar gasto' : `${perfilConfig.nome}, qual foi o gasto?`}
         </h2>
       </div>
 
@@ -191,12 +189,12 @@ export function LancarView() {
       )}
 
       {/* Divisão — oculto para individual */}
-      {!ehIndividual && (
+      {temDivisao && (
         <div>
           <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-3">Como dividir?</label>
 
           {/* CASAL: 3 opções */}
-          {ehCasal && (
+          {!temDivisaoMembros && temDivisao && (
             <div className="grid grid-cols-3 gap-2">
               {([
                 { id: 'pessoal',      label: 'Só meu',       sub: '100% de um',       icon: User },
@@ -223,7 +221,7 @@ export function LancarView() {
           )}
 
           {/* FAMÍLIA: 2 opções */}
-          {ehFamilia && (
+          {temDivisaoMembros && (
             <div className="grid grid-cols-2 gap-2">
               {([
                 { id: 'pessoal', label: 'Só meu',          sub: 'Gasto individual', icon: User },
