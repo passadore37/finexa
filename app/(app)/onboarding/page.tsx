@@ -40,9 +40,13 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (perfil) {
       setNome(perfil.nome ?? '');
-      setPlano((perfil.plano as Plano) ?? 'casal');
+      // BUG-06: fallback para user_metadata.plano caso perfil.plano ainda seja null
+      const planoPerfil = (perfil.plano as Plano) ?? (user?.user_metadata?.plano as Plano) ?? 'individual';
+      setPlano(planoPerfil);
+    } else if (user?.user_metadata?.plano) {
+      setPlano(user.user_metadata.plano as Plano);
     }
-  }, [perfil]);
+  }, [perfil, user]);
 
   // Passos por perfil
   const passos = {
@@ -460,7 +464,17 @@ export default function OnboardingPage() {
 
         {/* Pular passo */}
         {['convite', 'convites', 'fixas', 'privacidade'].includes(etapaAtual) && (
-          <button onClick={() => setPasso(p => p + 1)}
+          <button onClick={async () => {
+            // BUG-08: Ao pular privacidade, salvar o modo padrão para não deixar null no banco
+            if (etapaAtual === 'privacidade') {
+              await fetch('/api/onboarding', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_master: true, privacidade: privacidade || 'aberta' }),
+              });
+            }
+            setPasso(p => p + 1);
+          }}
             className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
             Pular por agora →
           </button>

@@ -12,17 +12,24 @@ function VerificarEmailContent() {
 
   const [reenviando, setReenviando] = useState(false);
   const [reenviado, setReenviado]   = useState(false);
+  const [erroReenvio, setErroReenvio] = useState('');  // BUG-10
 
   async function reenviar() {
     setReenviando(true);
+    setErroReenvio('');
     const emailParaReenviar = emailCadastrado ||
       (await createClient().auth.getSession()).data.session?.user?.email || '';
-    if (!emailParaReenviar) { setReenviando(false); return; }
-    await fetch('/api/auth/reenviar-email', {
+    if (!emailParaReenviar) { setReenviando(false); setErroReenvio('Informe o e-mail para reenvio.'); return; }
+    const res = await fetch('/api/auth/reenviar-email', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailParaReenviar }),
     });
-    setReenviado(true); setReenviando(false);
+    if (!res.ok) {
+      setErroReenvio('Não foi possível reenviar o e-mail. Tente novamente.');
+    } else {
+      setReenviado(true);
+    }
+    setReenviando(false);
   }
 
   return (
@@ -53,6 +60,10 @@ function VerificarEmailContent() {
             {reenviando && <Loader2 className="h-4 w-4 animate-spin" />}
             {reenviando ? 'Enviando...' : 'Reenviar email de confirmação'}
           </button>
+        )}
+
+        {erroReenvio && (
+          <p className="text-sm font-bold text-[#EF9F27] text-center">{erroReenvio}</p>
         )}
 
         <p className="text-xs text-muted-foreground">Verifique também a pasta de spam.</p>

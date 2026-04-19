@@ -10,6 +10,7 @@ function LoginForm() {
   const params   = useSearchParams();
   const redirect = params.get('redirect') || '/dashboard';
   const confirmado = params.get('confirmado') === 'true';
+  const erroParam  = params.get('erro');
   const [email, setEmail]     = useState(params.get('email') || ''); // Inicializa com o e-mail da URL
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);
@@ -78,6 +79,12 @@ function LoginForm() {
                 <div className="p-3 mb-1 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/30 text-center">
                   <p className="text-sm font-bold text-[#1D9E75]">E-mail confirmado com sucesso! ✓</p>
                   <p className="text-xs text-muted-foreground mt-1">Por segurança, digite sua senha para entrar.</p>
+                </div>
+              )}
+              {erroParam === 'link_expirado' && (
+                <div className="p-3 mb-1 rounded-xl bg-[#854F0B]/10 border border-[#854F0B]/30 text-center">
+                  <p className="text-sm font-bold text-[#EF9F27]">Link expirado</p>
+                  <p className="text-xs text-muted-foreground mt-1">O link de confirmação expirou ou já foi usado. Faça login normalmente ou solicite um novo link.</p>
                 </div>
               )}
               <div>

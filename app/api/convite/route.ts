@@ -81,6 +81,12 @@ export async function PATCH(req: Request) {
     if (!convite) return NextResponse.json({ error: 'Convite inválido' }, { status: 404 });
     if (new Date(convite.expira_em) < new Date()) return NextResponse.json({ error: 'Expirado' }, { status: 410 });
 
+    // BUG-05: Verificar que o user_id corresponde ao email do convite
+    const { data: authUser } = await admin.auth.admin.getUserById(user_id);
+    if (!authUser.user || authUser.user.email?.toLowerCase() !== convite.email?.toLowerCase()) {
+      return NextResponse.json({ error: 'Usuário não corresponde ao convite' }, { status: 403 });
+    }
+
     await admin.from('perfis').update({ family_id: convite.family_id }).eq('id', user_id);
     await admin.from('convites').update({ usado: true }).eq('token', token);
 

@@ -20,7 +20,7 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
   const { membros, carregando } = useMembros();
   const [aba, setAba]           = useState<'plano' | 'membros' | 'privacidade'>('plano');
 
-  const planoAtual  = perfil?.plano as PlanoId ?? 'casal';
+  const planoAtual  = (perfil?.plano as PlanoId) || 'individual';
   const isMaster    = perfil?.is_master ?? false;
   const upgrades    = getUpgrades(planoAtual);
   const planoInfo   = getPlano(planoAtual);
@@ -319,7 +319,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [menuAberto, setMenuAberto]       = useState(false);
   const [modalConfig, setModalConfig]     = useState(false);
 
-  const planoInfo = getPlano(perfil?.plano ?? 'casal');
+  const planoInfo = getPlano((perfil?.plano as PlanoId) || 'individual');
 
   return (
     <>
