@@ -53,6 +53,25 @@ export async function POST(req: Request) {
       family_id,
     }).select().single();
     if (err) throw err;
+
+    if (recorrente || false) {
+      // Adicionar à tabela de planejamento para ser mantida para os próximos meses
+      const { data: plan } = await getAdmin().from('planejamento')
+        .select('id, contas_fixas').eq('family_id', family_id)
+        .order('updated_at', { ascending: false }).limit(1).single();
+      
+      if (plan) {
+        const fixas = Array.isArray(plan.contas_fixas) ? [...plan.contas_fixas] : [];
+        fixas.push({
+          id: result.id,
+          descricao: descricao || categoria,
+          valor: Number(valor),
+          categoria
+        });
+        await getAdmin().from('planejamento').update({ contas_fixas: fixas, updated_at: new Date().toISOString() }).eq('id', plan.id);
+      }
+    }
+
     return NextResponse.json({ success: true, data: result });
   } catch { return NextResponse.json({ success: false, error: 'Erro ao salvar' }, { status: 500 }); }
 }

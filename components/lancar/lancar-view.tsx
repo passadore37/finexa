@@ -33,6 +33,7 @@ export function LancarView() {
   const [categoria,   setCategoria]   = useState('');
   const [descricao,   setDescricao]   = useState('');
   const [parcelado,   setParcelado]   = useState(false);
+  const [recorrente,  setRecorrente]  = useState(false);
   const [totalParcelas, setTotalParcelas] = useState('2');
   const [parcelaAtual,  setParcelaAtual]  = useState('1');
   const [status,      setStatus]      = useState<Status>('idle');
@@ -73,9 +74,9 @@ export function LancarView() {
           valor: parseFloat(valor.replace(',', '.')),
           categoria, descricao: descricao || categoria,
           perfil, divisao,
-          parcela_atual:  parcelado ? parseInt(parcelaAtual)  : 1,
-          total_parcelas: parcelado ? parseInt(totalParcelas) : 1,
-          recorrente: false,
+          parcela_atual:  (parcelado && !recorrente) ? parseInt(parcelaAtual)  : 1,
+          total_parcelas: (parcelado && !recorrente) ? parseInt(totalParcelas) : 1,
+          recorrente: recorrente,
         }),
       });
       const data = await res.json();
@@ -84,7 +85,7 @@ export function LancarView() {
         window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
         setTimeout(() => {
           setStatus('idle'); setValor(''); setCategoria(''); setDescricao('');
-          setParcelado(false); setTotalParcelas('2'); setParcelaAtual('1');
+          setParcelado(false); setRecorrente(false); setTotalParcelas('2'); setParcelaAtual('1');
           if (!ehIndividual) setModoDivisao('5050');
           setMembrosSelecionados(MEMBROS_CASAL.map(m => m.id));
         }, 1500);
@@ -302,9 +303,21 @@ export function LancarView() {
             </div>
 
             <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Despesa fixa mensais (recorrente)?</label>
+              <div className="flex items-center gap-3 mb-4">
+                <button onClick={() => { setRecorrente(!recorrente); if (!recorrente) setParcelado(false); }}
+                  className={`w-10 h-5 rounded-full transition-colors relative ${recorrente ? 'bg-primary' : 'bg-secondary border border-border'}`}
+                >
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${recorrente ? 'left-5' : 'left-0.5'}`} />
+                </button>
+                <span className="text-sm text-muted-foreground">{recorrente ? 'Sim (todo mês)' : 'Não'}</span>
+              </div>
+            </div>
+
+            <div>
               <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Parcelado?</label>
               <div className="flex items-center gap-3">
-                <button onClick={() => setParcelado(!parcelado)}
+                <button onClick={() => { setParcelado(!parcelado); if (!parcelado) setRecorrente(false); }}
                   className={`w-10 h-5 rounded-full transition-colors relative ${parcelado ? 'bg-primary' : 'bg-secondary border border-border'}`}
                 >
                   <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${parcelado ? 'left-5' : 'left-0.5'}`} />
