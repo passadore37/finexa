@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Mail, Instagram } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -123,7 +124,6 @@ export function Footer() {
         {[
           { titulo: 'Produto', items: [['Como Funciona','/#como-funciona'],['Diferenciais','/#diferenciais'],['Planos','/#planos']] },
           { titulo: 'Legal', items: [['Termos de Uso','/termos'],['Privacidade','/privacidade']] },
-          { titulo: 'Contato', items: [['Suporte','mailto:contato@finexa.app'],['Letícia Passadore','#']] },
         ].map(col => (
           <div key={col.titulo}>
             <h4 className="font-black mb-4 text-[#5330ff] uppercase text-xs tracking-widest">{col.titulo}</h4>
@@ -136,6 +136,28 @@ export function Footer() {
             </ul>
           </div>
         ))}
+        <div>
+          <h4 className="font-black mb-4 text-[#5330ff] uppercase text-xs tracking-widest">Contato</h4>
+          <ul className="space-y-3">
+            <li>
+              <a href="mailto:contato@finexa.app"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+                <Mail className="h-4 w-4 text-[#5330ff]" />
+                contato@finexa.app
+              </a>
+            </li>
+            <li>
+              <a href="https://instagram.com/finexa.app" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+                <Instagram className="h-4 w-4 text-[#ff64ca]" />
+                @finexa.app
+              </a>
+            </li>
+            <li>
+              <span className="text-sm text-muted-foreground font-medium">Letícia Passadore</span>
+            </li>
+          </ul>
+        </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
         <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
