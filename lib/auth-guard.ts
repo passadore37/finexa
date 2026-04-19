@@ -9,7 +9,6 @@ export interface AuthResult {
 }
 
 export async function authGuard(req: Request): Promise<AuthResult> {
-  // Tenta cookies() do next/headers primeiro (mais confiável no App Router)
   let allCookies: { name: string; value: string }[] = [];
   try {
     const { cookies } = await import('next/headers');
@@ -17,7 +16,6 @@ export async function authGuard(req: Request): Promise<AuthResult> {
     allCookies = store.getAll().map((c: any) => ({ name: c.name, value: c.value }));
   } catch {}
 
-  // Fallback: lê do header da request diretamente
   if (allCookies.length === 0) {
     const cookieHeader = req.headers.get('cookie') || '';
     allCookies = cookieHeader
@@ -38,7 +36,7 @@ export async function authGuard(req: Request): Promise<AuthResult> {
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
 
   if (authError || !user) {
-    console.log('[authGuard] Sem sessão:', authError?.message);
+    // Sem log — não expor mensagem de erro de autenticação
     return {
       user: null, family_id: null,
       error: NextResponse.json(
@@ -53,13 +51,13 @@ export async function authGuard(req: Request): Promise<AuthResult> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: perfil, error: perfilError } = await admin
+  const { data: perfil } = await admin
     .from('perfis')
-    .select('family_id, email, nome, role')
+    .select('family_id')
     .eq('id', user.id)
     .single();
 
-  if (perfilError || !perfil?.family_id) {
+  if (!perfil?.family_id) {
     return {
       user: null, family_id: null,
       error: NextResponse.json(

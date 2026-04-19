@@ -3,11 +3,36 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+// Rate limit simples em memória — max 10 req/min por IP em rotas de auth
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+function checkRateLimit(ip: string, max = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(ip, { count: 1, reset: now + windowMs });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+}
+
 const PUBLIC_ROUTES  = ['/', '/login', '/cadastro', '/plano', '/convite', '/termos', '/privacidade', '/auth/callback', '/verificar-email', '/nova-senha'];
 const AUTH_ROUTES    = ['/login', '/cadastro'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Rate limit em rotas de autenticação
+  if (pathname.startsWith('/api/auth/') || pathname.startsWith('/api/convite')) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde um momento.' },
+        { status: 429 }
+      );
+    }
+  }
 
   // Rotas de arquivos estáticos e API — deixar passar
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {

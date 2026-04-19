@@ -57,7 +57,7 @@ export function usePushNotifications(perfil: Perfil) {
       setIsSubscribed(true);
       return true;
     } catch (e) {
-      console.warn('Erro ao registrar push:', e);
+      // Silencioso em produção — erro de push não crítico
       return false;
     }
   }

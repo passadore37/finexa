@@ -30,7 +30,8 @@ export async function POST(req: Request) {
     if (error) {
       if (error.message.includes('already registered') || error.message.includes('already been registered'))
         return NextResponse.json({ error: 'Este e-mail já está cadastrado.' }, { status: 409 });
-      throw error;
+      // Não expor mensagem de erro interna
+      return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 400 });
     }
 
     // Gerar link de confirmação
@@ -44,8 +45,8 @@ export async function POST(req: Request) {
       await enviarEmailBoasVindas(email, nome, linkData.properties.action_link);
     }
 
-    return NextResponse.json({ success: true, user_id: data.user?.id });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 });
   }
 }
