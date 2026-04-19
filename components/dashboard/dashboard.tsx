@@ -11,6 +11,7 @@ import { HeatmapGastos } from './heatmap-gastos';
 import { SankeyDirecionamento } from './sankey-direcionamento';
 import { AlertasPanel } from './alertas-panel';
 import { SugestoesPanel } from './sugestoes-panel';
+import { InsightsIAPanel } from './insights-ia-panel';
 import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
@@ -262,10 +263,22 @@ export function Dashboard() {
 
         <div className="section-separator my-6 sm:my-8" />
 
-        {/* Alertas + Sugestões */}
+        {/* Alertas + Insights IA */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <AlertasPanel alertas={alertas} />
-          <SugestoesPanel sugestoes={sugestoes} />
+          <InsightsIAPanel
+            receitas={receitas}
+            despesas={despesas}
+            saldo={saldo}
+            categorias={categorias}
+            evolucaoMensal={evolucaoMensal}
+            projecao={projecaoBar.projecao}
+            limite={limite}
+            fixas={fixas}
+            nomePerfil={isPerfil ? (usuariaAtiva.charAt(0).toUpperCase() + usuariaAtiva.slice(1)) : ''}
+            mes={mesSel.mes}
+            ano={mesSel.ano}
+          />
         </div>
       </main>
 
