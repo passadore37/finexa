@@ -1,66 +1,71 @@
-// hooks/use-plano.ts — feature flags por plano
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
+import { useMembros } from '@/hooks/use-membros';
 
-export type PlanoAtivo = 'individual' | 'casal' | 'familia';
+export type PlanoId = 'individual' | 'casal' | 'familia';
 
-interface PlanoFeatures {
-  plano: PlanoAtivo;
+export interface PlanoConfig {
+  plano: PlanoId;
+  isMaster: boolean;
   maxMembros: number;
-  temDivisaoProporcional: boolean;  // casal + família
-  temPerfilIndividual: boolean;     // casal + família
-  temMetasConjuntas: boolean;       // casal + família
-  temConvite: boolean;              // casal + família
-  temVisaoGeral: boolean;           // casal + família
-  temPlanejamentoFamilia: boolean;  // só família
-  nomePerfisDisponiveis: string[];  // perfis que aparecem no seletor
+  perfisVisiveis: { role: string; nome: string; cor: string }[];
+  temGeral: boolean;
+  temDivisao: boolean;
+  temDivisaoMembros: boolean;
+  temUpgrade: boolean;
+  upgradePara: PlanoId[];
+  precoPorMembroExtra: number;
 }
 
-export function usePlano(): PlanoFeatures {
+export function usePlano(): PlanoConfig {
   const { perfil } = useAuth();
-  const plano = (perfil?.plano ?? 'casal') as PlanoAtivo;
+  const { membros } = useMembros();
 
-  const base = {
-    plano,
-    maxMembros: plano === 'individual' ? 1 : plano === 'casal' ? 2 : 4,
-  };
+  const plano    = (perfil?.plano ?? 'casal') as PlanoId;
+  const isMaster = perfil?.is_master ?? false;
+  const meuRole  = perfil?.role ?? 'membro';
 
-  if (plano === 'individual') {
-    return {
-      ...base,
-      temDivisaoProporcional: false,
-      temPerfilIndividual:    false,
-      temMetasConjuntas:      false,
-      temConvite:             false,
-      temVisaoGeral:          false,
-      temPlanejamentoFamilia: false,
-      nomePerfisDisponiveis:  ['individual'],
-    };
+  const CORES = ['#82a1fd', '#ff64ca', '#ffa857', '#01b695'];
+
+  function getPerfisVisiveis() {
+    if (!Array.isArray(membros) || membros === undefined) return [];
+    if (plano === 'individual') {
+      const eu = membros[0];
+      return eu ? [{ role: eu.role, nome: eu.nome, cor: eu.cor }] : [];
+    }
+
+    const qtd = plano === 'casal' ? 2 : 4;
+    // Preencher slots vazios para manter os painéis mesmo sem convite aceito
+    const slots = Array(qtd).fill(null).map((_, i) => {
+      const m = membros[i];
+      return m
+        ? { role: m.role, nome: m.nome, cor: m.cor }
+        : { role: `slot${i}`, nome: `Membro ${i + 1}`, cor: CORES[i] ?? '#82a1fd' };
+    });
+
+    if (plano === 'familia' && !isMaster) {
+      // Não-mestre só vê o próprio painel
+      const eu = membros.find(m => m.role === meuRole) ?? membros[0];
+      return eu ? [{ role: eu.role, nome: eu.nome, cor: eu.cor }] : [];
+    }
+
+    return [
+      { role: 'casal', nome: 'Geral', cor: '#ffa857' },
+      ...slots,
+    ];
   }
 
-  if (plano === 'casal') {
-    return {
-      ...base,
-      temDivisaoProporcional: true,
-      temPerfilIndividual:    true,
-      temMetasConjuntas:      true,
-      temConvite:             true,
-      temVisaoGeral:          true,
-      temPlanejamentoFamilia: false,
-      nomePerfisDisponiveis:  ['casal', perfil?.role ?? 'membro'],
-    };
-  }
-
-  // família
   return {
-    ...base,
-    temDivisaoProporcional: true,
-    temPerfilIndividual:    true,
-    temMetasConjuntas:      true,
-    temConvite:             true,
-    temVisaoGeral:          true,
-    temPlanejamentoFamilia: true,
-    nomePerfisDisponiveis:  ['familia'],
+    plano,
+    isMaster,
+    maxMembros: plano === 'individual' ? 1 : plano === 'casal' ? 2 : 4,
+    perfisVisiveis: getPerfisVisiveis(),
+    temGeral:           plano !== 'individual',
+    temDivisao:         plano !== 'individual',
+    temDivisaoMembros:  plano === 'familia',
+    temUpgrade:         plano !== 'familia',
+    upgradePara: plano === 'individual' ? ['casal', 'familia'] : plano === 'casal' ? ['familia'] : [],
+    precoPorMembroExtra: 7,
   };
 }
