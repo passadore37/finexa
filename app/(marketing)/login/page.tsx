@@ -6,11 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 
-function LoginForm() {
-  const params   = useSearchParams();
-  const redirect = params.get('redirect') || '/dashboard';
-  const confirmado = params.get('confirmado') === 'true';
-  const erroParam  = params.get('erro');
+ver
   const [email, setEmail]     = useState(params.get('email') || ''); // Inicializa com o e-mail da URL
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);

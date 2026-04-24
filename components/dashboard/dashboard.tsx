@@ -216,7 +216,12 @@ export function Dashboard() {
           <ProjecaoBar
             dados={{ ...projecaoBar, limite }}
             onAjustarLimite={async (v) => {
-              await fetch('/api/limite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perfil: usuariaAtiva, limite: v }) });
+              await fetch('/api/limite', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ perfil: roleLogico(usuariaAtiva), limite: v }),
+              });
               mutate();
             }}
             perfilGeral={usuariaAtiva === 'casal'}
