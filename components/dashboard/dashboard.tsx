@@ -222,7 +222,10 @@ export function Dashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ perfil: roleLogico(usuariaAtiva), limite: v }),
               });
-              if (res.ok) await mutate();
+              if (res.ok) {
+                // Forçar re-fetch dos dados para atualizar o limite na tela
+                await mutate(undefined, { revalidate: true });
+              }
             }}
             perfilGeral={usuariaAtiva === 'casal'}
             fixas={fixas}

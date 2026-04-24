@@ -34,7 +34,6 @@ const projecaoComFixas = projecao + valorFixas;
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
 
-  // Atualizar inputValue quando limite externo muda (após salvar e mutate)
   useEffect(() => {
     setInputValue(limite);
   }, [limite]);
