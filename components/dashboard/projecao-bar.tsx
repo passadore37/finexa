@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +33,11 @@ const projecaoComFixas = projecao + valorFixas;
 
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(limite);
+
+  // Atualizar inputValue quando limite externo muda (após salvar e mutate)
+  useEffect(() => {
+    setInputValue(limite);
+  }, [limite]);
 
   const fmt = (v: number) =>
     new Intl.NumberFormat('pt-BR', {
