@@ -308,7 +308,12 @@ function calcularMetodologia(
     return { numero, gastos: gastosSemanais, disponivel, limite: mediaGastoSemanal, status, inicio: semana.inicio, fim: semana.fim };
   });
 
-  const saldoLivre = receitas - contasFixasTotal - reserva - totalGastosVariaveis;
+  // Calcula saldoLivre como: saldo do mês / dias restantes
+  const saldoDisponivel = receitas - contasFixasTotal - reserva - totalGastosVariaveis;
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diaAtual = mes === hoje.getMonth() && ano === hoje.getFullYear() ? hoje.getDate() : diasNoMes;
+  const diasRestantes = Math.max(1, diasNoMes - diaAtual + 1);
+  const saldoLivre = saldoDisponivel / diasRestantes;
 
   return {
     contasFixas: contasFixasTotal,
@@ -417,7 +422,14 @@ function calcularIndicadoresPerfil(
     }, 0);
 
   const investimento = salario * (percentualInvestimento / 100);
-  const saldoLivre = salario - parteFixas - gastosVariaveis - investimento;
+  const saldoDisponivel = salario - parteFixas - gastosVariaveis - investimento;
+  
+  // Calcula saldoLivre como: saldo disponível / dias restantes
+  const hoje = new Date();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diaAtual = mes === hoje.getMonth() && ano === hoje.getFullYear() ? hoje.getDate() : diasNoMes;
+  const diasRestantes = Math.max(1, diasNoMes - diaAtual + 1);
+  const saldoLivre = saldoDisponivel / diasRestantes;
 
   const categorias = calcularCategorias(ts, mes, ano, contasFixasConfig, perfil, salarioLeticia, salarioGiovanna);
 
