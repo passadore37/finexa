@@ -114,8 +114,6 @@ export function Dashboard() {
     : null;
 
   const receitas   = isPerfil ? perfilDados!.salario : indicadores.receitasMes;
-  const despesas   = isPerfil ? perfilDados!.parteFixas + perfilDados!.gastosVariaveis : indicadores.despesasMes;
-  const saldo      = receitas - despesas;
   const saldoLivre = isPerfil ? perfilDados!.saldoLivre : indicadores.metodologia.saldoLivre;
   const categorias = isPerfil ? perfilDados!.categorias : indicadores.despesasPorCategoria;
 
@@ -157,6 +155,10 @@ export function Dashboard() {
   const projecaoBar = isPerfil
     ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, parceladas)
     : calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, undefined, undefined, undefined, parceladas);
+
+  // Usa o gastoAtual da projeção como despesa principal
+  const despesas   = projecaoBar.gastoAtual;
+  const saldo      = receitas - despesas;
 
   const comprometimentoTotal = isPerfil
     ? parceladas.reduce((acc, p) => acc + p.comprometimentoFuturo, 0)
