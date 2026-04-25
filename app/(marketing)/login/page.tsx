@@ -6,13 +6,18 @@ import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 
-ver
-  const [email, setEmail]     = useState(params.get('email') || ''); // Inicializa com o e-mail da URL
+function LoginForm() {
+  const params    = useSearchParams();
+  const redirect  = params.get('redirect') || '/dashboard';
+  const confirmado = params.get('confirmado') === 'true';
+  const erroParam  = params.get('erro') || '';
+
+  const [email, setEmail]     = useState(params.get('email') || '');
   const [senha, setSenha]     = useState('');
   const [mostrar, setMostrar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro]       = useState('');
-  const [resetEnviado, setResetEnviado] = useState(false);
+  const [resetEnviado, setResetEnviado]   = useState(false);
   const [enviandoReset, setEnviandoReset] = useState(false);
 
   useEffect(() => {
