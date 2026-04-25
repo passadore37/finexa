@@ -1,18 +1,12 @@
-// lib/mailer.ts — substitui lib/resend.ts usando Nodemailer + Gmail
-import nodemailer from 'nodemailer';
+// lib/mailer.ts — Resend (substitui Nodemailer + Gmail)
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,   // passadoreleticia@gmail.com
-    pass: process.env.GMAIL_PASS,   // senha de app de 16 chars
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = `"Finexa" <${process.env.GMAIL_USER}>`;
+const FROM = 'Finexa <onboarding@resend.dev>';
 
 export async function enviarEmailBoasVindas(to: string, nome: string, confirmUrl: string) {
-  return transporter.sendMail({
+  return resend.emails.send({
     from: FROM, to,
     subject: 'Confirme seu email — Finexa',
     html: `
@@ -28,7 +22,7 @@ export async function enviarEmailBoasVindas(to: string, nome: string, confirmUrl
 }
 
 export async function enviarEmailSenha(to: string, nome: string, resetUrl: string) {
-  return transporter.sendMail({
+  return resend.emails.send({
     from: FROM, to,
     subject: 'Redefinir senha — Finexa',
     html: `
@@ -43,7 +37,7 @@ export async function enviarEmailSenha(to: string, nome: string, resetUrl: strin
 }
 
 export async function enviarEmailConvite(to: string, nomeFamilia: string, nomeQuemConvidou: string, conviteUrl: string) {
-  return transporter.sendMail({
+  return resend.emails.send({
     from: FROM, to,
     subject: `${nomeQuemConvidou} te convidou para o Finexa`,
     html: `
@@ -59,7 +53,7 @@ export async function enviarEmailConvite(to: string, nomeFamilia: string, nomeQu
 }
 
 export async function enviarEmailTrialExpirando(to: string, nome: string, diasRestantes: number, upgradeUrl: string) {
-  return transporter.sendMail({
+  return resend.emails.send({
     from: FROM, to,
     subject: `Seu trial expira em ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''} — Finexa`,
     html: `
@@ -80,7 +74,7 @@ export async function enviarEmailSemanal(to: string, nome: string, dados: {
   semana: string;
 }) {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-  return transporter.sendMail({
+  return resend.emails.send({
     from: FROM, to,
     subject: `Seu resumo da semana — Finexa 📊`,
     html: `
