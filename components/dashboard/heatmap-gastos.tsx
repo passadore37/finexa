@@ -33,9 +33,10 @@ export function HeatmapGastos({ transacoes, diaAtivo, onDiaSelect, mes, ano, cat
       futuro: (i + 1) > diaHoje, // marcador de dia futuro
     }));
 
-    // Filtrar apenas despesas deste mês
+    // Filtrar apenas despesas deste mês (excluindo contas fixas/recorrentes)
     const tsMes = transacoes.filter(t => {
       if (t.tipo !== 'despesa') return false;
+      if (t.recorrente) return false; // Excluir contas fixas (despesas recorrentes)
       if (categoriaFiltro && t.categoria !== categoriaFiltro) return false;
       const tDate = new Date(typeof t.data === 'string' && t.data.length === 10 ? t.data + 'T12:00:00' : t.data);
       return tDate.getMonth() === mesAlvo && tDate.getFullYear() === anoAlvo;
