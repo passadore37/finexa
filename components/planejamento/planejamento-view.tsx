@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Receipt, Wallet, PiggyBank, CalendarDays, Pencil, Check,
          X as XIcon, Info, Save, Loader2, RefreshCw, Sun, ArrowRight,
-         TrendingUp, Zap, Shield, Star } from 'lucide-react';
+         TrendingUp, Zap, Shield, Star, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { usePlano } from '@/hooks/use-plano';
@@ -478,6 +478,129 @@ export function PlanejamentoView() {
               <p className="text-[10px] text-muted-foreground mt-1">{diasNoMes} dias · casal</p>
             </div>
           </div>
+
+          {/* Status do Mês */}
+          {(() => {
+            const hoje = new Date();
+            const diaHojeAtual = mesGlobal === hoje.getMonth() && anoGlobal === hoje.getFullYear() ? hoje.getDate() : diasNoMes;
+            const diasRestantes = Math.max(0, diasNoMes - diaHojeAtual);
+            const diasPassados = diaHojeAtual;
+            
+            // Calcular gastos totais do mês até agora
+            const gastoTotalMesLet = transacoes
+              .filter((t: any) => !t.recorrente && new Date(t.data + 'T12:00:00').getDate() <= diaHojeAtual)
+              .reduce((acc: number, t: any) => {
+                const val = Number(t.valor);
+                const div = t.divisao || 'pessoal';
+                const perf = t.perfil || 'casal';
+                if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'leticia') ? val : 0);
+                if (div === '50/50') return acc + val / 2;
+                return acc + val * propLet;
+              }, 0);
+
+            const gastoTotalMesGio = transacoes
+              .filter((t: any) => !t.recorrente && new Date(t.data + 'T12:00:00').getDate() <= diaHojeAtual)
+              .reduce((acc: number, t: any) => {
+                const val = Number(t.valor);
+                const div = t.divisao || 'pessoal';
+                const perf = t.perfil || 'casal';
+                if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'giovanna') ? val : 0);
+                if (div === '50/50') return acc + val / 2;
+                return acc + val * propGio;
+              }, 0);
+
+            const gastoTotalMes = gastoTotalMesLet + gastoTotalMesGio;
+            const orcamentoDisponivel = disponivelTotal;
+            const disponivelRestante = orcamentoDisponivel - gastoTotalMes;
+            const pctUsado = orcamentoDisponivel > 0 ? Math.min((gastoTotalMes / orcamentoDisponivel) * 100, 100) : 0;
+            const pctDisponivel = 100 - pctUsado;
+
+            const statusCor = pctUsado > 80 ? '#E24B4A' : pctUsado > 60 ? '#EF9F27' : '#1D9E75';
+
+            return (
+              <Card className="border-border bg-gradient-to-br from-secondary to-card overflow-hidden">
+                <div className="h-1 w-full" style={{ background: statusCor }} />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold text-foreground">
+                    📊 Status do Mês
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Info rápida: 3 colunas */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2.5 rounded-xl border border-border/50 text-center">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Dia Atual</p>
+                      <p className="text-2xl font-black text-foreground">{diaHojeAtual}</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{diasRestantes}d restam</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl border border-border/50 text-center" style={{ borderColor: statusCor + '40', background: statusCor + '10' }}>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Consumido</p>
+                      <p className="text-2xl font-black" style={{ color: statusCor }}>{Math.round(pctUsado)}%</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{fmt(gastoTotalMes)}</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl border border-[#1D9E75]/30 bg-[#1D9E75]/10 text-center">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Disponível</p>
+                      <p className="text-2xl font-black text-[#1D9E75]">{Math.round(pctDisponivel)}%</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{fmt(Math.max(0, disponivelRestante))}</p>
+                    </div>
+                  </div>
+
+                  {/* Barra de progresso do mês */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">Progresso do mês</span>
+                      <span className="text-xs text-muted-foreground">{diaHojeAtual} de {diasNoMes} dias</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-border overflow-hidden">
+                      <div className="h-full rounded-full transition-all" 
+                        style={{ width: `${(diaHojeAtual / diasNoMes) * 100}%`, background: '#5330ff' }} />
+                    </div>
+                  </div>
+
+                  {/* Barra de consumo do orçamento */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">Consumo do orçamento</span>
+                      <span className="text-xs font-bold" style={{ color: statusCor }}>{fmt(gastoTotalMes)} / {fmt(orcamentoDisponivel)}</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-border overflow-hidden">
+                      <div className="h-full rounded-full transition-all"
+                        style={{ width: `${pctUsado}%`, background: statusCor }} />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-muted-foreground pt-0.5">
+                      <span>Gasto: {Math.round(pctUsado)}%</span>
+                      <span>Disponível: {Math.round(pctDisponivel)}%</span>
+                    </div>
+                  </div>
+
+                  {/* Alertas inteligentes */}
+                  {pctUsado > 80 && (
+                    <div className="p-2.5 rounded-lg border border-[#E24B4A]/30 bg-[#E24B4A]/10 flex gap-2">
+                      <AlertCircle className="h-4 w-4 text-[#E24B4A] flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-[#E24B4A]">Atenção: Orçamento alto</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Você consumiu {Math.round(pctUsado)}% do orçamento. Reste {diasRestantes} dias para não ultrapassar.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {pctUsado <= 60 && diasRestantes > 0 && (
+                    <div className="p-2.5 rounded-lg border border-[#1D9E75]/30 bg-[#1D9E75]/10 flex gap-2">
+                      <Zap className="h-4 w-4 text-[#1D9E75] flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-[#1D9E75]">Ótimo ritmo!</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Você tem R${(disponivelRestante / diasRestantes).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })} disponível por dia nos próximos {diasRestantes} dias.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
 
           {/* Saldo individual */}
           <div className="grid grid-cols-2 gap-3">
