@@ -56,7 +56,7 @@ export function KPICard({ titulo, valor, formato = 'moeda', variacao, icone: Ico
             >
               <Icone 
                 className="h-4 w-4 transition-transform group-hover:scale-110" 
-                fill={corBarra ? `${corBarra}33` : 'currentColor'} 
+                fill="none" 
               />
             </div>
           )}
