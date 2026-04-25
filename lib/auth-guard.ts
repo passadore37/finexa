@@ -10,6 +10,7 @@ export interface AuthResult {
 
 export async function authGuard(req: Request): Promise<AuthResult> {
   let allCookies: { name: string; value: string }[] = [];
+
   try {
     const { cookies } = await import('next/headers');
     const store = await cookies();
@@ -36,13 +37,9 @@ export async function authGuard(req: Request): Promise<AuthResult> {
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
 
   if (authError || !user) {
-    // Sem log — não expor mensagem de erro de autenticação
     return {
       user: null, family_id: null,
-      error: NextResponse.json(
-        { success: false, error: 'Não autorizado.' },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ success: false, error: 'Não autorizado.' }, { status: 401 }),
     };
   }
 
@@ -60,10 +57,7 @@ export async function authGuard(req: Request): Promise<AuthResult> {
   if (!perfil?.family_id) {
     return {
       user: null, family_id: null,
-      error: NextResponse.json(
-        { success: false, error: 'Perfil não encontrado.' },
-        { status: 403 }
-      ),
+      error: NextResponse.json({ success: false, error: 'Perfil não encontrado.' }, { status: 403 }),
     };
   }
 
