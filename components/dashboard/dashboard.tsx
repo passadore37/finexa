@@ -208,7 +208,7 @@ export function Dashboard() {
           <KPICard titulo="Saldo do Mês"   valor={saldo}      variacao={indicadores.variacaoSaldo}    icone={Wallet}      corIcone="text-primary"  corBarra="var(--indigo)" />
           <KPICard titulo="Receitas"        valor={receitas}   variacao={indicadores.variacaoReceitas} icone={TrendingUp}  corIcone="text-teal"     corBarra="var(--teal)" />
           <KPICard titulo="Despesas"        valor={despesas}   variacao={indicadores.variacaoDespesas} icone={TrendingDown} corIcone="text-magenta" corBarra="var(--magenta)" />
-          <KPICard titulo="Saldo Livre"     valor={saldoLivre} icone={PiggyBank} corIcone="text-primary" corBarra="var(--primary)" descricao={`Sem ${indicadores.metodologia.semanaAtual}/${indicadores.metodologia.semanas.length}`} />
+          <KPICard titulo="Saldo Livre"     valor={saldoLivre} icone={PiggyBank} corIcone="text-primary" corBarra="var(--primary)" descricao={`Sem ${indicadores.metodologia.semanaAtual}/${indicadores.metodologia.semanas.length} · Por dia`} />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
