@@ -13,6 +13,8 @@ export interface PlanoConfig {
   temGeral: boolean;
   temDivisao: boolean;
   temUpgrade: boolean;
+  ehCasal: boolean;
+  ehIndividual: boolean;
 }
 
 export function usePlano(): PlanoConfig {
@@ -55,5 +57,7 @@ export function usePlano(): PlanoConfig {
     temGeral:       plano === 'casal',
     temDivisao:     plano === 'casal',
     temUpgrade:     plano === 'individual',
+    ehCasal:        plano === 'casal',
+    ehIndividual:   plano === 'individual',
   };
 }

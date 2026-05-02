@@ -155,7 +155,7 @@ export default function OnboardingPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ perfil: 'leticia', limite: Number(limite.replace(/\D/g, '')) }),
+        body: JSON.stringify({ perfil: perfil?.role ?? 'membro0', limite: Number(limite.replace(/\D/g, '')) }),
       });
       setSalvando(false);
     }

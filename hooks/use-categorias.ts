@@ -37,7 +37,7 @@ export function useCategorias(perfilAtivo?: string) {
 
   // Categorias customizadas filtradas pelo perfil ativo
   // Se perfis=[] → visível para todos
-  // Se perfis=['leticia'] → só aparece para Letícia na aba lançar
+  // Se perfis=['membro0'] → só aparece para Membro 1 na aba lançar
   const categoriasCustomFiltradas = customizadas
     .filter(c => {
       if (!perfilAtivo || perfilAtivo === 'casal') return true; // casal vê tudo
