@@ -33,6 +33,7 @@ export default function OnboardingPage() {
   const [membros, setMembros]     = useState<MembroFamilia[]>([{ email: '', podeVerGeral: true, podeVerOutros: true }]);
   const [linksGerados, setLinksGerados] = useState<{email: string; url: string}[]>([]);
   const [privacidade, setPrivacidade] = useState('aberta');
+  const [limite, setLimite] = useState('');
 
   // Passo atual
   const [passo, setPasso] = useState(0);
@@ -50,10 +51,10 @@ export default function OnboardingPage() {
 
   // Passos por perfil
   const passos = {
-    individual: ['plano', 'perfil', 'fixas', 'pronto'],
-    casal:      ['plano', 'perfil', 'fixas', 'convite', 'pronto'],
-    familia:    ['plano', 'perfil', 'fixas', 'privacidade', 'convites', 'pronto'],
-    convidado:  ['perfil', 'pronto']
+    individual: ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'pronto'],
+    casal:      ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'convite', 'pronto'],
+    familia:    ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'privacidade', 'convites', 'pronto'],
+    convidado:  ['boasvindas', 'perfil', 'pronto']
   };
 
   const etapas = passos[isInvitee ? 'convidado' : plano];
@@ -148,6 +149,17 @@ export default function OnboardingPage() {
       if (links.length > 0) return;
     }
 
+    if (etapaAtual === 'limite' && limite) {
+      setSalvando(true);
+      await fetch('/api/limite', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ perfil: 'leticia', limite: Number(limite.replace(/\D/g, '')) }),
+      });
+      setSalvando(false);
+    }
+
     if (etapaAtual === 'pronto') {
       router.push('/dashboard');
       return;
@@ -194,7 +206,51 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── PASSO: PLANO ── */}
+        {/* ── PASSO: BOAS-VINDAS BETA ── */}
+        {etapaAtual === 'boasvindas' && (
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#5330ff] flex items-center justify-center mx-auto font-black text-white text-3xl">F</div>
+            <div>
+              <h2 className="text-2xl font-black text-foreground mb-2">Bem-vinda ao Finexa! 🎉</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Você foi selecionada para testar o <strong className="text-foreground">Finexa Beta</strong> — uma plataforma de controle financeiro inteligente para casais e indivíduos. Sem planilha. Sem complicação.
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 text-left space-y-2">
+              <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Use o app por alguns dias e nos conte o que funcionou, o que travou e o que poderia ser melhor. Seu feedback é essencial para melhorarmos.
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-[#ffa857]/8 border border-[#ffa857]/20 text-left space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-[#ffa857]">Contribuição voluntária</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Para ajudar a manter o app e financiar melhorias, aceitamos contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>.
+              </p>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <div className="text-2xl">📱</div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Chave Pix</p>
+                  <p className="text-sm font-black text-foreground select-all">11992456210</p>
+                </div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText('11992456210'); }}
+                  className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold bg-[#ffa857] text-black">
+                  Copiar
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground italic">Totalmente opcional — o acesso é gratuito durante o beta.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-[#01b695]/8 border border-[#01b695]/20 text-left space-y-2">
+              <p className="text-xs font-black uppercase tracking-widest text-[#01b695]">Encontrou um bug?</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Use o botão roxo flutuante no canto da tela para enviar feedback a qualquer momento. Todo relato nos ajuda!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── PASSO: PLANO ── */}}
         {etapaAtual === 'plano' && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-black text-foreground">Confirme seu plano</h2>
