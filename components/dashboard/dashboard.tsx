@@ -33,7 +33,7 @@ interface APIResponse {
   success: boolean;
   dados: DadosPlanilha;
   indicadores: IndicadoresFinanceiros;
-  limites: { leticia: number; giovanna: number };
+  limites: { membro0: number; membro1: number };
   error?: string;
 }
 
@@ -51,9 +51,9 @@ export function Dashboard() {
   const { membros } = useMembros();
   const [mostrarTutorial, setMostrarTutorial] = useState(false);
   // Mapeia role real → role lógico para os cálculos
-  const role0 = membros[0]?.role ?? 'leticia';
-  const role1 = membros[1]?.role ?? 'giovanna';
-  const roleLogico = (r: string) => r === role0 ? 'leticia' : r === role1 ? 'giovanna' : r;
+  const role0 = membros[0]?.role ?? 'membro0';
+  const role1 = membros[1]?.role ?? 'membro1';
+  const roleLogico = (r: string) => r === role0 ? 'membro0' : r === role1 ? 'membro1' : r;
   const { getCor } = useCategorias();
 
   // Mês visualizado — compartilhado globalmente via hook
@@ -122,14 +122,14 @@ export function Dashboard() {
     ? { cor: membroAtivo.cor, corSecundaria: membroAtivo.corSecundaria, corBg: membroAtivo.corBg, nome: membroAtivo.nome, emoji: '' }
     : (PERFIL_CONFIG[usuariaAtiva] ?? PERFIL_CONFIG['casal']);
   const perfilDados = isPerfil
-    ? indicadores[roleLogico(usuariaAtiva) === 'leticia' ? 'perfilLeticia' : 'perfilGiovanna']
+    ? indicadores[roleLogico(usuariaAtiva) === 'membro0' ? 'perfilMembro0' : 'perfilMembro1']
     : null;
 
   const receitas   = isPerfil ? perfilDados!.salario : indicadores.receitasMes;
   const saldoLivre = isPerfil ? perfilDados!.saldoLivre : indicadores.metodologia.saldoLivre;
   const categorias = isPerfil ? perfilDados!.categorias : indicadores.despesasPorCategoria;
 
-  const _salarios = { leticia: dados.salarioLeticia, giovanna: dados.salarioGiovanna };
+  const _salarios = { membro0: dados.salarioMembro0, membro1: dados.salarioMembro1 };
   const transacoesVisiveis: Transacao[] = isPerfil
     ? dados.transacoes.filter(t => {
         if (t.tipo === 'receita') return t.responsavel === roleLogico(usuariaAtiva) || t.responsavel === usuariaAtiva;
@@ -147,25 +147,25 @@ export function Dashboard() {
   });
 
   const limite = (usuariaAtiva === 'casal' || usuariaAtiva === 'geral')
-    ? limites.leticia + limites.giovanna
-    : (limites[roleLogico(usuariaAtiva) as 'leticia' | 'giovanna'] || 9000);
+    ? limites.membro0 + limites.membro1
+    : (limites[roleLogico(usuariaAtiva) as 'membro0' | 'membro1'] || 9000);
   const fixas   = isPerfil ? perfilDados!.parteFixas : indicadores.metodologia.contasFixas;
   const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(dados.transacoes, roleLogico(usuariaAtiva) as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, categoriaAtiva)
+    ? calcularEvolucaoMensal(dados.transacoes, roleLogico(usuariaAtiva) as 'membro0' | 'membro1', dados.salarioMembro0, dados.salarioMembro1, categoriaAtiva)
     : indicadores.evolucaoMensal;
 
   const parceladas = isPerfil
     ? calcularParceladas(
         dados.transacoes,
         new Date(mesSel.ano, mesSel.mes, 1),
-        usuariaAtiva as 'leticia' | 'giovanna',
-        dados.salarioLeticia,
-        dados.salarioGiovanna,
+        usuariaAtiva as 'membro0' | 'membro1',
+        dados.salarioMembro0,
+        dados.salarioMembro1,
       )
     : indicadores.parceladas;
 
   const projecaoBar = isPerfil
-    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'leticia' | 'giovanna', dados.salarioLeticia, dados.salarioGiovanna, parceladas)
+    ? calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, usuariaAtiva as 'membro0' | 'membro1', dados.salarioMembro0, dados.salarioMembro1, parceladas)
     : calcularProjecaoBar(transacoesMesAtual, mesSel.mes, mesSel.ano, limite, fixas, undefined, undefined, undefined, parceladas);
 
   // Usa o gastoAtual da projeção como despesa principal

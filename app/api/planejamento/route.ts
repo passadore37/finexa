@@ -25,16 +25,16 @@ export async function POST(req: Request) {
   if (error) return error;
   try {
     const body = await req.json();
-    const { salario_leticia, salario_giovanna, percentual_investimento, contas_fixas,
-            reserva_atual, meta_economia_leticia, meta_economia_giovanna, 
+    const { salario_membro0, salario_membro1, percentual_investimento, contas_fixas,
+            reserva_atual, meta_economia_membro0, meta_economia_membro1, 
             limite_gasto_mensal } = body;
     const { data: existing } = await getAdmin().from('planejamento')
       .select('id').eq('family_id', family_id).limit(1).single();
     const payload = {
-      salario_leticia, salario_giovanna, percentual_investimento, contas_fixas,
+      salario_membro0, salario_membro1, percentual_investimento, contas_fixas,
       reserva_atual: reserva_atual || 0,
-      meta_economia_leticia: meta_economia_leticia || 0,
-      meta_economia_giovanna: meta_economia_giovanna || 0,
+      meta_economia_membro0: meta_economia_membro0 || 0,
+      meta_economia_membro1: meta_economia_membro1 || 0,
       limite_gasto_mensal: limite_gasto_mensal || 9000,
       updated_at: new Date().toISOString(),
     };

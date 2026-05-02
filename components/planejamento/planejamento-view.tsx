@@ -45,8 +45,8 @@ export function PlanejamentoView() {
   const isGeral = usuariaAtiva === 'casal';
   const { membros } = useMembros();
   const [aba, setAba] = useState<Aba>('configurar');
-  const [salLet, setSalLet]     = useState(0);
-  const [salGio, setSalGio]     = useState(0);
+  const [salMembro0, setSalLet]     = useState(0);
+  const [salMembro1, setSalGio]     = useState(0);
   const [pctLet, setPctLet]     = useState(0); // investimento individual membro 1
   const [pctGio, setPctGio]     = useState(0); // investimento individual membro 2
   const [contasFixas, setContasFixas] = useState<ContaFixa[]>([]);
@@ -87,8 +87,8 @@ export function PlanejamentoView() {
   useEffect(() => {
     fetch('/api/planejamento').then(r => r.json()).then(res => {
       if (res.success && res.data) {
-        setSalLet(res.data.salario_leticia || 0);
-        setSalGio(res.data.salario_giovanna || 0);
+        setSalLet(res.data.salario_membro0 || 0);
+        setSalGio(res.data.salario_membro1 || 0);
         setPctLet(res.data.percentual_investimento ?? 0);
         setPctGio(res.data.percentual_investimento ?? 0);
         if (res.data.contas_fixas?.length > 0) setContasFixas(res.data.contas_fixas);
@@ -99,20 +99,20 @@ export function PlanejamentoView() {
   const mark = () => setAlterado(true);
 
   // ── Cálculos casal ──
-  const salTotal     = salLet + salGio;
+  const salTotal     = salMembro0 + salMembro1;
   const totalFixas   = contasFixas.reduce((a, c) => a + c.valor, 0);
-  const propLet      = salTotal > 0 ? (salLet > 0 ? salLet / salTotal : 0) : 0.5;
+  const propLet      = salTotal > 0 ? (salMembro0 > 0 ? salMembro0 / salTotal : 0) : 0.5;
   const propGio      = 1 - propLet;
 
   // ── Cálculos individuais ──
   const membrosBase = membros.length >= 2
     ? [
-        { perfil: membros[0].role, nome: membros[0].nome, cor: membros[0].cor, sal: salLet, pct: pctLet, setPct: setPctLet, prop: propLet },
-        { perfil: membros[1].role, nome: membros[1].nome, cor: membros[1].cor, sal: salGio, pct: pctGio, setPct: setPctGio, prop: propGio },
+        { perfil: membros[0].role, nome: membros[0].nome, cor: membros[0].cor, sal: salMembro0, pct: pctLet, setPct: setPctLet, prop: propLet },
+        { perfil: membros[1].role, nome: membros[1].nome, cor: membros[1].cor, sal: salMembro1, pct: pctGio, setPct: setPctGio, prop: propGio },
       ]
     : [
-        { perfil: 'membro1', nome: 'Membro 1', cor: '#82a1fd', sal: salLet, pct: pctLet, setPct: setPctLet, prop: propLet },
-        { perfil: 'membro2', nome: 'Membro 2', cor: '#ff64ca', sal: salGio, pct: pctGio, setPct: setPctGio, prop: propGio },
+        { perfil: 'membro1', nome: 'Membro 1', cor: '#82a1fd', sal: salMembro0, pct: pctLet, setPct: setPctLet, prop: propLet },
+        { perfil: 'membro2', nome: 'Membro 2', cor: '#ff64ca', sal: salMembro1, pct: pctGio, setPct: setPctGio, prop: propGio },
       ];
 
   const indiv = membrosBase.map(p => {
@@ -137,7 +137,7 @@ export function PlanejamentoView() {
     try {
       const res = await fetch('/api/planejamento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ salario_leticia: salLet, salario_giovanna: salGio,
+        body: JSON.stringify({ salario_membro0: salMembro0, salario_membro1: salMembro1,
           percentual_investimento: Math.round((pctLet + pctGio) / 2),
           contas_fixas: contasFixas }),
       });
@@ -232,8 +232,8 @@ export function PlanejamentoView() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { label: membros[0]?.nome ?? 'Membro 1', cor: membros[0]?.cor ?? '#82a1fd', val: salLet, set: (v: number) => { setSalLet(v); mark(); } },
-                  ...(!ehIndividual ? [{ label: membros[1]?.nome ?? 'Membro 2', cor: membros[1]?.cor ?? '#ff64ca', val: salGio, set: (v: number) => { setSalGio(v); mark(); } }] : []),
+                  { label: membros[0]?.nome ?? 'Membro 1', cor: membros[0]?.cor ?? '#82a1fd', val: salMembro0, set: (v: number) => { setSalLet(v); mark(); } },
+                  ...(!ehIndividual ? [{ label: membros[1]?.nome ?? 'Membro 2', cor: membros[1]?.cor ?? '#ff64ca', val: salMembro1, set: (v: number) => { setSalGio(v); mark(); } }] : []),
                 ].map(s => (
                   <div key={s.label}>
                     <label className="text-[10px] uppercase tracking-widest block mb-2 font-bold" style={{ color: s.cor }}>{s.label}</label>
@@ -493,7 +493,7 @@ export function PlanejamentoView() {
                 const val = Number(t.valor);
                 const div = t.divisao || 'pessoal';
                 const perf = t.perfil || 'casal';
-                if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'leticia') ? val : 0);
+                if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'membro0') ? val : 0);
                 if (div === '50/50') return acc + val / 2;
                 return acc + val * propLet;
               }, 0);
@@ -504,7 +504,7 @@ export function PlanejamentoView() {
                 const val = Number(t.valor);
                 const div = t.divisao || 'pessoal';
                 const perf = t.perfil || 'casal';
-                if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'giovanna') ? val : 0);
+                if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'membro1') ? val : 0);
                 if (div === '50/50') return acc + val / 2;
                 return acc + val * propGio;
               }, 0);
@@ -627,14 +627,14 @@ export function PlanejamentoView() {
             const primeiroDia = new Date(hoje2.getFullYear(), hoje2.getMonth(), 1).getDay();
 
             // Calcular gasto por dia por perfil usando regra de rateio
-            const salarios = { leticia: salLet, giovanna: salGio };
-            const gastoPorDia: Record<number, { leticia: number; giovanna: number; total: number }> = {};
+            const salarios = { membro0: salMembro0, membro1: salMembro1 };
+            const gastoPorDia: Record<number, { membro0: number; membro1: number; total: number }> = {};
 
             transacoes.forEach((t: any) => {
               if (t.recorrente) return; // fixas não contam no orçamento variável
               const d   = new Date(t.data + 'T12:00:00');
               const dia = d.getDate();
-              if (!gastoPorDia[dia]) gastoPorDia[dia] = { leticia: 0, giovanna: 0, total: 0 };
+              if (!gastoPorDia[dia]) gastoPorDia[dia] = { membro0: 0, membro1: 0, total: 0 };
 
               const val = Number(t.valor);
               const div = t.divisao || 'pessoal';
@@ -643,8 +643,8 @@ export function PlanejamentoView() {
               // Rateio por perfil
               let vLet = 0, vGio = 0;
               if (div === 'pessoal') {
-                if (perf === (membros[0]?.role ?? 'leticia'))  vLet = val;
-                else if (perf === (membros[1]?.role ?? 'giovanna')) vGio = val;
+                if (perf === (membros[0]?.role ?? 'membro0'))  vLet = val;
+                else if (perf === (membros[1]?.role ?? 'membro1')) vGio = val;
                 else { vLet = val * propLet; vGio = val * propGio; }
               } else if (div === '50/50') {
                 vLet = val / 2; vGio = val / 2;
@@ -659,8 +659,8 @@ export function PlanejamentoView() {
                   vLet = val * propLet; vGio = val * propGio;
                 }
               }
-              gastoPorDia[dia].leticia  += vLet;
-              gastoPorDia[dia].giovanna += vGio;
+              gastoPorDia[dia].membro0  += vLet;
+              gastoPorDia[dia].membro1 += vGio;
               gastoPorDia[dia].total    += val;
             });
 
@@ -692,8 +692,8 @@ export function PlanejamentoView() {
                     const isFuturo = dia > diaHoje;
                     const gastos   = gastoPorDia[dia];
                     const totalDia = gastos?.total ?? 0;
-                    const overLet  = gastos ? gastos.leticia  > indiv[0].porDia : false;
-                    const overGio  = gastos ? gastos.giovanna > indiv[1].porDia : false;
+                    const overLet  = gastos ? gastos.membro0  > indiv[0].porDia : false;
+                    const overGio  = gastos ? gastos.membro1 > indiv[1].porDia : false;
                     const overAny  = overLet || overGio;
                     const semana   = semanas.find(s => dia >= s.inicio && dia <= s.fim);
                     const semIdx   = semana ? semana.numero - 1 : 0;
@@ -709,7 +709,7 @@ export function PlanejamentoView() {
                       <div key={dia}
                         className="w-7 h-7 rounded-md flex flex-col items-center justify-center relative text-center"
                         style={{ background: bg, opacity: isFuturo ? 0.3 : 1 }}
-                        title={gastos ? `${membros[0]?.nome ?? 'M1'}: ${fmt(gastos.leticia)} | ${membros[1]?.nome ?? 'M2'}: ${fmt(gastos.giovanna)}` : ''}>
+                        title={gastos ? `${membros[0]?.nome ?? 'M1'}: ${fmt(gastos.membro0)} | ${membros[1]?.nome ?? 'M2'}: ${fmt(gastos.membro1)}` : ''}>
                         <span className="text-[9px] font-bold leading-none"
                           style={{ color: isHoje2 ? '#fff' : 'var(--foreground)' }}>
                           {dia}
@@ -718,9 +718,9 @@ export function PlanejamentoView() {
                         {!isFuturo && gastos && (
                           <div className="flex gap-[2px] mt-[2px]">
                             <div className="w-[4px] h-[4px] rounded-full"
-                              style={{ background: overLet ? '#E24B4A' : '#82a1fd', opacity: gastos.leticia > 0 ? 1 : 0.2 }} />
+                              style={{ background: overLet ? '#E24B4A' : '#82a1fd', opacity: gastos.membro0 > 0 ? 1 : 0.2 }} />
                             <div className="w-[4px] h-[4px] rounded-full"
-                              style={{ background: overGio ? '#E24B4A' : '#ff64ca', opacity: gastos.giovanna > 0 ? 1 : 0.2 }} />
+                              style={{ background: overGio ? '#E24B4A' : '#ff64ca', opacity: gastos.membro1 > 0 ? 1 : 0.2 }} />
                           </div>
                         )}
                         {isHoje2 && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#4ADE80]" />}
@@ -772,7 +772,7 @@ export function PlanejamentoView() {
                   const val = Number(t.valor);
                   const div = t.divisao || 'pessoal';
                   const perf = t.perfil || 'casal';
-                  if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'leticia') ? val : 0);
+                  if (div === 'pessoal') return acc + (perf === (membros[0]?.role ?? 'membro0') ? val : 0);
                   if (div === '50/50') return acc + val / 2;
                   return acc + val * propLet;
                 }, 0);
@@ -787,7 +787,7 @@ export function PlanejamentoView() {
                   const val = Number(t.valor);
                   const div = t.divisao || 'pessoal';
                   const perf = t.perfil || 'casal';
-                  if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'giovanna') ? val : 0);
+                  if (div === 'pessoal') return acc + (perf === (membros[1]?.role ?? 'membro1') ? val : 0);
                   if (div === '50/50') return acc + val / 2;
                   return acc + val * propGio;
                 }, 0);

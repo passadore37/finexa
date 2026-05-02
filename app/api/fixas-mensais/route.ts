@@ -42,10 +42,10 @@ export async function POST(req: Request) {
     for (const planejamento of planejamentos) {
       if (!planejamento?.contas_fixas?.length) continue;
 
-      const salLet = Number(planejamento.salario_leticia || 0);
-      const salGio = Number(planejamento.salario_giovanna || 0);
-      const total = salLet + salGio;
-      const propLet = total > 0 ? Math.round((salLet / total) * 100) : 50;
+      const salMembro0 = Number(planejamento.salario_membro0 || 0);
+      const salMembro1 = Number(planejamento.salario_membro1 || 0);
+      const total = salMembro0 + salMembro1;
+      const propLet = total > 0 ? Math.round((salMembro0 / total) * 100) : 50;
       const divisaoReal = `${propLet}/${100 - propLet}`;
 
       const { data: existentes } = await supabaseAdmin.from('transacoes').select('descricao')

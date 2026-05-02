@@ -11,8 +11,8 @@ export const CORES_PERFIL = [
 export const PERFIL_CONFIG: Record<string, {
   cor: string; corSecundaria: string; corBg: string; nome: string; emoji: string;
 }> = {
-  leticia:  { cor: '#82a1fd', corSecundaria: '#5330ff', corBg: 'rgba(130,161,253,0.1)', nome: 'Letícia',  emoji: '' },
-  giovanna: { cor: '#ff64ca', corSecundaria: '#de7ed1', corBg: 'rgba(255,100,202,0.1)', nome: 'Giovanna', emoji: '' },
+  membro0:  { cor: '#82a1fd', corSecundaria: '#5330ff', corBg: 'rgba(130,161,253,0.1)', nome: 'Membro 1',  emoji: '' },
+  membro1: { cor: '#ff64ca', corSecundaria: '#de7ed1', corBg: 'rgba(255,100,202,0.1)', nome: 'Membro 2', emoji: '' },
   casal:    { cor: '#ffa857', corSecundaria: '#e08020', corBg: 'rgba(255,168,87,0.1)',  nome: 'Geral',    emoji: '' },
   membro:   { cor: '#82a1fd', corSecundaria: '#5330ff', corBg: 'rgba(130,161,253,0.1)', nome: 'Eu',       emoji: '' },
   geral:    { cor: '#ffa857', corSecundaria: '#e08020', corBg: 'rgba(255,168,87,0.1)',  nome: 'Geral',    emoji: '' },
@@ -34,17 +34,17 @@ export function calcularProporcoes(salarios: Record<string, number>): Record<str
   return Object.fromEntries(Object.entries(salarios).map(([k, v]) => [k, v / total]));
 }
 
-export function calcularProporcoesSimples(salarioLeticia: number, salarioGiovanna: number) {
-  const props = calcularProporcoes({ leticia: salarioLeticia, giovanna: salarioGiovanna });
-  return { leticia: props.leticia ?? 0.5, giovanna: props.giovanna ?? 0.5 };
+export function calcularProporcoesSimples(salarioMembro0: number, salarioMembro1: number) {
+  const props = calcularProporcoes({ membro0: salarioMembro0, membro1: salarioMembro1 });
+  return { membro0: props.membro0 ?? 0.5, membro1: props.membro1 ?? 0.5 };
 }
 
-export function calcularParteFixa(valorTotal: number, perfil: string, salarioLeticia: number, salarioGiovanna: number): number {
-  const props = calcularProporcoesSimples(salarioLeticia, salarioGiovanna);
-  return valorTotal * (props[perfil as 'leticia' | 'giovanna'] ?? 0);
+export function calcularParteFixa(valorTotal: number, perfil: string, salarioMembro0: number, salarioMembro1: number): number {
+  const props = calcularProporcoesSimples(salarioMembro0, salarioMembro1);
+  return valorTotal * (props[perfil as 'membro0' | 'membro1'] ?? 0);
 }
 
-export function parseDivisao(divisao: string | undefined, perfil: string, membros: string[] = ['leticia', 'giovanna']): number | null {
+export function parseDivisao(divisao: string | undefined, perfil: string, membros: string[] = ['membro0', 'membro1']): number | null {
   if (!divisao || divisao === 'pessoal') return null;
   if (divisao === '50/50') return 0.5;
   const partes = divisao.split('/').map(Number);

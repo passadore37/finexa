@@ -45,8 +45,8 @@ interface Reserva {
 }
 
 interface Planejamento {
-  salario_leticia: number;
-  salario_giovanna: number;
+  salario_membro0: number;
+  salario_membro1: number;
   contas_fixas: Array<{ descricao: string; valor: number; categoria: string }>;
 }
 
@@ -366,7 +366,7 @@ function CardMeta({ meta, aportes, perfilAtivo, onAporte, onConcluir, onDeletar 
 export function MetasView() {
   const { perfil: perfilAuth } = useAuth();
   const plano = perfilAuth?.plano ?? 'casal';
-  const perfilAtivo = perfilAuth?.role ?? 'leticia';
+  const perfilAtivo = perfilAuth?.role ?? 'membro0';
 
   const [metas, setMetas] = useState<Meta[]>([]);
   const [aportes, setAportes] = useState<Aporte[]>([]);
@@ -418,24 +418,24 @@ export function MetasView() {
     return doPlano > 0 ? doPlano : totalFixasRecorrentes;
   }, [planejamento, totalFixasRecorrentes]);
 
-  const salLeticia  = planejamento?.salario_leticia  || 0;
-  const salGiovanna = planejamento?.salario_giovanna || 0;
-  const salTotal = salLeticia + salGiovanna;
+  const salMembro0icia  = planejamento?.salario_membro0  || 0;
+  const salMembro1vanna = planejamento?.salario_membro1 || 0;
+  const salTotal = salMembro0icia + salMembro1vanna;
 
   // Proporção real por salário — salário 0 = não participa
   // Fallback 50/50 apenas se AMBOS forem zero
-  const propLet = salTotal > 0 ? (salLeticia > 0 ? salLeticia / salTotal : 0) : 0.5;
-  const propGio = salTotal > 0 ? (salGiovanna > 0 ? salGiovanna / salTotal : 0) : 0.5;
+  const propLet = salTotal > 0 ? (salMembro0icia > 0 ? salMembro0icia / salTotal : 0) : 0.5;
+  const propGio = salTotal > 0 ? (salMembro1vanna > 0 ? salMembro1vanna / salTotal : 0) : 0.5;
 
-  const fixasLeticia  = totalFixasConjunto * propLet;
-  const fixasGiovanna = totalFixasConjunto * propGio;
+  const fixasMembro0  = totalFixasConjunto * propLet;
+  const fixasMembro 2 = totalFixasConjunto * propGio;
 
   // Perfis a mostrar na reserva
   const perfisReserva = plano === 'individual'
     ? [{ perfil: perfilAtivo, nome: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.nome ?? perfilAtivo, cor: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.cor ?? '#5330ff', fixas: totalFixasConjunto }]
     : [
-        { perfil: 'leticia',  nome: `Letícia (${Math.round(propLet * 100)}%)`,  cor: '#82a1fd', fixas: fixasLeticia },
-        { perfil: 'giovanna', nome: `Giovanna (${Math.round(propGio * 100)}%)`, cor: '#ff64ca', fixas: fixasGiovanna },
+        { perfil: 'membro0',  nome: `Membro 1 (${Math.round(propLet * 100)}%)`,  cor: '#82a1fd', fixas: fixasMembro0 },
+        { perfil: 'membro1', nome: `Membro 2 (${Math.round(propGio * 100)}%)`, cor: '#ff64ca', fixas: fixasMembro 2 },
         { perfil: 'casal',    nome: 'Conjunta (total)', cor: '#ffa857', fixas: totalFixasConjunto },
       ];
 

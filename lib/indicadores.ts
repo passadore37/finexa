@@ -24,21 +24,21 @@ function calcularTotais(ts: Transacao[]) {
   );
 }
 
-function salariosDoPerfil(salarioLeticia: number, salarioGiovanna: number) {
-  return { leticia: salarioLeticia, giovanna: salarioGiovanna };
+function salariosDoPerfil(salarioMembro0: number, salarioMembro1: number) {
+  return { membro0: salarioMembro0, membro1: salarioMembro1 };
 }
 
 // ─── Evolução Mensal ─────────────────────────────────────────────────────────
 
 export function calcularEvolucaoMensal(
   ts: Transacao[],
-  perfil?: 'leticia' | 'giovanna',
-  salarioLeticia = 0,
-  salarioGiovanna = 0,
+  perfil?: 'membro0' | 'membro1',
+  salarioMembro0 = 0,
+  salarioMembro1 = 0,
   categoriaFiltro?: string | null,
 ): EvolucaoMensal[] {
   const hoje = new Date();
-  const salarios = { leticia: salarioLeticia, giovanna: salarioGiovanna };
+  const salarios = { membro0: salarioMembro0, membro1: salarioMembro1 };
 
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
@@ -82,11 +82,11 @@ function calcularCategorias(
   mes: number,
   ano: number,
   contasFixasConfig: Array<{ valor: number; categoria: string; descricao: string }>,
-  perfil?: 'leticia' | 'giovanna',
-  salarioLeticia = 0,
-  salarioGiovanna = 0,
+  perfil?: 'membro0' | 'membro1',
+  salarioMembro0 = 0,
+  salarioMembro1 = 0,
 ): DespesaPorCategoria[] {
-  const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
+  const salarios = salariosDoPerfil(salarioMembro0, salarioMembro1);
   const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa' && t.categoria !== 'Salário' && !t.recorrente);
 
   const porCat: Record<string, number> = {};
@@ -116,7 +116,7 @@ function calcularCategorias(
   // Adicionar fixas do planejamento (apenas se não vieram como transações reais)
   if (contasFixasConfig.length > 0) {
     const fixasValor = perfil
-      ? contasFixasConfig.reduce((acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna), 0)
+      ? contasFixasConfig.reduce((acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioMembro0, salarioMembro1), 0)
       : contasFixasConfig.reduce((acc, c) => acc + c.valor, 0);
 
     if (fixasValor > 0) {
@@ -132,27 +132,27 @@ function calcularCategorias(
 
 export function calcularDespesasPorCategoriaPerfil(
   ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salarioLeticia: number,
-  salarioGiovanna: number,
+  perfil: 'membro0' | 'membro1',
+  salarioMembro0: number,
+  salarioMembro1: number,
   contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
   mes?: number,
   ano?: number,
 ): DespesaPorCategoria[] {
   const hoje = new Date();
-  return calcularCategorias(ts, mes ?? hoje.getMonth(), ano ?? hoje.getFullYear(), contasFixasConfig, perfil, salarioLeticia, salarioGiovanna);
+  return calcularCategorias(ts, mes ?? hoje.getMonth(), ano ?? hoje.getFullYear(), contasFixasConfig, perfil, salarioMembro0, salarioMembro1);
 }
 
 export function calcularDespesasPorCategoriaPerfilMes(
   ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
-  salarioLeticia: number,
-  salarioGiovanna: number,
+  perfil: 'membro0' | 'membro1',
+  salarioMembro0: number,
+  salarioMembro1: number,
   contasFixasConfig: Array<{ descricao: string; valor: number; categoria: string }>,
   mes: number,
   ano: number,
 ): DespesaPorCategoria[] {
-  return calcularCategorias(ts, mes, ano, contasFixasConfig, perfil, salarioLeticia, salarioGiovanna);
+  return calcularCategorias(ts, mes, ano, contasFixasConfig, perfil, salarioMembro0, salarioMembro1);
 }
 
 // ─── Parceladas ──────────────────────────────────────────────────────────────
@@ -160,11 +160,11 @@ export function calcularDespesasPorCategoriaPerfilMes(
 export function calcularParceladas(
   ts: Transacao[],
   mesAtual: Date,
-  perfil?: 'leticia' | 'giovanna',
-  salarioLeticia = 0,
-  salarioGiovanna = 0,
+  perfil?: 'membro0' | 'membro1',
+  salarioMembro0 = 0,
+  salarioMembro1 = 0,
 ): Parcelada[] {
-  const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
+  const salarios = salariosDoPerfil(salarioMembro0, salarioMembro1);
 
   return ts
     .filter(t => t.tipo === 'despesa' && t.totalParcelas && t.totalParcelas > 1)
@@ -209,12 +209,12 @@ export function calcularProjecaoBar(
   ano: number,
   limite: number,
   fixas = 0,
-  perfil?: 'leticia' | 'giovanna',
-  salarioLeticia = 0,
-  salarioGiovanna = 0,
+  perfil?: 'membro0' | 'membro1',
+  salarioMembro0 = 0,
+  salarioMembro1 = 0,
   parceladasAtivas?: Parcelada[]
 ): DadosProjecaoBar {
-  const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
+  const salarios = salariosDoPerfil(salarioMembro0, salarioMembro1);
   const hoje = new Date();
   const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa' && !t.recorrente);
 
@@ -392,23 +392,23 @@ export function gerarSugestoes(
 
 function calcularIndicadoresPerfil(
   ts: Transacao[],
-  perfil: 'leticia' | 'giovanna',
+  perfil: 'membro0' | 'membro1',
   salario: number,
-  salarioLeticia: number,
-  salarioGiovanna: number,
+  salarioMembro0: number,
+  salarioMembro1: number,
   contasFixasConfig: Array<{ valor: number; categoria: string; descricao: string }>,
   parceladas: Parcelada[],
   percentualInvestimento: number,
   mes: number,
   ano: number,
 ): IndicadoresPerfil {
-  const salarios = salariosDoPerfil(salarioLeticia, salarioGiovanna);
+  const salarios = salariosDoPerfil(salarioMembro0, salarioMembro1);
   const proporcaoRenda = salarios[perfil] ?? 0.5;
 
   const tsMes = filtrarPorMes(ts, mes, ano).filter(t => t.tipo === 'despesa');
 
   const parteFixas = contasFixasConfig.reduce(
-    (acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioLeticia, salarioGiovanna), 0
+    (acc, c) => acc + calcularParteFixa(c.valor, perfil, salarioMembro0, salarioMembro1), 0
   );
 
   const gastosVariaveis = tsMes
@@ -431,7 +431,7 @@ function calcularIndicadoresPerfil(
   const diasRestantes = Math.max(1, diasNoMes - diaAtual + 1);
   const saldoLivre = saldoDisponivel / diasRestantes;
 
-  const categorias = calcularCategorias(ts, mes, ano, contasFixasConfig, perfil, salarioLeticia, salarioGiovanna);
+  const categorias = calcularCategorias(ts, mes, ano, contasFixasConfig, perfil, salarioMembro0, salarioMembro1);
 
   return {
     salario,
@@ -451,7 +451,7 @@ function calcularIndicadoresPerfil(
 export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinanceiros {
   const {
     transacoes, limiteMensal, metaEmergencia, percentualInvestimento,
-    contasFixasConfig, salarioLeticia, salarioGiovanna, mesAlvo, anoAlvo,
+    contasFixasConfig, salarioMembro0, salarioMembro1, mesAlvo, anoAlvo,
   } = dados;
 
   const hoje = new Date();
@@ -484,12 +484,12 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
   const contasFixasTotal = contasFixasConfig.reduce((acc, c) => acc + Number(c.valor), 0);
   const projecaoBar = calcularProjecaoBar(transacoes, mes, ano, limiteMensal, contasFixasTotal, undefined, 0, 0, parceladas);
 
-  const perfilLeticia = calcularIndicadoresPerfil(
-    transacoes, 'leticia', salarioLeticia, salarioLeticia, salarioGiovanna,
+  const perfilMembro0 = calcularIndicadoresPerfil(
+    transacoes, 'membro0', salarioMembro0, salarioMembro0, salarioMembro1,
     contasFixasConfig, parceladas, percentualInvestimento, mes, ano,
   );
-  const perfilGiovanna = calcularIndicadoresPerfil(
-    transacoes, 'giovanna', salarioGiovanna, salarioLeticia, salarioGiovanna,
+  const perfilMembro1 = calcularIndicadoresPerfil(
+    transacoes, 'membro1', salarioMembro1, salarioMembro0, salarioMembro1,
     contasFixasConfig, parceladas, percentualInvestimento, mes, ano,
   );
 
@@ -512,7 +512,7 @@ export function calcularTodosIndicadores(dados: DadosPlanilha): IndicadoresFinan
     comprometimentoTotal,
     alertas,
     sugestoes,
-    perfilLeticia,
-    perfilGiovanna,
+    perfilMembro0,
+    perfilMembro1,
   };
 }

@@ -36,8 +36,8 @@ export interface DadosPlanilha {
   limiteMensal: number;
   metaEmergencia: number;
   orcamentoCategoria: Record<string, number>;
-  salarioLeticia: number;
-  salarioGiovanna: number;
+  salarioMembro0: number;
+  salarioMembro1: number;
   percentualInvestimento: number;
   contasFixasConfig: ContaFixaConfig[];
   mesAlvo?: number;   // mês sendo visualizado (0-11)
@@ -188,7 +188,7 @@ export interface MetodologiaOrcamento {
 
 // Indicadores personalizados por perfil
 export interface IndicadoresPerfil {
-  perfil: 'leticia' | 'giovanna';
+  perfil: 'membro0' | 'membro1';
   salario: number;
   proporcaoRenda: number; // % do salário total
   parteFixas: number;     // parte proporcional das fixas
@@ -222,6 +222,6 @@ export interface IndicadoresFinanceiros {
   alertas: Alerta[];
   sugestoes: Sugestao[];
   // Indicadores por perfil
-  perfilLeticia: IndicadoresPerfil;
-  perfilGiovanna: IndicadoresPerfil;
+  perfilMembro0: IndicadoresPerfil;
+  perfilMembro1: IndicadoresPerfil;
 }

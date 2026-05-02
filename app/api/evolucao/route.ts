@@ -13,11 +13,11 @@ export async function GET(req: Request) {
     );
 
     const { data: pl } = await adminClient.from('planejamento')
-      .select('salario_leticia, salario_giovanna')
+      .select('salario_membro0, salario_membro1')
       .eq('family_id', family_id)
       .order('updated_at', { ascending: false }).limit(1).single();
 
-    const salarioTotal = Number(pl?.salario_leticia || 0) + Number(pl?.salario_giovanna || 0);
+    const salarioTotal = Number(pl?.salario_membro0 || 0) + Number(pl?.salario_membro1 || 0);
 
     const { searchParams } = new URL(req.url);
     const categoriaFiltro = searchParams.get('categoria');

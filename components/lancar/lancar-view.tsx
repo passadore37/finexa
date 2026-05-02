@@ -24,12 +24,12 @@ export function LancarView() {
   const MEMBROS_CASAL = membros.length >= 2
     ? membros.map(m => ({ id: m.role, nome: m.nome, cor: m.cor }))
     : [
-        { id: 'leticia',  nome: 'Membro 1', cor: '#82a1fd' },
-        { id: 'giovanna', nome: 'Membro 2', cor: '#ff64ca' },
+        { id: 'membro0',  nome: 'Membro 1', cor: '#82a1fd' },
+        { id: 'membro1', nome: 'Membro 2', cor: '#ff64ca' },
       ];
 
-  const role0 = membros[0]?.role ?? 'leticia';
-  const role1 = membros[1]?.role ?? 'giovanna';
+  const role0 = membros[0]?.role ?? 'membro0';
+  const role1 = membros[1]?.role ?? 'membro1';
 
   // perfilConfig com cor real do membro ativo
   const membroAtivo = membros.find(m => m.role === usuariaAtiva);
@@ -52,7 +52,7 @@ export function LancarView() {
   const [mostrarAvancado, setMostrarAvancado] = useState(false);
   const [modoDivisao, setModoDivisao] = useState<ModoDivisao>(ehIndividual ? 'pessoal' : '5050');
   const [membrosSelecionados, setMembrosSelecionados] = useState<string[]>(MEMBROS_CASAL.map(m => m.id));
-  const [responsavel, setResponsavel] = useState<string>(usuariaAtiva === 'casal' ? 'leticia' : usuariaAtiva);
+  const [responsavel, setResponsavel] = useState<string>(usuariaAtiva === 'casal' ? 'membro0' : usuariaAtiva);
 
   useEffect(() => {
     setModoDivisao(ehIndividual ? 'pessoal' : '5050');
@@ -60,8 +60,8 @@ export function LancarView() {
 
   function normalizarRole(role: string): string {
     if (role === 'casal' || role === 'geral') return 'casal';
-    if (role === role0) return 'leticia';
-    if (role === role1) return 'giovanna';
+    if (role === role0) return 'membro0';
+    if (role === role1) return 'membro1';
     return role;
   }
 

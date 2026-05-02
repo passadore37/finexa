@@ -104,15 +104,15 @@ export async function POST(req: Request) {
     const payload: any = { updated_at: new Date().toISOString() };
 
     if (is_master) {
-      if (salario !== undefined)         payload.salario_leticia  = salario;
-      if (salario_parceiro !== undefined) payload.salario_giovanna = salario_parceiro;
+      if (salario !== undefined)         payload.salario_membro0  = salario;
+      if (salario_parceiro !== undefined) payload.salario_membro1 = salario_parceiro;
       if (contas_fixas !== undefined)     payload.contas_fixas = contas_fixas;
       if (limite_gasto_mensal !== undefined) payload.limite_gasto_mensal = limite_gasto_mensal;
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
       payload.percentual_investimento = 0;
     } else {
-      // Convidado: seu salário entra como salario_giovanna para divisão proporcional
-      if (salario !== undefined) payload.salario_giovanna = salario;
+      // Convidado: seu salário entra como salario_membro1 para divisão proporcional
+      if (salario !== undefined) payload.salario_membro1 = salario;
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
     }
 
@@ -123,8 +123,8 @@ export async function POST(req: Request) {
     } else {
       // Garantir campos mínimos para não criar linha incompleta
       await admin.from('planejamento').insert({
-        salario_leticia: 0,
-        salario_giovanna: 0,
+        salario_membro0: 0,
+        salario_membro1: 0,
         percentual_investimento: 0,
         contas_fixas: [],
         limite_gasto_mensal: 9000,

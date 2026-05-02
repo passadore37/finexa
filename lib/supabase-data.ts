@@ -50,33 +50,33 @@ export async function fetchDadosPlanilha(
       .order('criado_em', { ascending: true }),
   ]);
 
-  // Mapear perfis reais — membro[0] = 'leticia' lógico, membro[1] = 'giovanna' lógico
+  // Mapear perfis reais — membro[0] = 'membro0' lógico, membro[1] = 'membro1' lógico
   const perfisReais = resPerfis.data || [];
   const roleMap: Record<string, string> = {};
   perfisReais.forEach((p, i) => {
     // Mapeia o role real para o role lógico usado nos cálculos
-    if (p.role === 'leticia' || p.role === 'giovanna') {
+    if (p.role === 'membro0' || p.role === 'membro1') {
       roleMap[p.role] = p.role; // manter compatibilidade
     } else {
-      // Novos usuários: membro[0] vira 'leticia', membro[1] vira 'giovanna'
-      roleMap[p.role] = i === 0 ? 'leticia' : 'giovanna';
+      // Novos usuários: membro[0] vira 'membro0', membro[1] vira 'membro1'
+      roleMap[p.role] = i === 0 ? 'membro0' : 'membro1';
     }
-    roleMap[p.id] = i === 0 ? 'leticia' : 'giovanna';
+    roleMap[p.id] = i === 0 ? 'membro0' : 'membro1';
   });
 
   if (resMes.error) throw new Error(`Erro transacoes: ${resMes.error.message}`);
 
   const pl = resPl.data;
 
-  const salarioLeticia  = primeiroValido(pl?.salario_leticia, process.env.SALARIO_LETICIA);
-  const salarioGiovanna = primeiroValido(pl?.salario_giovanna, process.env.SALARIO_GIOVANNA);
+  const salarioMembro0  = primeiroValido(pl?.salario_membro0, process.env.SALARIO_MEMBRO0);
+  const salarioMembro1 = primeiroValido(pl?.salario_membro1, process.env.SALARIO_MEMBRO1);
   const percentualInvestimento = primeiroValido(pl?.percentual_investimento, 0);
   const limiteMensal    = primeiroValido(pl?.limite_gasto_mensal, pl?.limite, 9000);
   const contasFixasConfig: ContaFixaConfig[] = Array.isArray(pl?.contas_fixas) ? pl.contas_fixas : [];
 
   function mapRows(rows: any[]): Transacao[] {
     return rows.map(row => {
-      // Normalizar o responsavel para role lógico (leticia/giovanna)
+      // Normalizar o responsavel para role lógico (membro0/membro1)
       const responsavelOriginal = row.perfil || row.responsavel || undefined;
       const responsavelNormalizado = responsavelOriginal
         ? (roleMap[responsavelOriginal] ?? responsavelOriginal)
@@ -106,15 +106,15 @@ export async function fetchDadosPlanilha(
   const nomeMembro0 = perfisReais[0]?.nome ?? 'Membro 1';
   const nomeMembro1 = perfisReais[1]?.nome ?? 'Membro 2';
   if (rowsMes.length > 0) {
-    if (salarioLeticia > 0) transacoes.push({ id: `sal-let-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioLeticia, responsavel: 'leticia', recorrente: true });
-    if (salarioGiovanna > 0) transacoes.push({ id: `sal-gio-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioGiovanna, responsavel: 'giovanna', recorrente: true });
+    if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
+    if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
   }
   if (rowsAnt.length > 0) {
-    if (salarioLeticia > 0) transacoes.push({ id: `sal-let-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioLeticia, responsavel: 'leticia', recorrente: true });
-    if (salarioGiovanna > 0) transacoes.push({ id: `sal-gio-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioGiovanna, responsavel: 'giovanna', recorrente: true });
+    if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
+    if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
   }
 
-  return { transacoes, limiteMensal, metaEmergencia: primeiroValido(process.env.META_EMERGENCIA, 30000), orcamentoCategoria: {}, salarioLeticia, salarioGiovanna, percentualInvestimento, contasFixasConfig, mesAlvo, anoAlvo };
+  return { transacoes, limiteMensal, metaEmergencia: primeiroValido(process.env.META_EMERGENCIA, 30000), orcamentoCategoria: {}, salarioMembro0, salarioMembro1, percentualInvestimento, contasFixasConfig, mesAlvo, anoAlvo };
 }
 
 export function gerarDadosDemo(): DadosPlanilha {
@@ -123,15 +123,15 @@ export function gerarDadosDemo(): DadosPlanilha {
   const ant = new Date(ano, mes - 1, 10, 12);
   return {
     transacoes: [
-      { id: 'sal-let', data: new Date(ano,mes,1,12), descricao: 'Salário Letícia', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'leticia', recorrente: true },
-      { id: 'sal-gio', data: new Date(ano,mes,1,12), descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
+      { id: 'sal-let', data: new Date(ano,mes,1,12), descricao: 'Salário Membro 1', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'membro0', recorrente: true },
+      { id: 'sal-gio', data: new Date(ano,mes,1,12), descricao: 'Salário Membro 2', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'membro1', recorrente: true },
       { id: 'aluguel', data: new Date(ano,mes,5,12), descricao: 'Aluguel', categoria: 'Moradia', tipo: 'despesa', valor: 2200, recorrente: true },
       { id: 'alim', data: new Date(ano,mes,8,12), descricao: 'Supermercado', categoria: 'Alimentação', tipo: 'despesa', valor: 1050, responsavel: 'casal', divisao: '50/50' },
       { id: 'sofa', data: new Date(ano,mes,15,12), descricao: 'Sofá', categoria: 'Casa', tipo: 'despesa', valor: 350, parcelaAtual: 3, totalParcelas: 10 },
-      { id: 'ant-sal-let', data: ant, descricao: 'Salário Letícia', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'leticia', recorrente: true },
-      { id: 'ant-sal-gio', data: ant, descricao: 'Salário Giovanna', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'giovanna', recorrente: true },
+      { id: 'ant-sal-m0', data: ant, descricao: 'Salário Membro 1', categoria: 'Salário', tipo: 'receita', valor: 8500, responsavel: 'membro0', recorrente: true },
+      { id: 'ant-sal-m1', data: ant, descricao: 'Salário Membro 2', categoria: 'Salário', tipo: 'receita', valor: 6500, responsavel: 'membro1', recorrente: true },
       { id: 'ant-alim', data: ant, descricao: 'Alimentação', categoria: 'Alimentação', tipo: 'despesa', valor: 920, responsavel: 'casal', divisao: '50/50' },
     ],
-    limiteMensal: 9000, metaEmergencia: 30000, orcamentoCategoria: {}, salarioLeticia: 8500, salarioGiovanna: 6500, percentualInvestimento: 0, contasFixasConfig: [], mesAlvo: mes, anoAlvo: ano,
+    limiteMensal: 9000, metaEmergencia: 30000, orcamentoCategoria: {}, salarioMembro0: 8500, salarioMembro1: 6500, percentualInvestimento: 0, contasFixasConfig: [], mesAlvo: mes, anoAlvo: ano,
   };
 }

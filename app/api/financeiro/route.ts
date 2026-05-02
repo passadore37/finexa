@@ -28,12 +28,12 @@ export async function GET(req: Request) {
     ]);
 
     // Mapear roles reais para roles lógicos
-    const p0role = perfisData?.[0]?.role ?? 'leticia';
-    const p1role = perfisData?.[1]?.role ?? 'giovanna';
+    const p0role = perfisData?.[0]?.role ?? 'membro0';
+    const p1role = perfisData?.[1]?.role ?? 'membro1';
 
     const limites = {
-      leticia:  limitesData?.find(l => l.perfil === 'leticia' || l.perfil === p0role)?.limite ?? 0,
-      giovanna: limitesData?.find(l => l.perfil === 'giovanna' || l.perfil === p1role)?.limite ?? 0,
+      membro0:  limitesData?.find(l => l.perfil === 'membro0' || l.perfil === p0role)?.limite ?? 0,
+      membro1: limitesData?.find(l => l.perfil === 'membro1' || l.perfil === p1role)?.limite ?? 0,
     };
 
     return NextResponse.json(
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     const dados = gerarDadosDemo();
     const indicadores = calcularTodosIndicadores(dados);
     return NextResponse.json(
-      { success: true, dados, indicadores, limites: { leticia: 0, giovanna: 0 }, demo: true },
+      { success: true, dados, indicadores, limites: { membro0: 0, membro1: 0 }, demo: true },
       { headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   }
