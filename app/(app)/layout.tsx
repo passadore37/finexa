@@ -10,15 +10,17 @@ import { getUpgrades, getPlano, PRECO_MEMBRO_EXTRA } from '@/lib/planos';
 import type { PlanoId } from '@/lib/planos';
 import {
   LogOut, ChevronDown, Settings, X, Users, CreditCard,
-  Shield, UserPlus, Copy, Mail, Loader2, Check, Trash2
+  Shield, UserPlus, Copy, Mail, Loader2, Check, Trash2,
+  Wallet, Plus, Trash
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePlano } from '@/hooks/use-plano';
 
 // ─── Modal de configurações ───────────────────────────────────────────────────
 function ModalConfig({ onFechar }: { onFechar: () => void }) {
   const { perfil } = useAuth();
   const { membros, carregando } = useMembros();
-  const [aba, setAba]           = useState<'plano' | 'membros' | 'privacidade'>('plano');
+  const [aba, setAba]           = useState<'plano' | 'financas' | 'membros' | 'privacidade'>('plano');
 
   const planoAtual  = (perfil?.plano as PlanoId) || 'casal';
   const isMaster    = perfil?.is_master ?? false;
@@ -27,6 +29,52 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
   const maxMembros  = planoInfo.maxMembros;
   const podeConvite = isMaster && planoAtual !== 'individual';
   const membrosExtra = Math.max(0, membros.length - maxMembros);
+  const { ehCasal } = usePlano();
+
+  // Estados aba Finanças
+  const [salMembro0, setSalMembro0]   = useState('');
+  const [salMembro1, setSalMembro1]   = useState('');
+  const [contasFixas, setContasFixas] = useState<{ descricao: string; valor: string }[]>([]);
+  const [salvandoFin, setSalvandoFin] = useState(false);
+  const [finSalvo, setFinSalvo]       = useState(false);
+
+  useEffect(() => {
+    if (aba !== 'financas') return;
+    fetch('/api/planejamento', { credentials: 'include' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.data) {
+          setSalMembro0(res.data.salario_membro0 > 0 ? String(res.data.salario_membro0) : '');
+          setSalMembro1(res.data.salario_membro1 > 0 ? String(res.data.salario_membro1) : '');
+          setContasFixas(
+            (res.data.contas_fixas ?? []).map((f: any) => ({
+              descricao: f.descricao ?? '',
+              valor: f.valor > 0 ? String(f.valor) : '',
+            }))
+          );
+        }
+      });
+  }, [aba]);
+
+  async function salvarFinancas() {
+    setSalvandoFin(true);
+    const fixas = contasFixas
+      .filter(f => f.descricao && f.valor)
+      .map(f => ({ descricao: f.descricao, valor: Number(f.valor) }));
+    await fetch('/api/planejamento', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        salario_membro0: Number(salMembro0) || 0,
+        salario_membro1: Number(salMembro1) || 0,
+        contas_fixas: fixas,
+      }),
+    });
+    setSalvandoFin(false);
+    setFinSalvo(true);
+    setTimeout(() => setFinSalvo(false), 2500);
+  }
 
   // Convite
   const [emailNovo, setEmailNovo]   = useState('');
@@ -56,8 +104,9 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
   }
 
   const abas = [
-    { id: 'plano',       label: 'Meu plano',  icon: CreditCard },
-    { id: 'membros',     label: 'Membros',     icon: Users },
+    { id: 'plano',    label: 'Meu plano', icon: CreditCard },
+    { id: 'financas', label: 'Finanças',  icon: Wallet },
+    { id: 'membros',  label: 'Membros',   icon: Users },
     ...(planoAtual === 'familia' ? [{ id: 'privacidade', label: 'Privacidade', icon: Shield }] : []),
   ] as const;
 
@@ -163,7 +212,109 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
             </div>
           )}
 
-          {/* ── ABA: MEMBROS ── */}
+          {/* ── ABA: FINANÇAS ── */}
+          {aba === 'financas' && (
+            <div className="space-y-5">
+
+              {/* Salário membro 0 */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                  {membros[0]?.nome ?? 'Membro 1'} — Salário mensal
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">R$</span>
+                  <input
+                    type="number"
+                    value={salMembro0}
+                    onChange={e => setSalMembro0(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-background border-2 border-border rounded-xl pl-10 pr-4 py-3 text-foreground font-bold focus:outline-none focus:border-[#5330ff] transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Salário membro 1 — só casal */}
+              {ehCasal && membros.length > 1 && (
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    {membros[1]?.nome ?? 'Membro 2'} — Salário mensal
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">R$</span>
+                    <input
+                      type="number"
+                      value={salMembro1}
+                      onChange={e => setSalMembro1(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-background border-2 border-border rounded-xl pl-10 pr-4 py-3 text-foreground font-bold focus:outline-none focus:border-[#5330ff] transition-colors"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Divisor */}
+              <div className="border-t border-border pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    Contas fixas
+                  </label>
+                  <button
+                    onClick={() => setContasFixas(prev => [...prev, { descricao: '', valor: '' }])}
+                    className="flex items-center gap-1 text-xs font-bold text-[#5330ff] hover:underline">
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </button>
+                </div>
+
+                {contasFixas.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic">Nenhuma conta fixa cadastrada.</p>
+                )}
+
+                <div className="space-y-2">
+                  {contasFixas.map((f, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Descrição (ex: Aluguel)"
+                        value={f.descricao}
+                        onChange={e => setContasFixas(prev => prev.map((x, idx) => idx === i ? { ...x, descricao: e.target.value } : x))}
+                        className="flex-1 bg-background border-2 border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-[#5330ff] transition-colors"
+                      />
+                      <div className="relative w-28">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold">R$</span>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={f.valor}
+                          onChange={e => setContasFixas(prev => prev.map((x, idx) => idx === i ? { ...x, valor: e.target.value } : x))}
+                          className="w-full bg-background border-2 border-border rounded-xl pl-8 pr-2 py-2.5 text-sm text-foreground focus:outline-none focus:border-[#5330ff] transition-colors"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setContasFixas(prev => prev.filter((_, idx) => idx !== i))}
+                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500">
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Botão salvar */}
+              <button
+                onClick={salvarFinancas}
+                disabled={salvandoFin}
+                className="w-full py-3 rounded-xl font-black text-sm text-white flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+                style={{ background: '#5330ff', boxShadow: '3px 3px 0 #82a1fd60' }}>
+                {salvandoFin
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</>
+                  : finSalvo
+                  ? <><Check className="h-4 w-4" /> Salvo!</>
+                  : 'Salvar alterações'}
+              </button>
+            </div>
+          )}
+
+          {/* ── ABA: MEMBROS ── */}}
           {aba === 'membros' && (
             <div className="space-y-4">
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">

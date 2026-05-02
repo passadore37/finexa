@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PlusCircle, Target, BookOpen } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Target } from 'lucide-react';
 
 const tabs = [
-  { label: 'Gastos',       href: '/dashboard',    icon: LayoutDashboard, color: 'var(--indigo)' },
-  { label: 'Lançar',       href: '/lancar',        icon: PlusCircle,      color: 'var(--teal)' },
-  { label: 'Metas',        href: '/metas',         icon: Target,          color: 'var(--magenta)' },
-  { label: 'Planejamento', href: '/planejamento',  icon: BookOpen,        color: 'var(--orange)' },
+  { label: 'Gastos',  href: '/dashboard', icon: LayoutDashboard, color: 'var(--indigo)' },
+  { label: 'Lançar',  href: '/lancar',     icon: PlusCircle,      color: 'var(--teal)' },
+  { label: 'Metas',   href: '/metas',      icon: Target,          color: 'var(--magenta)' },
 ];
 
 export function TabNav() {
