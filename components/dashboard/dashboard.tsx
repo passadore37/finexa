@@ -15,7 +15,9 @@ import { InsightsIAPanel } from './insights-ia-panel';
 import { ParceladasPanel } from './parceladas-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
+import { OnboardingTutorial } from './onboarding-tutorial';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
+import { useAuth } from '@/hooks/use-auth';
 import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useMesContext } from '@/hooks/use-mes-context';
@@ -44,8 +46,10 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.j
 
 export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
+  const { perfil } = useAuth();
   const { plano, perfisVisiveis } = usePlano();
   const { membros } = useMembros();
+  const [mostrarTutorial, setMostrarTutorial] = useState(false);
   // Mapeia role real → role lógico para os cálculos
   const role0 = membros[0]?.role ?? 'leticia';
   const role1 = membros[1]?.role ?? 'giovanna';
@@ -80,6 +84,14 @@ export function Dashboard() {
     window.addEventListener('planejamento-atualizado', handler);
     return () => window.removeEventListener('planejamento-atualizado', handler);
   }, [mutate]);
+
+  // Mostrar tutorial para novo usuário (primeiro acesso)
+  useEffect(() => {
+    if (perfil?.onboarding_done && !localStorage.getItem('tutorial-visto')) {
+      setMostrarTutorial(true);
+      localStorage.setItem('tutorial-visto', 'true');
+    }
+  }, [perfil?.onboarding_done]);
 
   const selecionarMesGrafico = (mes: number, ano: number) => navegarMes(mes, ano);
 
@@ -190,6 +202,9 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Tutorial para novo usuário */}
+      {mostrarTutorial && <OnboardingTutorial onClose={() => setMostrarTutorial(false)} />}
+
       {/* Barra de controles */}
       <div className="border-b border-border bg-card/50 sticky top-[113px] z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3 flex-wrap">

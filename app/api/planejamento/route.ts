@@ -26,7 +26,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { salario_leticia, salario_giovanna, percentual_investimento, contas_fixas,
-            reserva_atual, meta_economia_leticia, meta_economia_giovanna } = body;
+            reserva_atual, meta_economia_leticia, meta_economia_giovanna, 
+            limite_gasto_mensal } = body;
     const { data: existing } = await getAdmin().from('planejamento')
       .select('id').eq('family_id', family_id).limit(1).single();
     const payload = {
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
       reserva_atual: reserva_atual || 0,
       meta_economia_leticia: meta_economia_leticia || 0,
       meta_economia_giovanna: meta_economia_giovanna || 0,
+      limite_gasto_mensal: limite_gasto_mensal || 9000,
       updated_at: new Date().toISOString(),
     };
     const result = existing?.id

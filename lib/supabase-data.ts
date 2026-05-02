@@ -23,19 +23,6 @@ function getMesLabel(mes: number, ano: number): string {
   return `${meses[mes]}-${String(ano).slice(2)}`;
 }
 
-async function garantirConfiguracaoMes(mes: number, ano: number, family_id: string) {
-  const mesLabel = getMesLabel(mes, ano);
-  const { data } = await getAdmin().from('configuracao_mensal').select('*')
-    .eq('mes', mesLabel).eq('family_id', family_id).single();
-  if (!data) {
-    const { data: novo } = await getAdmin().from('configuracao_mensal')
-      .insert({ mes: mesLabel, limite: 9000, salario_leticia: 0, salario_giovanna: 0, family_id })
-      .select().single();
-    return novo;
-  }
-  return data;
-}
-
 export async function fetchDadosPlanilha(
   family_id: string,
   mes?: number,
@@ -79,13 +66,12 @@ export async function fetchDadosPlanilha(
 
   if (resMes.error) throw new Error(`Erro transacoes: ${resMes.error.message}`);
 
-  const config = await garantirConfiguracaoMes(mesAlvo, anoAlvo, family_id);
   const pl = resPl.data;
 
-  const salarioLeticia  = primeiroValido(pl?.salario_leticia, config?.salario_leticia, process.env.SALARIO_LETICIA);
-  const salarioGiovanna = primeiroValido(pl?.salario_giovanna, config?.salario_giovanna, process.env.SALARIO_GIOVANNA);
+  const salarioLeticia  = primeiroValido(pl?.salario_leticia, process.env.SALARIO_LETICIA);
+  const salarioGiovanna = primeiroValido(pl?.salario_giovanna, process.env.SALARIO_GIOVANNA);
   const percentualInvestimento = primeiroValido(pl?.percentual_investimento, 0);
-  const limiteMensal    = primeiroValido(config?.limite, 9000);
+  const limiteMensal    = primeiroValido(pl?.limite_gasto_mensal, pl?.limite, 9000);
   const contasFixasConfig: ContaFixaConfig[] = Array.isArray(pl?.contas_fixas) ? pl.contas_fixas : [];
 
   function mapRows(rows: any[]): Transacao[] {
