@@ -314,7 +314,7 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
             </div>
           )}
 
-          {/* ── ABA: MEMBROS ── */}}
+          {/* ── ABA: MEMBROS ── */}
           {aba === 'membros' && (
             <div className="space-y-4">
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">

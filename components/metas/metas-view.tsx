@@ -418,24 +418,24 @@ export function MetasView() {
     return doPlano > 0 ? doPlano : totalFixasRecorrentes;
   }, [planejamento, totalFixasRecorrentes]);
 
-  const salMembro0icia  = planejamento?.salario_membro0  || 0;
-  const salMembro1vanna = planejamento?.salario_membro1 || 0;
-  const salTotal = salMembro0icia + salMembro1vanna;
+  const salMembro0  = planejamento?.salario_membro0  || 0;
+  const salMembro1 = planejamento?.salario_membro1 || 0;
+  const salTotal = salMembro0 + salMembro1;
 
   // Proporção real por salário — salário 0 = não participa
   // Fallback 50/50 apenas se AMBOS forem zero
-  const propLet = salTotal > 0 ? (salMembro0icia > 0 ? salMembro0icia / salTotal : 0) : 0.5;
-  const propGio = salTotal > 0 ? (salMembro1vanna > 0 ? salMembro1vanna / salTotal : 0) : 0.5;
+  const propMembro0 = salTotal > 0 ? (salMembro0 > 0 ? salMembro0 / salTotal : 0) : 0.5;
+  const propMembro1 = salTotal > 0 ? (salMembro1 > 0 ? salMembro1 / salTotal : 0) : 0.5;
 
-  const fixasMembro0  = totalFixasConjunto * propLet;
-  const fixasMembro 2 = totalFixasConjunto * propGio;
+  const fixasMembro0  = totalFixasConjunto * propMembro0;
+  const fixasMembro1 = totalFixasConjunto * propMembro1;
 
   // Perfis a mostrar na reserva
   const perfisReserva = plano === 'individual'
     ? [{ perfil: perfilAtivo, nome: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.nome ?? perfilAtivo, cor: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.cor ?? '#5330ff', fixas: totalFixasConjunto }]
     : [
-        { perfil: 'membro0',  nome: `Membro 1 (${Math.round(propLet * 100)}%)`,  cor: '#82a1fd', fixas: fixasMembro0 },
-        { perfil: 'membro1', nome: `Membro 2 (${Math.round(propGio * 100)}%)`, cor: '#ff64ca', fixas: fixasMembro 2 },
+        { perfil: 'membro0',  nome: `Membro 1 (${Math.round(propMembro0 * 100)}%)`,  cor: '#82a1fd', fixas: fixasMembro0 },
+        { perfil: 'membro1', nome: `Membro 2 (${Math.round(propMembro1 * 100)}%)`, cor: '#ff64ca', fixas: fixasMembro1 },
         { perfil: 'casal',    nome: 'Conjunta (total)', cor: '#ffa857', fixas: totalFixasConjunto },
       ];
 

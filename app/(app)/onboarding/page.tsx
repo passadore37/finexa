@@ -155,7 +155,7 @@ export default function OnboardingPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ perfil: perfil?.role ?? 'membro0', limite: Number(limite.replace(/\D/g, '')) }),
+        body: JSON.stringify({ perfil: 'leticia', limite: Number(limite.replace(/\D/g, '')) }),
       });
       setSalvando(false);
     }
@@ -250,7 +250,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── PASSO: PLANO ── */}}
+        {/* ── PASSO: PLANO ── */}
         {etapaAtual === 'plano' && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-black text-foreground">Confirme seu plano</h2>
