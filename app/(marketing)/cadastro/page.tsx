@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, User, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase';
 
 const PLANOS = [
   { id: 'individual', nome: 'Individual', preco: 24, Icon: User,  cor: '#01b695', desc: '1 usuário · Controle pessoal completo' },
@@ -17,6 +18,7 @@ function CadastroForm() {
   const [nome, setNome]       = useState('');
   const [email, setEmail]     = useState(params.get('email') || '');
   const [senha, setSenha]     = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mostrar, setMostrar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro]       = useState('');
@@ -26,8 +28,11 @@ function CadastroForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (senha.length < 8) { setErro('A senha deve ter pelo menos 8 caracteres.'); return; }
+    if (senha !== confirmarSenha) { setErro('As senhas não coincidem.'); return; }
+
     setLoading(true); setErro('');
     try {
+      // 1. Criar conta via API (cria usuário + perfil + família no Supabase)
       const res  = await fetch('/api/auth/cadastro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,14 +40,28 @@ function CadastroForm() {
       });
       const data = await res.json();
       if (!res.ok) { setErro(data.error || 'Erro ao criar conta. Tente novamente.'); return; }
+
+      // 2. Vincular convite ao novo usuário, se houver
       if (conviteToken && data.user_id) {
-      await fetch('/api/convite', {
-        method: 'PATCH',
-       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
-  });
+        await fetch('/api/convite', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: conviteToken, user_id: data.user_id }),
+        });
       }
-      window.location.href = `/login?email=${encodeURIComponent(email)}`;
+
+      // 3. Login automático — elimina a fricção de pedir para o usuário logar manualmente
+      const supabase = createClient();
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (loginErr) {
+        // Fallback: redirecionar para login com e-mail pré-preenchido
+        window.location.href = `/login?email=${encodeURIComponent(email)}`;
+        return;
+      }
+
+      // 4. Aguardar cookies de sessão serem persistidos e redirecionar para onboarding
+      await new Promise(r => setTimeout(r, 600));
+      window.location.href = '/onboarding';
     } catch {
       setErro('Erro de conexão. Tente novamente.');
     } finally { setLoading(false); }
@@ -56,19 +75,27 @@ function CadastroForm() {
         <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-8">
           <ArrowLeft size={16} /> Voltar ao início
         </Link>
+
+        {/* Indicador de passos */}
         <div className="flex items-center gap-3 mb-8">
           {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-black transition-all ${step >= s ? 'bg-[#5330ff] border-[#5330ff] text-white' : 'border-border text-muted-foreground'}`}
+              <div
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-black transition-all ${step >= s ? 'bg-[#5330ff] border-[#5330ff] text-white' : 'border-border text-muted-foreground'}`}
                 style={step >= s ? { boxShadow: '2px 2px 0 #82a1fd' } : {}}>
                 {step > s ? <Check size={14} /> : s}
               </div>
               {s < 2 && <div className={`h-0.5 w-16 transition-all ${step > s ? 'bg-[#5330ff]' : 'bg-border'}`} />}
             </div>
           ))}
-          <span className="text-sm text-muted-foreground font-medium ml-1">{step === 1 ? 'Escolha o plano' : 'Crie sua conta'}</span>
+          <span className="text-sm text-muted-foreground font-medium ml-1">
+            {step === 1 ? 'Escolha o plano' : 'Crie sua conta'}
+          </span>
         </div>
+
         <div className="nb-card bg-card p-8">
+
+          {/* ── PASSO 1: Escolha do plano ── */}
           {step === 1 ? (
             <>
               <div className="flex items-center gap-3 mb-6">
@@ -85,8 +112,12 @@ function CadastroForm() {
                   return (
                     <button key={p.id} onClick={() => setPlano(p.id)}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
-                      style={{ borderColor: sel ? p.cor : 'var(--border)', background: sel ? `${p.cor}12` : 'transparent',
-                               boxShadow: sel ? `3px 3px 0 ${p.cor}50` : 'none', transform: sel ? 'translate(-1px,-1px)' : 'none' }}>
+                      style={{
+                        borderColor: sel ? p.cor : 'var(--border)',
+                        background: sel ? `${p.cor}12` : 'transparent',
+                        boxShadow: sel ? `3px 3px 0 ${p.cor}50` : 'none',
+                        transform: sel ? 'translate(-1px,-1px)' : 'none',
+                      }}>
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: `${p.cor}20`, border: `2px solid ${p.cor}60` }}>
                         <p.Icon size={22} style={{ color: p.cor }} />
@@ -94,7 +125,9 @@ function CadastroForm() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-black text-lg text-foreground">{p.nome}</span>
-                          {(p as any).destaque && <span className="text-[10px] font-black bg-[#ff64ca] text-white px-2 py-0.5 rounded-full">POPULAR</span>}
+                          {(p as any).destaque && (
+                            <span className="text-[10px] font-black bg-[#ff64ca] text-white px-2 py-0.5 rounded-full">POPULAR</span>
+                          )}
                         </div>
                         <span className="text-sm text-muted-foreground">{p.desc}</span>
                       </div>
@@ -113,6 +146,8 @@ function CadastroForm() {
               </button>
             </>
           ) : (
+
+          // ── PASSO 2: Dados da conta ──
             <>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-lg"
@@ -121,38 +156,95 @@ function CadastroForm() {
                   <h1 className="text-2xl font-black text-foreground">Crie sua conta</h1>
                   <p className="text-sm text-muted-foreground">Plano {planoSel.nome} · R${planoSel.preco}/mês</p>
                 </div>
-                <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground"><ArrowLeft size={18} /></button>
+                <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground">
+                  <ArrowLeft size={18} />
+                </button>
               </div>
+
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {[
-                  { label: 'Seu nome', value: nome, set: setNome, type: 'text', placeholder: 'Como prefere ser chamada', auto: 'name' },
-                  { label: 'E-mail',   value: email, set: setEmail, type: 'email', placeholder: 'voce@exemplo.com', auto: 'email' },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">{f.label}</label>
-                    <input type={f.type} value={f.value} onChange={e => f.set(e.target.value)} required placeholder={f.placeholder} autoComplete={f.auto}
-                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
-                  </div>
-                ))}
+                {/* Nome */}
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Senha</label>
+                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    Seu nome
+                  </label>
+                  <input
+                    type="text" value={nome} onChange={e => setNome(e.target.value)}
+                    required placeholder="Como prefere ser chamado(a)" autoComplete="name"
+                    className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors"
+                  />
+                </div>
+
+                {/* E-mail */}
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    E-mail
+                  </label>
+                  <input
+                    type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    required placeholder="voce@exemplo.com" autoComplete="email"
+                    className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors"
+                  />
+                </div>
+
+                {/* Senha */}
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    Senha
+                  </label>
                   <div className="relative">
-                    <input type={mostrar ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} required
+                    <input
+                      type={mostrar ? 'text' : 'password'} value={senha}
+                      onChange={e => setSenha(e.target.value)} required
                       placeholder="Mínimo 8 caracteres" autoComplete="new-password"
-                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 pr-12 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
+                      className="w-full bg-background border-2 border-border rounded-xl px-4 py-3.5 pr-12 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors"
+                    />
                     <button type="button" onClick={() => setMostrar(!mostrar)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {mostrar ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
                   </div>
                 </div>
-                {erro && <div className="border-2 border-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">{erro}</div>}
+
+                {/* Confirmar senha */}
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    Confirmar senha
+                  </label>
+                  <input
+                    type={mostrar ? 'text' : 'password'} value={confirmarSenha}
+                    onChange={e => setConfirmarSenha(e.target.value)} required
+                    placeholder="Repita a senha" autoComplete="new-password"
+                    className={`w-full bg-background border-2 rounded-xl px-4 py-3.5 text-foreground focus:outline-none transition-colors ${
+                      confirmarSenha && confirmarSenha !== senha
+                        ? 'border-red-400 focus:border-red-400'
+                        : confirmarSenha && confirmarSenha === senha
+                        ? 'border-[#01b695] focus:border-[#01b695]'
+                        : 'border-border focus:border-[#5330ff]'
+                    }`}
+                  />
+                  {confirmarSenha && confirmarSenha !== senha && (
+                    <p className="text-xs text-red-500 mt-1 font-bold">As senhas não coincidem.</p>
+                  )}
+                  {confirmarSenha && confirmarSenha === senha && (
+                    <p className="text-xs text-[#01b695] mt-1 font-bold flex items-center gap-1">
+                      <Check size={12} /> Senhas conferem
+                    </p>
+                  )}
+                </div>
+
+                {erro && (
+                  <div className="border-2 border-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">
+                    {erro}
+                  </div>
+                )}
+
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Ao criar sua conta você concorda com os{' '}
                   <Link href="/termos" className="text-[#5330ff] font-bold hover:underline">Termos de Uso</Link> e a{' '}
                   <Link href="/privacidade" className="text-[#5330ff] font-bold hover:underline">Política de Privacidade</Link>.
                 </p>
-                <button type="submit" disabled={loading}
+
+                <button type="submit" disabled={loading || (!!confirmarSenha && senha !== confirmarSenha)}
                   className="nb-btn bg-[#5330ff] text-white py-4 font-black text-base w-full mt-1 disabled:opacity-60 flex items-center justify-center gap-2"
                   style={{ borderColor: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -161,6 +253,7 @@ function CadastroForm() {
               </form>
             </>
           )}
+
           <p className="text-center text-sm text-muted-foreground mt-6">
             Já tem conta?{' '}
             <Link href="/login" className="font-black text-[#5330ff] hover:underline">Entrar</Link>
