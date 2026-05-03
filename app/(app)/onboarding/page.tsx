@@ -6,7 +6,7 @@ import { Check, ArrowRight, Loader2, Users, Wallet, CalendarDays,
          Shield, UserPlus, Copy, Mail, Lock, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
-type Plano = 'individual' | 'casal' | 'familia';
+type Plano = 'individual' | 'casal';
 
 interface MembroFamilia {
   email: string;
@@ -213,25 +213,25 @@ export default function OnboardingPage() {
             <div>
               <h2 className="text-2xl font-black text-foreground mb-2">Bem-vinda ao Finexa! 🎉</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Você foi selecionada para testar o <strong className="text-foreground">Finexa Beta</strong> — uma plataforma de controle financeiro inteligente para casais e indivíduos. Sem planilha. Sem complicação.
+                Você foi selecionada para testar o <strong className="text-foreground">Finexa Beta</strong> uma plataforma de controle financeiro inteligente pessoal ou para o casal. Sem planilha. Sem complicação.
               </p>
             </div>
             <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 text-left space-y-2">
               <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Use o app por alguns dias e nos conte o que funcionou, o que travou e o que poderia ser melhor. Seu feedback é essencial para melhorarmos.
+                Use o app e me conte o que funcionou, o que travou e o que poderia ser melhor. Seu feedback é essencial para que eu possa melhorar.
               </p>
             </div>
             <div className="p-4 rounded-xl bg-[#ffa857]/8 border border-[#ffa857]/20 text-left space-y-3">
               <p className="text-xs font-black uppercase tracking-widest text-[#ffa857]">Contribuição voluntária</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Para ajudar a manter o app e financiar melhorias, aceitamos contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>.
+                Para ajudar a manter o app e financiar melhorias, aceito contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>.
               </p>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
                 <div className="text-2xl">📱</div>
                 <div>
                   <p className="text-xs text-muted-foreground">Chave Pix</p>
-                  <p className="text-sm font-black text-foreground select-all">11992456210</p>
+                  <p className="text-sm font-black text-foreground select-all">(11) 99245-6210</p>
                 </div>
                 <button
                   onClick={() => { navigator.clipboard.writeText('11992456210'); }}
@@ -239,12 +239,12 @@ export default function OnboardingPage() {
                   Copiar
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground italic">Totalmente opcional — o acesso é gratuito durante o beta.</p>
+              <p className="text-xs text-muted-foreground italic">Totalmente opcional | Acesso é gratuito durante o beta teste.</p>
             </div>
             <div className="p-4 rounded-xl bg-[#01b695]/8 border border-[#01b695]/20 text-left space-y-2">
               <p className="text-xs font-black uppercase tracking-widest text-[#01b695]">Encontrou um bug?</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Use o botão roxo flutuante no canto da tela para enviar feedback a qualquer momento. Todo relato nos ajuda!
+                Use o botão roxo flutuante no canto inferior da tela para enviar feedback a qualquer momento. Todo relato me ajuda!
               </p>
             </div>
           </div>

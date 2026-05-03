@@ -37,25 +37,25 @@ const DIFERENCIAIS = [
   {
     Icon: TableProperties,
     titulo: 'Adeus, planilha',
-    desc: 'Chega de abas, fórmulas e dados desatualizados. O Finexa substitui qualquer planilha com dashboard em tempo real — sem você precisar digitar nada duas vezes.',
+    desc: 'Chega de abas, fórmulas e dados desatualizados. O Finexa substitui qualquer planilha com dashboard em tempo real.',
     cor: '#01b695',
   },
   {
     Icon: Brain,
     titulo: 'Sugestões da IA',
-    desc: 'O painel de IA analisa seus padrões e dá recomendações personalizadas: onde cortar, onde investir mais, e o que fazer para bater suas metas mais rápido.',
+    desc: 'O painel de IA analisa seus padrões e dá recomendações personalizadas: onde cortar, onde investir mais e o que fazer para bater suas metas mais rápido.',
     cor: '#5330ff',
   },
   {
     Icon: TrendingUp,
     titulo: 'Projeção de gasto mensal',
-    desc: 'Veja para onde o mês está indo antes de acabar. A projeção calcula seu ritmo de gastos e estima o total ao fim do mês — com tempo para ajustar.',
+    desc: 'Veja para onde o mês está indo antes de acabar. A projeção calcula seu ritmo de gastos e estima o total ao fim do mês.',
     cor: '#ff64ca',
   },
   {
     Icon: PieChart,
     titulo: 'Mapeamento por categoria',
-    desc: 'Moradia, alimentação, lazer, assinaturas. Cada gasto classificado automaticamente. Você vê de uma vez onde o dinheiro foi — sem fazer nada.',
+    desc: 'Moradia, alimentação, lazer, assinaturas. Cada gasto classificado. Você vê de uma vez onde o dinheiro foi.',
     cor: '#82a1fd',
   },
   {
@@ -67,7 +67,7 @@ const DIFERENCIAIS = [
   {
     Icon: CalendarDays,
     titulo: 'Planejamento semanal',
-    desc: 'O salário vira envelopes semanais. Você sabe exatamente quanto pode gastar essa semana — e vê no calendário os dias em que gastou mais.',
+    desc: 'O salário vira envelopes semanais. Você sabe exatamente quanto pode gastar essa semana e vê no calendário heatmap os dias em que gastou mais.',
     cor: '#fff245',
   },
 ];
