@@ -37,9 +37,9 @@ export default function OnboardingPage() {
   }, [perfil, user]);
 
   const passos = {
-    individual: ['plano', 'perfil', 'fixas', 'pronto'],
-    casal:      ['plano', 'perfil', 'fixas', 'convite', 'pronto'],
-    convidado:  ['perfil', 'pronto'],
+    individual: ['boasvindas', 'plano', 'perfil', 'fixas', 'pronto'],
+    casal:      ['boasvindas', 'plano', 'perfil', 'fixas', 'convite', 'pronto'],
+    convidado:  ['boasvindas', 'perfil', 'pronto'],
   };
 
   const etapas    = passos[isInvitee ? 'convidado' : plano];
@@ -166,6 +166,46 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* ── PASSO: BOAS-VINDAS ── */}
+        {etapaAtual === 'boasvindas' && (
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-black text-foreground">Bem-vinda ao Finexa! 🎉</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Você foi selecionada para testar o <strong className="text-foreground">Finexa</strong> um controle financeiro inteligente para casais e pessoas que querem ter clareza sobre seu dinheiro. Sem planilha. Sem complicação.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 space-y-2">
+              <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar:</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Use o app e me conte o que funcionou, o que travou e o que poderia ser melhor. Use o botão roxo flutuante na tela para enviar feedback a qualquer momento.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#ffa857]/8 border border-[#ffa857]/20 space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-[#ffa857]">Contribuição voluntária</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Para ajudar a manter o app e financiar melhorias, aceito contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>. Totalmente opcional — não esqueça de lançar esse valor em seu novo controle financeiro, Finexa!.
+              </p>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <span className="text-2xl">📱</span>
+                <div>
+                  <p className="text-xs text-muted-foreground">Chave Pix</p>
+                  <p className="text-sm font-black text-foreground select-all">(11) 99245-6210</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText('11992456210')}
+                  className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold text-black"
+                  style={{ background: '#ffa857' }}>
+                  Copiar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── PASSO: PLANO ── */}
         {etapaAtual === 'plano' && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
@@ -229,7 +269,7 @@ export default function OnboardingPage() {
             {!isInvitee && plano !== 'individual' && (
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                  Salário estimado do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
+                  Salário do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
                 </label>
                 <div className="flex items-center gap-2 bg-background border-2 border-border rounded-xl px-4 py-3 focus-within:border-[#5330ff] transition-colors">
                   <span className="text-sm text-muted-foreground">R$</span>
