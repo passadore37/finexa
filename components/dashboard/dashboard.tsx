@@ -13,6 +13,8 @@ import { AlertasPanel } from './alertas-panel';
 import { SugestoesPanel } from './sugestoes-panel';
 import { InsightsIAPanel } from './insights-ia-panel';
 import { ParceladasPanel } from './parceladas-panel';
+import { ContasFixasPanel } from './contas-fixas-panel';
+import { PlanejamentoResumoPanel } from './planejamento-resumo-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { OnboardingTutorial } from './onboarding-tutorial';
@@ -226,6 +228,22 @@ export function Dashboard() {
           <KPICard titulo="Saldo Livre"     valor={saldoLivre} icone={PiggyBank} corIcone="text-primary" corBarra="var(--primary)" descricao={`Sem ${indicadores.metodologia.semanaAtual}/${indicadores.metodologia.semanas.length} · Por dia`} />
         </div>
 
+        {/* Planejamento Resumo */}
+        <div className="mb-6 sm:mb-8">
+          <PlanejamentoResumoPanel
+            salarioMembro0={dados.salarioMembro0}
+            salarioMembro1={dados.salarioMembro1}
+            percentualInvestimento={dados.percentualInvestimento}
+            limiteMensal={limite}
+            reservaEmergencia={indicadores.metodologia.metaEmergencia}
+            plano={plano as 'individual' | 'casal'}
+            nomesMembros={{ 
+              membro0: perfisVisiveis[0]?.nome ?? 'Membro 1', 
+              membro1: perfisVisiveis[1]?.nome ?? 'Membro 2' 
+            }}
+          />
+        </div>
+
         <div className="section-separator my-6 sm:my-8" />
 
         {/* Projeção + Evolução */}
@@ -278,8 +296,8 @@ export function Dashboard() {
 
         <div className="section-separator my-6 sm:my-8" />
 
-        {/* Categorias + Parcelas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {/* Categorias + Parcelas + Contas Fixas */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <CategoriasPieChart
             dados={categorias}
             categoriaAtiva={categoriaAtiva}
@@ -287,6 +305,10 @@ export function Dashboard() {
             getCor={getCor}
           />
           <ParceladasPanel parceladas={parceladas} comprometimentoTotal={comprometimentoTotal} />
+          <ContasFixasPanel 
+            contasFixas={dados.contasFixasConfig} 
+            totalMensal={fixas}
+          />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
