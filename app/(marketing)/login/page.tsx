@@ -29,6 +29,7 @@ function LoginForm() {
         .select('onboarding_done')
         .eq('id', session.user.id)
         .single();
+      await new Promise(r => setTimeout(r, 300));
       window.location.href = perfil?.onboarding_done ? redirect : '/onboarding';
     });
   }, [redirect]);
@@ -37,8 +38,23 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true); setErro('');
     try {
-      const { error } = await createClient().auth.signInWithPassword({ email, password: senha });
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
       if (error) throw error;
+      // Aguardar cookies serem persistidos
+      await new Promise(r => setTimeout(r, 600));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: perfil } = await supabase
+          .from('perfis')
+          .select('onboarding_done')
+          .eq('id', user.id)
+          .single();
+        if (!perfil?.onboarding_done) {
+          window.location.href = '/onboarding';
+          return;
+        }
+      }
       window.location.href = redirect;
     } catch (err: any) {
       setErro(err.message?.includes('Invalid login') ? 'E-mail ou senha incorretos.' : err.message || 'Erro ao entrar.');
