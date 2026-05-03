@@ -57,7 +57,10 @@ async function getUserAndFamily(req: Request): Promise<{ userId: string | null; 
         family_id: familyId,
         email: user.email,
         nome: user.user_metadata?.nome ?? '',
-        role: 'membro',
+        role: 'master',
+        is_master: true,
+        plano: planoCriacao,
+        onboarding_done: false,
       }, { onConflict: 'id' });
     }
   }
@@ -101,9 +104,13 @@ export async function POST(req: Request) {
     const { data: existing } = await admin.from('planejamento')
       .select('id').eq('family_id', familyId).limit(1).single();
 
+    // Garantir is_master pelo perfil real caso o payload não traga o campo
+    const { data: perfilAtual } = await admin.from('perfis').select('is_master, role').eq('id', userId).single();
+    const ehMaster = is_master ?? perfilAtual?.is_master ?? (perfilAtual?.role === 'master');
+
     const payload: any = { updated_at: new Date().toISOString() };
 
-    if (is_master) {
+    if (ehMaster) {
       if (salario !== undefined)         payload.salario_membro0  = salario;
       if (salario_parceiro !== undefined) payload.salario_membro1 = salario_parceiro;
       if (contas_fixas !== undefined)     payload.contas_fixas = contas_fixas;
@@ -111,7 +118,7 @@ export async function POST(req: Request) {
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
       payload.percentual_investimento = 0;
     } else {
-      // Convidado: seu salário entra como salario_membro1 para divisão proporcional
+      // Convidado (ou membro não-master): seu salário entra como salario_membro1
       if (salario !== undefined) payload.salario_membro1 = salario;
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
     }
