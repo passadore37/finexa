@@ -23,6 +23,7 @@ export default function OnboardingPage() {
   const [emailParceiro, setEmailParceiro] = useState('');
   const [linkConvite, setLinkConvite] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [pixCopiado, setPixCopiado] = useState(false);
   const [passo, setPasso]             = useState(0);
 
   useEffect(() => {
@@ -201,10 +202,30 @@ export default function OnboardingPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigator.clipboard.writeText('11992456210')}
-                  className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold text-black"
-                  style={{ background: '#ffa857' }}>
-                  Copiar
+                  onClick={async () => {
+                    const chave = '11992456210';
+                    try {
+                      await navigator.clipboard.writeText(chave);
+                    } catch {
+                      // Fallback para ambientes sem suporte ao clipboard API (HTTP, WebView)
+                      const el = document.createElement('textarea');
+                      el.value = chave;
+                      el.style.position = 'fixed';
+                      el.style.opacity = '0';
+                      document.body.appendChild(el);
+                      el.focus();
+                      el.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(el);
+                    }
+                    setPixCopiado(true);
+                    setTimeout(() => setPixCopiado(false), 2000);
+                  }}
+                  className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={pixCopiado
+                    ? { background: '#1D9E75', color: 'white' }
+                    : { background: '#ffa857', color: 'black' }}>
+                  {pixCopiado ? 'Copiado! ✓' : 'Copiar'}
                 </button>
               </div>
             </div>
