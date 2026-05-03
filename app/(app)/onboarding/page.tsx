@@ -77,13 +77,13 @@ export default function OnboardingPage() {
           }),
         });
         if (!res.ok) throw new Error('Erro ao salvar perfil');
-        await reloadPerfil?.();
+        // reloadPerfil sem await — não bloquear a navegação
+        reloadPerfil?.().catch(() => {});
       } catch {
         setErroSalvar('Erro ao salvar. Tente novamente.');
+      } finally {
         setSalvando(false);
-        return;
       }
-      setSalvando(false);
     }
 
     if (etapaAtual === 'fixas') {
@@ -111,13 +111,12 @@ export default function OnboardingPage() {
           }),
         });
         if (!res.ok) throw new Error('Erro ao salvar fixas');
-        await reloadPerfil?.();
+        reloadPerfil?.().catch(() => {});
       } catch {
         setErroSalvar('Erro ao salvar. Tente novamente.');
+      } finally {
         setSalvando(false);
-        return;
       }
-      setSalvando(false);
     }
 
     if (etapaAtual === 'convite' && emailParceiro && !linkConvite) {
@@ -127,8 +126,9 @@ export default function OnboardingPage() {
         setLinkConvite(url);
       } catch {
         setErroSalvar('Erro ao gerar link. Tente novamente.');
+      } finally {
+        setSalvando(false);
       }
-      setSalvando(false);
       return;
     }
 
@@ -172,27 +172,27 @@ export default function OnboardingPage() {
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-black text-foreground">Bem-vinda ao Finexa! 🎉</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Você foi selecionada para testar o <strong className="text-foreground">Finexa</strong> um controle financeiro inteligente para casais e pessoas que querem ter clareza sobre seu dinheiro. Sem planilha. Sem complicação.
+                Você foi selecionada para testar o <strong className="text-foreground">Finexa Beta</strong> — controle financeiro inteligente para casais e pessoas que querem ter clareza sobre seu dinheiro. Sem planilha. Sem complicação.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar:</p>
+              <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Use o app e me conte o que funcionou, o que travou e o que poderia ser melhor. Use o botão roxo flutuante na tela para enviar feedback a qualquer momento.
+                Use o app por alguns dias e nos conte o que funcionou, o que travou e o que poderia ser melhor. Use o botão roxo flutuante na tela para enviar feedback a qualquer momento.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#ffa857]/8 border border-[#ffa857]/20 space-y-3">
               <p className="text-xs font-black uppercase tracking-widest text-[#ffa857]">Contribuição voluntária</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Para ajudar a manter o app e financiar melhorias, aceito contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>. Totalmente opcional — não esqueça de lançar esse valor em seu novo controle financeiro, Finexa!.
+                Para ajudar a manter o app e financiar melhorias, aceitamos contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>. Totalmente opcional — o acesso é gratuito durante o beta.
               </p>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
                 <span className="text-2xl">📱</span>
                 <div>
                   <p className="text-xs text-muted-foreground">Chave Pix</p>
-                  <p className="text-sm font-black text-foreground select-all">(11) 99245-6210</p>
+                  <p className="text-sm font-black text-foreground select-all">11992456210</p>
                 </div>
                 <button
                   type="button"
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
             {!isInvitee && plano !== 'individual' && (
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                  Salário do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
+                  Salário estimado do cônjuge/parceiro(a) <span className="normal-case text-[10px]">(pode alterar depois)</span>
                 </label>
                 <div className="flex items-center gap-2 bg-background border-2 border-border rounded-xl px-4 py-3 focus-within:border-[#5330ff] transition-colors">
                   <span className="text-sm text-muted-foreground">R$</span>
