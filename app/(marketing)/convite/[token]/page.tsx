@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Loader2, AlertTriangle, Eye, EyeOff, Users } from 'lucide-react';
+import { Loader2, AlertTriangle, Eye, EyeOff, Users, Check } from 'lucide-react';
+import { createClient } from '@/lib/supabase';
 
 // BUG-01 / BUG-02 / BUG-07 / BUG-12:
 // Antes, a página aceitava o convite (PATCH) e fazia o onboarding inline ANTES da confirmação
@@ -39,7 +40,7 @@ export default function ConvitePage() {
     if (senha.length < 8) { setErro('Senha deve ter pelo menos 8 caracteres.'); return; }
     setLoading(true); setErro('');
     try {
-      // BUG-07: is_invitee: true para onboarding simplificado
+      // 1. Criar conta via admin (email_confirm: true — sem e-mail de confirmação)
       const res = await fetch('/api/auth/cadastro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,9 +49,7 @@ export default function ConvitePage() {
       const data = await res.json();
       if (!res.ok) { setErro(data.error || 'Erro ao criar conta.'); return; }
 
-      // BUG-01: PATCH convite feito aqui (sem sessão, mas API usa service_role e valida email)
-      // O family_id é vinculado antes da confirmação de email — correto agora com
-      // validação de email no PATCH (BUG-05 fix)
+      // 2. Vincular convite ao novo usuário (service_role, sem sessão necessária)
       if (data.user_id) {
         await fetch('/api/convite', {
           method: 'PATCH',
@@ -59,9 +58,18 @@ export default function ConvitePage() {
         });
       }
 
-      // BUG-02: Não mais onboarding inline sem sessão.
-      // Usuário vai confirmar email → login → /onboarding (que detecta is_invitee=true)
-      setConcluido(true);
+      // 3. Login automático — usuário já confirmado, não precisa verificar e-mail
+      const supabase = createClient();
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (loginErr) {
+        setErro('Conta criada! Faça login para continuar.');
+        setTimeout(() => { window.location.href = `/login?email=${encodeURIComponent(email)}`; }, 1500);
+        return;
+      }
+
+      // 4. Aguardar sessão e ir direto pro onboarding do convidado
+      await new Promise(r => setTimeout(r, 600));
+      window.location.href = '/onboarding';
     } catch { setErro('Erro de conexão.'); }
     finally { setLoading(false); }
   }
@@ -82,36 +90,20 @@ export default function ConvitePage() {
     </div>
   );
 
-  // BUG-12: Tela de conclusão redirecionando para verificar-email, não para dashboard direto
   if (concluido) return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="max-w-md text-center space-y-5">
-        <div className="w-16 h-16 rounded-2xl bg-[#5330ff]/15 flex items-center justify-center mx-auto">
-          <Users className="h-8 w-8 text-[#5330ff]" />
+        <div className="w-16 h-16 rounded-2xl bg-[#01b695]/15 flex items-center justify-center mx-auto">
+          <Check className="h-8 w-8 text-[#01b695]" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-foreground mb-2">Quase lá! 🎉</h1>
+          <h1 className="text-2xl font-black text-foreground mb-2">Conta criada! Entrando... 🎉</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Sua conta foi criada e você já está vinculado à família <strong className="text-foreground">{familia?.nome}</strong>.<br />
-            Confirme seu e-mail para entrar e completar seu perfil.
+            Você já está vinculado à família <strong className="text-foreground">{familia?.nome}</strong>.<br />
+            Redirecionando para o onboarding...
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 text-left space-y-1.5">
-          <p className="text-xs font-black text-foreground">Próximos passos:</p>
-          <p className="text-xs text-muted-foreground">📧 Confirme seu e-mail <strong>{email}</strong></p>
-          <p className="text-xs text-muted-foreground">🔐 Faça login com a senha que criou</p>
-          <p className="text-xs text-muted-foreground">👤 Complete seu perfil (nome + salário)</p>
-          <p className="text-xs text-muted-foreground">📊 Acesse o dashboard da família</p>
-        </div>
-        <a href={`/verificar-email?email=${encodeURIComponent(email)}`}
-          className="block py-3 rounded-xl font-black text-base text-white text-center"
-          style={{ background: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
-          Ver instruções de confirmação →
-        </a>
-        <a href={`/login?email=${encodeURIComponent(email)}`}
-          className="block text-sm font-bold text-[#5330ff] hover:underline">
-          Já confirmei → Fazer login
-        </a>
+        <Loader2 className="h-6 w-6 animate-spin text-[#5330ff] mx-auto" />
       </div>
     </div>
   );
