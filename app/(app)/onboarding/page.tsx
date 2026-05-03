@@ -3,64 +3,48 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ArrowRight, Loader2, Users, Wallet, CalendarDays,
-         Shield, UserPlus, Copy, Mail, Lock, Eye } from 'lucide-react';
+         UserPlus, Copy, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 type Plano = 'individual' | 'casal';
-
-interface MembroFamilia {
-  email: string;
-  podeVerGeral: boolean;
-  podeVerOutros: boolean;
-  linkGerado?: string;
-}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { perfil, user, reloadPerfil } = useAuth();
   const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState('');
   const isInvitee = user?.user_metadata?.is_invitee || false;
 
-  // Dados do onboarding
-  const [plano, setPlano]         = useState<Plano>('casal');
-  const [nome, setNome]           = useState('');
-  const [salario, setSalario]     = useState('');
+  const [plano, setPlano]             = useState<Plano>('casal');
+  const [nome, setNome]               = useState('');
+  const [salario, setSalario]         = useState('');
   const [salParceiro, setSalParceiro] = useState('');
-  const [fixas, setFixas]         = useState([{ descricao: '', valor: '' }]);
+  const [fixas, setFixas]             = useState([{ descricao: '', valor: '' }]);
   const [emailParceiro, setEmailParceiro] = useState('');
   const [linkConvite, setLinkConvite] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
-  const [membros, setMembros]     = useState<MembroFamilia[]>([{ email: '', podeVerGeral: true, podeVerOutros: true }]);
-  const [linksGerados, setLinksGerados] = useState<{email: string; url: string}[]>([]);
-  const [privacidade, setPrivacidade] = useState('aberta');
-  const [limite, setLimite] = useState('');
-
-  // Passo atual
-  const [passo, setPasso] = useState(0);
+  const [passo, setPasso]             = useState(0);
 
   useEffect(() => {
     if (perfil) {
       setNome(perfil.nome ?? '');
-      // BUG-06: fallback para user_metadata.plano caso perfil.plano ainda seja null
-      const planoPerfil = (perfil.plano as Plano) ?? (user?.user_metadata?.plano as Plano) ?? 'individual';
-      setPlano(planoPerfil);
+      const p = (perfil.plano as Plano) ?? (user?.user_metadata?.plano as Plano) ?? 'casal';
+      setPlano(p === 'familia' ? 'casal' : p); // fallback família → casal
     } else if (user?.user_metadata?.plano) {
-      setPlano(user.user_metadata.plano as Plano);
+      const p = user.user_metadata.plano as Plano;
+      setPlano(p === 'familia' ? 'casal' : p);
     }
   }, [perfil, user]);
 
-  // Passos por perfil
   const passos = {
-    individual: ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'pronto'],
-    casal:      ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'convite', 'pronto'],
-    familia:    ['boasvindas', 'plano', 'perfil', 'fixas', 'limite', 'privacidade', 'convites', 'pronto'],
-    convidado:  ['boasvindas', 'perfil', 'pronto']
+    individual: ['plano', 'perfil', 'fixas', 'pronto'],
+    casal:      ['plano', 'perfil', 'fixas', 'convite', 'pronto'],
+    convidado:  ['perfil', 'pronto'],
   };
 
-  const etapas = passos[isInvitee ? 'convidado' : plano];
+  const etapas    = passos[isInvitee ? 'convidado' : plano];
   const etapaAtual = etapas[passo];
-  const isUltimo = passo === etapas.length - 1;
-  const totalPassos = etapas.length - 1; // sem contar 'pronto'
+  const totalPassos = etapas.length - 1;
 
   async function gerarLinkConvite(email: string): Promise<string> {
     const res = await fetch('/api/convite', {
@@ -74,90 +58,78 @@ export default function OnboardingPage() {
   }
 
   async function avancar() {
-    // Salvar ao sair do passo 'perfil'
+    setErroSalvar('');
+
     if (etapaAtual === 'perfil') {
+      if (!nome.trim()) { setErroSalvar('Por favor, preencha seu nome.'); return; }
       setSalvando(true);
-      await fetch('/api/onboarding', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome, salario: parseFloat(salario) || 0,
-          salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
-          plano: isInvitee ? undefined : plano, 
-          is_master: !isInvitee,
-        }),
-      });
-      // Recarregar perfil para o header mostrar o nome correto
-      await reloadPerfil?.();
+      try {
+        const res = await fetch('/api/onboarding', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome,
+            salario: parseFloat(salario) || 0,
+            salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
+            plano: isInvitee ? undefined : plano,
+            is_master: !isInvitee,
+          }),
+        });
+        if (!res.ok) throw new Error('Erro ao salvar perfil');
+        await reloadPerfil?.();
+      } catch {
+        setErroSalvar('Erro ao salvar. Tente novamente.');
+        setSalvando(false);
+        return;
+      }
       setSalvando(false);
     }
 
-    // Salvar fixas ao sair do passo 'fixas'
     if (etapaAtual === 'fixas') {
-      const contasFixas = fixas
-        .filter(f => f.descricao && parseFloat(f.valor) > 0)
-        .map(f => ({ id: Date.now().toString() + Math.random(), descricao: f.descricao, valor: parseFloat(f.valor), categoria: 'Outros' }));
       setSalvando(true);
-      await fetch('/api/onboarding', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome,
-          salario: parseFloat(salario) || 0,
-          salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
-          contas_fixas: contasFixas,
-          plano: isInvitee ? undefined : plano,
-          is_master: !isInvitee,
-        }),
-      });
-      await reloadPerfil?.();
+      try {
+        const contasFixas = fixas
+          .filter(f => f.descricao && parseFloat(f.valor) > 0)
+          .map(f => ({
+            id: Date.now().toString() + Math.random(),
+            descricao: f.descricao,
+            valor: parseFloat(f.valor),
+            categoria: 'Outros',
+          }));
+        const res = await fetch('/api/onboarding', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome,
+            salario: parseFloat(salario) || 0,
+            salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
+            contas_fixas: contasFixas,
+            plano: isInvitee ? undefined : plano,
+            is_master: !isInvitee,
+          }),
+        });
+        if (!res.ok) throw new Error('Erro ao salvar fixas');
+        await reloadPerfil?.();
+      } catch {
+        setErroSalvar('Erro ao salvar. Tente novamente.');
+        setSalvando(false);
+        return;
+      }
       setSalvando(false);
     }
 
-    // Salvar modo de privacidade Família
-    if (etapaAtual === 'privacidade') {
-      setSalvando(true);
-      await fetch('/api/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_master: true, privacidade }),
-      });
-      setSalvando(false);
-    }
-
-    // Gerar link de convite para casal
     if (etapaAtual === 'convite' && emailParceiro && !linkConvite) {
       setSalvando(true);
-      const url = await gerarLinkConvite(emailParceiro);
-      setLinkConvite(url);
-      setSalvando(false);
-      return; // ficar na tela para mostrar o link
-    }
-
-    // Gerar links para família
-    if (etapaAtual === 'convites') {
-      setSalvando(true);
-      const links: {email: string; url: string}[] = [];
-      for (const m of membros.filter(m => m.email)) {
-        const url = await gerarLinkConvite(m.email);
-        links.push({ email: m.email, url });
+      try {
+        const url = await gerarLinkConvite(emailParceiro);
+        setLinkConvite(url);
+      } catch {
+        setErroSalvar('Erro ao gerar link. Tente novamente.');
       }
-      setLinksGerados(links);
       setSalvando(false);
-      if (links.length > 0) return;
-    }
-
-    if (etapaAtual === 'limite' && limite) {
-      setSalvando(true);
-      await fetch('/api/limite', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ perfil: 'leticia', limite: Number(limite.replace(/\D/g, '')) }),
-      });
-      setSalvando(false);
+      return;
     }
 
     if (etapaAtual === 'pronto') {
@@ -168,18 +140,6 @@ export default function OnboardingPage() {
     setPasso(p => p + 1);
   }
 
-  function copiarLink(link: string, idx?: number) {
-    navigator.clipboard.writeText(link);
-    setLinkCopiado(true);
-    setTimeout(() => setLinkCopiado(false), 2000);
-  }
-
-  const fmt = (v: string) => {
-    const n = parseFloat(v);
-    return isNaN(n) ? '' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-  };
-
-  // ── Render ────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
@@ -206,50 +166,6 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── PASSO: BOAS-VINDAS BETA ── */}
-        {etapaAtual === 'boasvindas' && (
-          <div className="bg-card border border-border rounded-2xl p-8 space-y-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#5330ff] flex items-center justify-center mx-auto font-black text-white text-3xl">F</div>
-            <div>
-              <h2 className="text-2xl font-black text-foreground mb-2">Bem-vinda ao Finexa! 🎉</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Você foi selecionada para testar o <strong className="text-foreground">Finexa Beta</strong> uma plataforma de controle financeiro inteligente pessoal ou para o casal. Sem planilha. Sem complicação.
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 text-left space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-[#5330ff]">Como você pode ajudar</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Use o app e me conte o que funcionou, o que travou e o que poderia ser melhor. Seu feedback é essencial para que eu possa melhorar.
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-[#ffa857]/8 border border-[#ffa857]/20 text-left space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-[#ffa857]">Contribuição voluntária</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Para ajudar a manter o app e financiar melhorias, aceito contribuições simbólicas de <strong className="text-foreground">R$20/mês via Pix</strong>.
-              </p>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
-                <div className="text-2xl">📱</div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Chave Pix</p>
-                  <p className="text-sm font-black text-foreground select-all">(11) 99245-6210</p>
-                </div>
-                <button
-                  onClick={() => { navigator.clipboard.writeText('11992456210'); }}
-                  className="ml-auto px-3 py-1.5 rounded-lg text-xs font-bold bg-[#ffa857] text-black">
-                  Copiar
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground italic">Totalmente opcional | Acesso é gratuito durante o beta teste.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-[#01b695]/8 border border-[#01b695]/20 text-left space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-[#01b695]">Encontrou um bug?</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Use o botão roxo flutuante no canto inferior da tela para enviar feedback a qualquer momento. Todo relato me ajuda!
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* ── PASSO: PLANO ── */}
         {etapaAtual === 'plano' && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
@@ -259,7 +175,6 @@ export default function OnboardingPage() {
               {([
                 { id: 'individual', label: 'Individual', desc: '1 pessoa · Controle pessoal', cor: '#01b695' },
                 { id: 'casal',      label: 'Casal',      desc: '2 pessoas · Divisão proporcional', cor: '#5330ff' },
-                { id: 'familia',    label: 'Família',    desc: 'Até 4 pessoas · Visão consolidada', cor: '#ffa857' },
               ] as const).map(p => (
                 <button key={p.id} onClick={() => setPlano(p.id)}
                   className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all"
@@ -277,6 +192,17 @@ export default function OnboardingPage() {
                   {plano === p.id && <Check className="h-4 w-4" style={{ color: p.cor }} />}
                 </button>
               ))}
+              {/* Família — em breve */}
+              <div className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-dashed opacity-50 cursor-not-allowed"
+                style={{ borderColor: 'var(--border)' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#ffa857]/20">
+                  <Users className="h-5 w-5 text-[#ffa857]" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-foreground">Família <span className="text-[10px] font-bold bg-[#ffa857]/20 text-[#ffa857] px-1.5 py-0.5 rounded-full ml-1">Em breve</span></p>
+                  <p className="text-xs text-muted-foreground">Até 4 pessoas · Visão consolidada</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -310,7 +236,7 @@ export default function OnboardingPage() {
                   <input type="number" value={salParceiro} onChange={e => setSalParceiro(e.target.value)} placeholder="0"
                     className="flex-1 bg-transparent text-foreground focus:outline-none" />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">Usado para divisão proporcional. O cônjuge/parceiro(a) confirma o valor no próprio onboarding.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Usado para divisão proporcional.</p>
               </div>
             )}
           </div>
@@ -321,7 +247,7 @@ export default function OnboardingPage() {
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <div>
               <h2 className="text-lg font-black text-foreground">Contas fixas mensais</h2>
-              <p className="text-sm text-muted-foreground mt-1">Aluguel, condomínio, internet... Pode pular e adicionar depois na aba Planejamento.</p>
+              <p className="text-sm text-muted-foreground mt-1">Aluguel, condomínio, internet... Pode pular e adicionar depois em Configurações.</p>
             </div>
             <div className="space-y-2">
               {fixas.map((f, i) => (
@@ -350,7 +276,6 @@ export default function OnboardingPage() {
             <p className="text-sm text-muted-foreground">
               {linkConvite ? 'Link gerado! Compartilhe com seu cônjuge/parceiro(a).' : 'Digite o email para gerar o link de acesso.'}
             </p>
-
             {!linkConvite ? (
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Email do cônjuge/parceiro(a)</label>
@@ -365,7 +290,7 @@ export default function OnboardingPage() {
                   <p className="text-xs text-muted-foreground break-all">{linkConvite}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => copiarLink(linkConvite)}
+                  <button onClick={() => { navigator.clipboard.writeText(linkConvite); setLinkCopiado(true); setTimeout(() => setLinkCopiado(false), 2000); }}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-bold transition-all"
                     style={linkCopiado ? { background: '#1D9E75', color: 'white', borderColor: '#1D9E75' } : {}}>
                     <Copy className="h-4 w-4" />
@@ -378,98 +303,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
             )}
-
-            <p className="text-[10px] text-muted-foreground">Pode pular e convidar depois na aba Planejamento.</p>
-          </div>
-        )}
-
-        {/* ── PASSO: PRIVACIDADE FAMÍLIA ── */}
-        {etapaAtual === 'privacidade' && (
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-[#ffa857]" />
-              <h2 className="text-lg font-black text-foreground">Configurar privacidade</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Como mestre da família você decide o que cada membro pode ver. Pode alterar depois.
-            </p>
-            <div className="space-y-3">
-              {([
-                { id: 'aberta', label: 'Família aberta', desc: 'Todos veem tudo', icon: Eye, cor: '#01b695' },
-                { id: 'restrita', label: 'Família restrita', desc: 'Cada um vê só o próprio dashboard', icon: Lock, cor: '#ffa857' },
-                { id: 'personalizada', label: 'Personalizado', desc: 'Você define quem vê o quê', icon: Shield, cor: '#5330ff' },
-              ] as const).map(op => {
-                const Icon = op.icon;
-                return (
-                  <button key={op.id} className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all hover:border-[#5330ff]/40"
-                    style={{ borderColor: privacidade === op.id ? op.cor : 'var(--border)', background: privacidade === op.id ? `${op.cor}12` : 'transparent' }}
-                    onClick={() => setPrivacidade(op.id)}>
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${op.cor}20` }}>
-                      <Icon className="h-4 w-4" style={{ color: op.cor }} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{op.label}</p>
-                      <p className="text-xs text-muted-foreground">{op.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[10px] text-muted-foreground">A configuração detalhada fica disponível na aba Planejamento após o onboarding.</p>
-          </div>
-        )}
-
-        {/* ── PASSO: CONVITES FAMÍLIA ── */}
-        {etapaAtual === 'convites' && (
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-[#ffa857]" />
-              <h2 className="text-lg font-black text-foreground">Convidar membros</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {linksGerados.length > 0 ? 'Links gerados! Compartilhe com cada membro.' : 'Adicione os emails dos membros da família.'}
-            </p>
-
-            {linksGerados.length === 0 ? (
-              <>
-                <div className="space-y-2">
-                  {membros.map((m, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <input type="email" placeholder={`Membro ${i + 1} — email`} value={m.email}
-                        onChange={e => setMembros(prev => prev.map((x, idx) => idx === i ? { ...x, email: e.target.value } : x))}
-                        className="flex-1 bg-background border-2 border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#ffa857] transition-colors" />
-                    </div>
-                  ))}
-                </div>
-                {membros.length < 3 && (
-                  <button onClick={() => setMembros(prev => [...prev, { email: '', podeVerGeral: true, podeVerOutros: true }])}
-                    className="text-xs text-[#ffa857] font-bold hover:underline">+ Adicionar outro membro</button>
-                )}
-              </>
-            ) : (
-              <div className="space-y-3">
-                {linksGerados.map((item, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[#1D9E75]/10 border border-[#1D9E75]/20 space-y-2">
-                    <p className="text-xs font-bold text-[#1D9E75]">✓ {item.email}</p>
-                    <p className="text-[10px] text-muted-foreground break-all bg-secondary/50 rounded-lg px-2 py-1.5 select-all">
-                      {item.url}
-                    </p>
-                    <div className="flex gap-2">
-                      <button onClick={() => { navigator.clipboard.writeText(item.url); setLinkCopiado(true); setTimeout(() => setLinkCopiado(false), 2000); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-border hover:bg-secondary transition-colors"
-                        style={linkCopiado ? { background: '#1D9E75', color: 'white', borderColor: '#1D9E75' } : {}}>
-                        <Copy className="h-3 w-3" />{linkCopiado ? 'Copiado!' : 'Copiar'}
-                      </button>
-                      <a href={`mailto:${item.email}?subject=Convite%20Finexa&body=Acesse%20o%20link%20para%20entrar%20no%20Finexa:%20${encodeURIComponent(item.url)}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#5330ff] text-white">
-                        <Mail className="h-3 w-3" />Email
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <p className="text-[10px] text-muted-foreground">Pode pular e convidar depois em Configurações.</p>
           </div>
         )}
 
@@ -480,9 +314,7 @@ export default function OnboardingPage() {
               <Check className="h-8 w-8 text-[#1D9E75]" />
             </div>
             <h2 className="text-2xl font-black text-foreground">Tudo pronto, {nome}! 🎉</h2>
-            <p className="text-sm text-muted-foreground">
-              Sua conta está configurada. Vamos para o dashboard!
-            </p>
+            <p className="text-sm text-muted-foreground">Sua conta está configurada. Vamos para o dashboard!</p>
             <div className="p-3 rounded-xl bg-[#5330ff]/8 border border-[#5330ff]/20 text-left space-y-1.5">
               <p className="text-xs font-bold text-foreground">O que você pode fazer agora:</p>
               {[
@@ -497,6 +329,13 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Erro */}
+        {erroSalvar && (
+          <div className="px-4 py-3 rounded-xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 text-sm font-bold text-red-600 dark:text-red-400">
+            {erroSalvar}
+          </div>
+        )}
+
         {/* Botões de navegação */}
         <div className="flex gap-3">
           {passo > 0 && etapaAtual !== 'pronto' && (
@@ -507,30 +346,19 @@ export default function OnboardingPage() {
           )}
           <button onClick={avancar} disabled={salvando}
             className="flex-1 py-3 rounded-xl font-black text-base text-white flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-            style={{ background: plano === 'familia' ? '#ffa857' : '#5330ff', boxShadow: `4px 4px 0 ${plano === 'familia' ? '#ffa85760' : '#82a1fd60'}` }}>
+            style={{ background: '#5330ff', boxShadow: '4px 4px 0 #82a1fd60' }}>
             {salvando ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
             {salvando ? 'Salvando...'
               : etapaAtual === 'pronto' ? 'Ir para o dashboard →'
               : etapaAtual === 'convite' && !linkConvite && emailParceiro ? 'Gerar link de convite'
-              : etapaAtual === 'convites' && linksGerados.length === 0 && membros.some(m => m.email) ? 'Gerar links de convite'
               : 'Próximo'}
             {!salvando && etapaAtual !== 'pronto' && <ArrowRight className="h-4 w-4" />}
           </button>
         </div>
 
         {/* Pular passo */}
-        {['convite', 'convites', 'fixas', 'privacidade'].includes(etapaAtual) && (
-          <button onClick={async () => {
-            // BUG-08: Ao pular privacidade, salvar o modo padrão para não deixar null no banco
-            if (etapaAtual === 'privacidade') {
-              await fetch('/api/onboarding', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ is_master: true, privacidade: privacidade || 'aberta' }),
-              });
-            }
-            setPasso(p => p + 1);
-          }}
+        {['convite', 'fixas'].includes(etapaAtual) && (
+          <button onClick={() => setPasso(p => p + 1)}
             className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
             Pular por agora →
           </button>
