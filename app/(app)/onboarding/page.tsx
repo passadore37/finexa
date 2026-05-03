@@ -57,6 +57,37 @@ export default function OnboardingPage() {
     return data.url ?? '';
   }
 
+  async function salvarPlanejamento(contasFixas?: { id: string; descricao: string; valor: number; categoria: string }[]) {
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome,
+        salario: parseFloat(salario) || 0,
+        salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
+        contas_fixas: contasFixas,
+        plano: isInvitee ? undefined : plano,
+        is_master: !isInvitee,
+      }),
+    });
+    if (!res.ok) throw new Error('Erro ao salvar');
+    reloadPerfil?.().catch(() => {});
+  }
+
+  async function pularFixas() {
+    // Ao pular a etapa de fixas, ainda salva o salário preenchido na etapa anterior
+    setSalvando(true);
+    try {
+      await salvarPlanejamento([]);
+    } catch {
+      // Falha silenciosa no pulo — o dado de salário pode já ter sido salvo na etapa 'perfil'
+    } finally {
+      setSalvando(false);
+    }
+    setPasso(p => p + 1);
+  }
+
   async function avancar() {
     setErroSalvar('');
 
@@ -64,26 +95,13 @@ export default function OnboardingPage() {
       if (!nome.trim()) { setErroSalvar('Por favor, preencha seu nome.'); return; }
       setSalvando(true);
       try {
-        const res = await fetch('/api/onboarding', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome,
-            salario: parseFloat(salario) || 0,
-            salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
-            plano: isInvitee ? undefined : plano,
-            is_master: !isInvitee,
-          }),
-        });
-        if (!res.ok) throw new Error('Erro ao salvar perfil');
-        // reloadPerfil sem await — não bloquear a navegação
-        reloadPerfil?.().catch(() => {});
+        await salvarPlanejamento();
       } catch {
         setErroSalvar('Erro ao salvar. Tente novamente.');
-      } finally {
         setSalvando(false);
+        return;
       }
+      setSalvando(false);
     }
 
     if (etapaAtual === 'fixas') {
@@ -97,26 +115,13 @@ export default function OnboardingPage() {
             valor: parseFloat(f.valor),
             categoria: 'Outros',
           }));
-        const res = await fetch('/api/onboarding', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome,
-            salario: parseFloat(salario) || 0,
-            salario_parceiro: isInvitee ? undefined : parseFloat(salParceiro) || 0,
-            contas_fixas: contasFixas,
-            plano: isInvitee ? undefined : plano,
-            is_master: !isInvitee,
-          }),
-        });
-        if (!res.ok) throw new Error('Erro ao salvar fixas');
-        reloadPerfil?.().catch(() => {});
+        await salvarPlanejamento(contasFixas);
       } catch {
         setErroSalvar('Erro ao salvar. Tente novamente.');
-      } finally {
         setSalvando(false);
+        return;
       }
+      setSalvando(false);
     }
 
     if (etapaAtual === 'convite' && emailParceiro && !linkConvite) {
@@ -398,8 +403,10 @@ export default function OnboardingPage() {
 
         {/* Pular passo */}
         {['convite', 'fixas'].includes(etapaAtual) && (
-          <button onClick={() => setPasso(p => p + 1)}
-            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={etapaAtual === 'fixas' ? pularFixas : () => setPasso(p => p + 1)}
+            disabled={salvando}
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
             Pular por agora →
           </button>
         )}
