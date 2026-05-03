@@ -1,23 +1,75 @@
-import { NextResponse } from 'next/server';
-import { authGuard } from '@/lib/auth-guard';
-import { createClient } from '@supabase/supabase-js';
+// hooks/use-membros.ts — carrega membros reais da família do banco
+'use client';
 
-function getAdmin() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+import { useState, useEffect } from 'react';
+import { CORES_PERFIL } from '@/lib/perfil-config';
+
+export interface Membro {
+  id: string;
+  nome: string;
+  role: string;
+  cor: string;
+  corSecundaria: string;
+  corBg: string;
 }
 
-export async function GET(req: Request) {
-  const { family_id, error } = await authGuard(req);
-  if (error) return error;
-  try {
-    const { data, error: err } = await getAdmin()
-      .from('perfis')
-      .select('id, nome, role, email')
-      .eq('family_id', family_id)
-      .order('criado_em', { ascending: true });
-    if (err) throw err;
-    return NextResponse.json({ success: true, data: data || [] });
-  } catch {
-    return NextResponse.json({ success: false, error: 'Erro ao buscar perfis' }, { status: 500 });
+export interface MembrosContexto {
+  membros: Membro[];
+  carregando: boolean;
+  // Perfil "Geral" sempre disponível no casal/família
+  temGeral: boolean;
+  // Encontrar membro pelo role
+  getMembro: (role: string) => Membro | undefined;
+  // Cor de qualquer perfil — inclui 'casal'/'geral'
+  getCorPerfil: (role: string) => string;
+  getNomePerfil: (role: string) => string;
+}
+
+export function useMembros(): MembrosContexto {
+  const [membros, setMembros] = useState<Membro[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/perfis')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const lista = (data.data as any[]).map((p, i) => {
+            // Preferir cor salva no banco; fallback para CORES_PERFIL por índice
+            const corBase = p.cor || CORES_PERFIL[i % CORES_PERFIL.length].cor;
+            // Derivar corSecundaria e corBg da cor base ou do preset
+            const preset = CORES_PERFIL.find(c => c.cor === corBase) ?? CORES_PERFIL[i % CORES_PERFIL.length];
+            return {
+              id:            p.id,
+              nome:          p.nome,
+              role:          p.role,
+              cor:           corBase,
+              corSecundaria: preset.corSecundaria,
+              corBg:         preset.corBg,
+            };
+          });
+          setMembros(lista);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCarregando(false));
+  }, []);
+
+  const temGeral = membros.length > 1;
+
+  function getMembro(role: string) {
+    return membros.find(m => m.role === role);
   }
+
+  function getCorPerfil(role: string): string {
+    if (role === 'casal' || role === 'geral') return '#ffa857';
+    return getMembro(role)?.cor ?? '#82a1fd';
+  }
+
+  function getNomePerfil(role: string): string {
+    if (role === 'casal' || role === 'geral') return 'Geral';
+    return getMembro(role)?.nome ?? role;
+  }
+
+  return { membros, carregando, temGeral, getMembro, getCorPerfil, getNomePerfil };
 }

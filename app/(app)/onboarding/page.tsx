@@ -21,6 +21,7 @@ export default function OnboardingPage() {
   const [salParceiro, setSalParceiro] = useState('');
   const [fixas, setFixas]             = useState([{ descricao: '', valor: '' }]);
   const [emailParceiro, setEmailParceiro] = useState('');
+  const [corEscolhida, setCorEscolhida]     = useState('#82a1fd');
   const [linkConvite, setLinkConvite] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [pixCopiado, setPixCopiado] = useState(false);
@@ -56,6 +57,15 @@ export default function OnboardingPage() {
     });
     const data = await res.json();
     return data.url ?? '';
+  }
+
+  async function salvarCor() {
+    if (!corEscolhida) return;
+    await fetch('/api/perfis/cor', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cor: corEscolhida }),
+    }).catch(() => {});
   }
 
   async function salvarPlanejamento(contasFixas?: { id: string; descricao: string; valor: number; categoria: string }[]) {
@@ -96,7 +106,7 @@ export default function OnboardingPage() {
       if (!nome.trim()) { setErroSalvar('Por favor, preencha seu nome.'); return; }
       setSalvando(true);
       try {
-        await salvarPlanejamento();
+        await Promise.all([salvarPlanejamento(), salvarCor()]);
       } catch {
         setErroSalvar('Erro ao salvar. Tente novamente.');
         setSalvando(false);
@@ -281,6 +291,23 @@ export default function OnboardingPage() {
               <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Como quer ser chamado(a)?</label>
               <input type="text" value={nome} onChange={e => setNome(e.target.value)} placeholder="Seu nome"
                 className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-[#5330ff] transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Sua cor no menu</label>
+              <div className="flex gap-2">
+                {([['#82a1fd','Azul'],['#ff64ca','Rosa'],['#01b695','Verde'],['#ffa857','Laranja']] as [string,string][]).map(([cor, label]) => (
+                  <button key={cor} type="button" onClick={() => setCorEscolhida(cor)}
+                    title={label}
+                    className="w-9 h-9 rounded-full border-4 transition-all"
+                    style={{
+                      background: cor,
+                      borderColor: corEscolhida === cor ? '#fff' : cor,
+                      boxShadow: corEscolhida === cor ? `0 0 0 3px ${cor}` : 'none',
+                      transform: corEscolhida === cor ? 'scale(1.15)' : 'scale(1)',
+                    }} />
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">Aparece no botão do seu perfil no dashboard.</p>
             </div>
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">

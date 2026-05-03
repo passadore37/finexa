@@ -34,14 +34,20 @@ export function useMembros(): MembrosContexto {
       .then(r => r.json())
       .then(data => {
         if (data.success && data.data) {
-          const lista = (data.data as any[]).map((p, i) => ({
-            id:           p.id,
-            nome:         p.nome,
-            role:         p.role,
-            cor:          CORES_PERFIL[i % CORES_PERFIL.length].cor,
-            corSecundaria: CORES_PERFIL[i % CORES_PERFIL.length].corSecundaria,
-            corBg:        CORES_PERFIL[i % CORES_PERFIL.length].corBg,
-          }));
+          const lista = (data.data as any[]).map((p, i) => {
+            // Preferir cor salva no banco; fallback para CORES_PERFIL por índice
+            const corBase = p.cor || CORES_PERFIL[i % CORES_PERFIL.length].cor;
+            // Derivar corSecundaria e corBg da cor base ou do preset
+            const preset = CORES_PERFIL.find(c => c.cor === corBase) ?? CORES_PERFIL[i % CORES_PERFIL.length];
+            return {
+              id:            p.id,
+              nome:          p.nome,
+              role:          p.role,
+              cor:           corBase,
+              corSecundaria: preset.corSecundaria,
+              corBg:         preset.corBg,
+            };
+          });
           setMembros(lista);
         }
       })
