@@ -118,8 +118,9 @@ export async function POST(req: Request) {
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
       payload.percentual_investimento = 0;
     } else {
-      // Convidado (ou membro não-master): seu salário entra como salario_membro1
-      if (salario !== undefined) payload.salario_membro1 = salario;
+      // Convidado: sobrescreve salario_membro1 com o salário REAL do parceiro
+      // (o master coloca uma estimativa no onboarding dele; aqui entra o valor real)
+      if (salario !== undefined && Number(salario) > 0) payload.salario_membro1 = salario;
       if (reserva_emergencia !== undefined) payload.reserva_emergencia = reserva_emergencia;
     }
 

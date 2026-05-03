@@ -284,7 +284,7 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                {plano === 'individual' ? 'Seu salário' : 'Seu salário mensal'}
+                Seu salário mensal
               </label>
               <div className="flex items-center gap-2 bg-background border-2 border-border rounded-xl px-4 py-3 focus-within:border-[#5330ff] transition-colors">
                 <span className="text-sm text-muted-foreground">R$</span>
@@ -330,7 +330,7 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
-            <button onClick={() => setFixas(prev => [...prev, { descricao: '', valor: '' }])}
+            <button type="button" onClick={() => setFixas(prev => [...prev, { descricao: '', valor: '' }])}
               className="text-xs text-[#5330ff] font-bold hover:underline">+ Adicionar outra</button>
           </div>
         )}
