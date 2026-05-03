@@ -102,16 +102,34 @@ export async function fetchDadosPlanilha(
   const rowsAnt = resAnt.data || [];
   const transacoes: Transacao[] = [...mapRows(rowsMes), ...mapRows(rowsAnt)];
 
-  // Salários sintéticos — usa nomes reais dos membros
+  // Salários sintéticos — injetados sempre que houver salário configurado,
+  // independentemente de existirem transações no mês (fix: novo usuário pós-onboarding)
   const nomeMembro0 = perfisReais[0]?.nome ?? 'Membro 1';
   const nomeMembro1 = perfisReais[1]?.nome ?? 'Membro 2';
-  if (rowsMes.length > 0) {
-    if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
-    if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
-  }
+
+  if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
+  if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
+
+  // Mês anterior — só injeta se havia transações reais (para não distorcer histórico vazio)
   if (rowsAnt.length > 0) {
     if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
     if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
+  }
+
+  // Contas fixas sintéticas — injetadas como transações do mês atual sempre que configuradas,
+  // garantindo que apareçam no dashboard mesmo sem outros lançamentos (fix: novo usuário pós-onboarding)
+  for (const conta of contasFixasConfig) {
+    if (conta.valor > 0) {
+      transacoes.push({
+        id: `fixa-${conta.id ?? conta.descricao}-${mesAlvo}-${anoAlvo}`,
+        data: new Date(anoAlvo, mesAlvo, 5, 12),
+        descricao: conta.descricao,
+        categoria: conta.categoria ?? 'Despesas Fixas',
+        tipo: 'despesa',
+        valor: Number(conta.valor),
+        recorrente: true,
+      });
+    }
   }
 
   return { transacoes, limiteMensal, metaEmergencia: primeiroValido(process.env.META_EMERGENCIA, 30000), orcamentoCategoria: {}, salarioMembro0, salarioMembro1, percentualInvestimento, contasFixasConfig, mesAlvo, anoAlvo };
