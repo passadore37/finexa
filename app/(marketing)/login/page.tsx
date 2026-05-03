@@ -21,8 +21,15 @@ function LoginForm() {
   const [enviandoReset, setEnviandoReset] = useState(false);
 
   useEffect(() => {
-    createClient().auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = redirect;
+    const supabase = createClient();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data: perfil } = await supabase
+        .from('perfis')
+        .select('onboarding_done')
+        .eq('id', session.user.id)
+        .single();
+      window.location.href = perfil?.onboarding_done ? redirect : '/onboarding';
     });
   }, [redirect]);
 
