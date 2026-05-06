@@ -8,7 +8,15 @@ export function useUsuarioContext() {
 
   useEffect(() => {
     const saved = localStorage.getItem('finexa_perfil');
-    if (saved) setUsuariaAtiva(saved);
+    // Aceitar apenas roles válidos do sistema atual — limpa valores legados
+    // como 'leticia', 'giovanna' etc que quebravam a seleção de perfil
+    const rolesValidos = ['casal', 'geral', 'master', 'membro', 'membro0', 'membro1'];
+    if (saved && rolesValidos.includes(saved)) {
+      setUsuariaAtiva(saved);
+    } else if (saved) {
+      // Role inválido/legado — limpar e voltar para 'casal'
+      localStorage.removeItem('finexa_perfil');
+    }
     setMounted(true);
   }, []);
 
