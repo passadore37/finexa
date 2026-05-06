@@ -61,7 +61,7 @@ export default function OnboardingPage() {
 
   async function salvarCor() {
     if (!corEscolhida) return;
-    await fetch('/api/perfis/cor', {
+    await fetch('/api/perfis', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cor: corEscolhida }),
