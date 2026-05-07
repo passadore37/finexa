@@ -39,11 +39,17 @@ export async function fetchDadosPlanilha(
   const inicioAnt = new Date(anoAntNum, mesAntNum, 1).toISOString().split('T')[0];
   const fimAnt    = new Date(anoAntNum, mesAntNum + 1, 0).toISOString().split('T')[0];
 
-  const [resMes, resAnt, resPl, resPerfis] = await Promise.all([
+  // Buscar histórico completo para o gráfico de evolução mensal (sem limite de meses)
+  // Início = 12 meses antes do mês alvo para cobrir qualquer janela de visualização
+  const inicioHistorico = new Date(anoAlvo, mesAlvo - 11, 1).toISOString().split('T')[0];
+
+  const [resMes, resAnt, resHistorico, resPl, resPerfis] = await Promise.all([
     getAdmin().from('transacoes').select('*').eq('family_id', family_id)
       .gte('data', inicioMes).lte('data', fimMes).order('data', { ascending: false }),
     getAdmin().from('transacoes').select('*').eq('family_id', family_id)
       .gte('data', inicioAnt).lte('data', fimAnt).order('data', { ascending: false }),
+    getAdmin().from('transacoes').select('*').eq('family_id', family_id)
+      .gte('data', inicioHistorico).lte('data', fimMes).order('data', { ascending: false }),
     getAdmin().from('planejamento').select('*').eq('family_id', family_id)
       .order('updated_at', { ascending: false }).limit(1).single(),
     getAdmin().from('perfis').select('id, nome, role').eq('family_id', family_id)
@@ -98,38 +104,37 @@ export async function fetchDadosPlanilha(
     });
   }
 
-  const rowsMes = resMes.data || [];
-  const rowsAnt = resAnt.data || [];
-  const transacoes: Transacao[] = [...mapRows(rowsMes), ...mapRows(rowsAnt)];
+  const rowsMes       = resMes.data || [];
+  const rowsAnt       = resAnt.data || [];
+  const rowsHistorico = resHistorico.data || [];
 
-  // Salários sintéticos — injetados sempre que houver salário configurado,
-  // independentemente de existirem transações no mês (fix: novo usuário pós-onboarding)
+  // Usar histórico completo (12 meses) como base de transações
+  // Isso garante que o gráfico de Evolução Mensal sempre tenha dados reais de todos os meses
+  const transacoes: Transacao[] = [...mapRows(rowsHistorico)];
+
+  // Injetar salários sintéticos para cada mês do histórico que tenha transações reais
   const nomeMembro0 = perfisReais[0]?.nome ?? 'Membro 1';
   const nomeMembro1 = perfisReais[1]?.nome ?? 'Membro 2';
 
+  // Mês atual — sempre injeta se há salário configurado
   if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
   if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAlvo}-${anoAlvo}`, data: new Date(anoAlvo, mesAlvo, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
 
-  // Mês anterior — só injeta se havia transações reais (para não distorcer histórico vazio)
-  if (rowsAnt.length > 0) {
-    if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
-    if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${mesAntNum}-${anoAntNum}`, data: new Date(anoAntNum, mesAntNum, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
-  }
+  // Meses do histórico — injeta salário em todo mês que tiver transações reais
+  const mesesComDados = new Set(
+    rowsHistorico.map(r => `${new Date(r.data).getFullYear()}-${new Date(r.data).getMonth()}`)
+  );
+  mesesComDados.forEach(chave => {
+    const [a, m] = chave.split('-').map(Number);
+    if (a === anoAlvo && m === mesAlvo) return; // já injetado acima
+    const sfx = `${m}-${a}`;
+    if (salarioMembro0 > 0) transacoes.push({ id: `sal-m0-${sfx}`, data: new Date(a, m, 1, 12), descricao: `Salário ${nomeMembro0}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro0, responsavel: 'membro0', recorrente: true });
+    if (salarioMembro1 > 0) transacoes.push({ id: `sal-m1-${sfx}`, data: new Date(a, m, 1, 12), descricao: `Salário ${nomeMembro1}`, categoria: 'Salário', tipo: 'receita', valor: salarioMembro1, responsavel: 'membro1', recorrente: true });
+  });
 
-  // Contas fixas sintéticas — injetadas como transações do mês atual sempre que configuradas,
-  // garantindo que apareçam no dashboard mesmo sem outros lançamentos (fix: novo usuário pós-onboarding)
-  for (const conta of contasFixasConfig) {
-    if (conta.valor > 0) {
-      transacoes.push({
-        id: `fixa-${conta.id ?? conta.descricao}-${mesAlvo}-${anoAlvo}`,
-        data: new Date(anoAlvo, mesAlvo, 5, 12),
-        descricao: conta.descricao,
-        categoria: conta.categoria ?? 'Despesas Fixas',
-        tipo: 'despesa',
-        valor: Number(conta.valor),
-        recorrente: true,
-      });
-    }
+  // rowsMes ainda é usado para rowsMes.length (controle de mês sem dados)
+  if (rowsMes.length === 0 && salarioMembro0 === 0 && salarioMembro1 === 0) {
+    // Nenhum dado nem salário — não há nada para mostrar
   }
 
   return { transacoes, limiteMensal, metaEmergencia: primeiroValido(process.env.META_EMERGENCIA, 30000), orcamentoCategoria: {}, salarioMembro0, salarioMembro1, percentualInvestimento, contasFixasConfig, mesAlvo, anoAlvo };
