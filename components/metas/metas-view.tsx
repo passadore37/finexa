@@ -6,6 +6,7 @@ import { Plus, Trash2, Check, X as XIcon, Loader2, Target, PiggyBank,
          CalendarDays, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
+import { useMembros } from '@/hooks/use-membros';
 import { PERFIL_CONFIG } from '@/lib/perfil-config';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -365,8 +366,18 @@ function CardMeta({ meta, aportes, perfilAtivo, onAporte, onConcluir, onDeletar 
 
 export function MetasView() {
   const { perfil: perfilAuth } = useAuth();
+  const { membros } = useMembros();
   const plano = perfilAuth?.plano ?? 'casal';
   const perfilAtivo = perfilAuth?.role ?? 'membro0';
+
+  // Nomes e cores reais dos membros da família
+  const nomeMembro0 = membros[0]?.nome ?? 'Membro 1';
+  const nomeMembro1 = membros[1]?.nome ?? 'Membro 2';
+  const corMembro0  = membros[0]?.cor  ?? '#82a1fd';
+  const corMembro1  = membros[1]?.cor  ?? '#ff64ca';
+  // Para plano individual — nome e cor do próprio usuário logado
+  const nomeProrio = perfilAuth?.nome ?? nomeMembro0;
+  const corPropria = membros.find(m => m.role === perfilAtivo)?.cor ?? corMembro0;
 
   const [metas, setMetas] = useState<Meta[]>([]);
   const [aportes, setAportes] = useState<Aporte[]>([]);
@@ -432,11 +443,11 @@ export function MetasView() {
 
   // Perfis a mostrar na reserva
   const perfisReserva = plano === 'individual'
-    ? [{ perfil: perfilAtivo, nome: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.nome ?? perfilAtivo, cor: PERFIL_CONFIG[perfilAtivo as keyof typeof PERFIL_CONFIG]?.cor ?? '#5330ff', fixas: totalFixasConjunto }]
+    ? [{ perfil: 'membro0', nome: nomeProrio, cor: corPropria, fixas: totalFixasConjunto }]
     : [
-        { perfil: 'membro0',  nome: `Membro 1 (${Math.round(propMembro0 * 100)}%)`,  cor: '#82a1fd', fixas: fixasMembro0 },
-        { perfil: 'membro1', nome: `Membro 2 (${Math.round(propMembro1 * 100)}%)`, cor: '#ff64ca', fixas: fixasMembro1 },
-        { perfil: 'casal',    nome: 'Conjunta (total)', cor: '#ffa857', fixas: totalFixasConjunto },
+        { perfil: 'membro0', nome: `${nomeMembro0} (${Math.round(propMembro0 * 100)}%)`, cor: corMembro0, fixas: fixasMembro0 },
+        { perfil: 'membro1', nome: `${nomeMembro1} (${Math.round(propMembro1 * 100)}%)`, cor: corMembro1, fixas: fixasMembro1 },
+        { perfil: 'casal',   nome: 'Conjunta (total)', cor: '#ffa857', fixas: totalFixasConjunto },
       ];
 
   async function salvarReserva(perfil: string, saldo: number) {
