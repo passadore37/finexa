@@ -156,24 +156,83 @@ export function LancarView() {
 
       {/* Categoria */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-[10px] text-muted-foreground uppercase tracking-widest">Categoria</label>
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Categoria</label>
           <button onClick={() => setModalCategoria(true)}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border border-dashed border-border hover:border-primary hover:text-primary transition-colors text-muted-foreground">
+            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground">
             <Plus className="h-3 w-3" /> Nova
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {todasCategorias.map(cat => {
-            const selected = categoria === cat.nome;
-            return (
-              <button key={cat.nome} onClick={() => setCategoria(cat.nome)}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 border"
-                style={selected ? { background: cat.cor, color: getTextSobreCor(cat.cor), borderColor: cat.cor } : { background: `${cat.cor}18`, color: cat.cor, borderColor: `${cat.cor}44` }}
-              >{cat.nome}</button>
-            );
-          })}
-        </div>
+        {/* Grupos de categorias */}
+        {[
+          { grupo: 'Essencial',     icone: '🏠', cats: ['Casa','Moradia','Energia','Gás','Água','Condomínio'] },
+          { grupo: 'Alimentação',   icone: '🍽️', cats: ['Alimentação','Mercado','Gatos','Pets','Farmácia'] },
+          { grupo: 'Transporte',    icone: '🚗', cats: ['Transporte','Carro','Combustível'] },
+          { grupo: 'Bem-estar',     icone: '💪', cats: ['Saúde','Academia','Higiene','Beleza','Cuidados'] },
+          { grupo: 'Estilo de Vida',icone: '✨', cats: ['Lazer','Viagem','Compras','Vestuário','Presentes','Eletrônicos'] },
+          { grupo: 'Finanças',      icone: '💰', cats: ['Investimentos','Dívidas','Impostos','Seguro','Poupança'] },
+          { grupo: 'Outros',        icone: '📦', cats: ['Assinaturas','Educação','Trabalho','Serviços','Outros'] },
+        ].map(({ grupo, icone, cats }) => {
+          const catsDoGrupo = todasCategorias.filter(c => cats.includes(c.nome));
+          if (catsDoGrupo.length === 0) return null;
+          return (
+            <div key={grupo} className="mb-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1.5 flex items-center gap-1">
+                <span>{icone}</span>{grupo}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {catsDoGrupo.map(cat => {
+                  const selected = categoria === cat.nome;
+                  const EMOJIS: Record<string,string> = {
+                    'Alimentação':'🍽️','Mercado':'🛒','Casa':'🏠','Transporte':'🚗','Lazer':'🎉','Saúde':'💊',
+                    'Moradia':'🏘️','Compras':'🛍️','Educação':'📚','Energia':'⚡','Gás':'🔥',
+                    'Gatos':'🐱','Pets':'🐾','Assinaturas':'📱','Vestuário':'👗','Beleza':'💄',
+                    'Higiene':'🧴','Viagem':'✈️','Presentes':'🎁','Eletrônicos':'💻','Serviços':'🔧',
+                    'Impostos':'📋','Dívidas':'💳','Investimentos':'📈','Seguro':'🛡️','Cuidados':'🌿',
+                    'Academia':'🏋️','Trabalho':'💼','Carro':'🚘','Farmácia':'💊','Outros':'📦',
+                  };
+                  return (
+                    <button key={cat.nome} type="button" onClick={() => setCategoria(cat.nome)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border-2"
+                      style={selected
+                        ? { background: cat.cor, color: getTextSobreCor(cat.cor), borderColor: cat.cor, transform: 'scale(1.05)', boxShadow: `0 2px 8px ${cat.cor}60` }
+                        : { background: `${cat.cor}15`, color: cat.cor, borderColor: `${cat.cor}35` }
+                      }>
+                      <span className="text-[11px]">{EMOJIS[cat.nome] ?? '•'}</span>
+                      {cat.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        {/* Categorias customizadas sem grupo */}
+        {(() => {
+          const grupoNomes = ['Casa','Moradia','Energia','Gás','Água','Condomínio','Alimentação','Gatos','Pets','Farmácia','Transporte','Carro','Combustível','Saúde','Academia','Higiene','Beleza','Cuidados','Lazer','Viagem','Compras','Vestuário','Presentes','Eletrônicos','Investimentos','Dívidas','Impostos','Seguro','Poupança','Assinaturas','Educação','Trabalho','Serviços','Outros'];
+          const semGrupo = todasCategorias.filter(c => !grupoNomes.includes(c.nome));
+          if (semGrupo.length === 0) return null;
+          return (
+            <div className="mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1.5">⭐ Minhas categorias</p>
+              <div className="flex flex-wrap gap-1.5">
+                {semGrupo.map(cat => {
+                  const selected = categoria === cat.nome;
+                  return (
+                    <button key={cat.nome} type="button" onClick={() => setCategoria(cat.nome)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border-2"
+                      style={selected
+                        ? { background: cat.cor, color: getTextSobreCor(cat.cor), borderColor: cat.cor, transform: 'scale(1.05)', boxShadow: `0 2px 8px ${cat.cor}60` }
+                        : { background: `${cat.cor}15`, color: cat.cor, borderColor: `${cat.cor}35` }
+                      }>
+                      ⭐ {cat.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Modal nova categoria */}
