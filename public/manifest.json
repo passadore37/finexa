@@ -18,7 +18,19 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lançar",
+      "url": "/lancar",
+      "description": "Lançar nova transação"
+    },
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Ver dashboard"
     }
   ]
 }
