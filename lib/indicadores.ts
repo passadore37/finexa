@@ -36,12 +36,13 @@ export function calcularEvolucaoMensal(
   salarioMembro0 = 0,
   salarioMembro1 = 0,
   categoriaFiltro?: string | null,
+  mesesExibir = 12,  // sem limite hardcoded — padrão 12 para cobrir histórico completo
 ): EvolucaoMensal[] {
   const hoje = new Date();
   const salarios = { membro0: salarioMembro0, membro1: salarioMembro1 };
 
-  return Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
+  return Array.from({ length: mesesExibir }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (mesesExibir - 1 - i), 1);
     const tsMes = filtrarPorMes(ts, d.getMonth(), d.getFullYear());
     const ehAtual = d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
     const label = ehAtual
