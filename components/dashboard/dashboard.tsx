@@ -14,6 +14,7 @@ import { SugestoesPanel } from './sugestoes-panel';
 import { InsightsIAPanel } from './insights-ia-panel';
 import { ParceladasPanel } from './parceladas-panel';
 import { ContasFixasPanel } from './contas-fixas-panel';
+import { PlanejamentoResumoPanel } from './planejamento-resumo-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { OnboardingTutorial } from './onboarding-tutorial';
@@ -87,12 +88,14 @@ export function Dashboard() {
   }, [mutate]);
 
   // Mostrar tutorial para novo usuário (primeiro acesso)
+  // Condição corrigida: mostra se o perfil existe E o tutorial ainda não foi visto
+  // Não depende de onboarding_done — novo usuário chega ao dash com onboarding_done=false
   useEffect(() => {
-    if (perfil?.onboarding_done && !localStorage.getItem('tutorial-visto')) {
+    if (perfil && !localStorage.getItem('finexa_tutorial_visto')) {
       setMostrarTutorial(true);
-      localStorage.setItem('tutorial-visto', 'true');
+      localStorage.setItem('finexa_tutorial_visto', 'true');
     }
-  }, [perfil?.onboarding_done]);
+  }, [perfil?.id]);
 
   const selecionarMesGrafico = (mes: number, ano: number) => navegarMes(mes, ano);
 
@@ -225,6 +228,22 @@ export function Dashboard() {
           <KPICard titulo="Receitas"        valor={receitas}   variacao={indicadores.variacaoReceitas} icone={TrendingUp}  corIcone="text-teal"     corBarra="var(--teal)" />
           <KPICard titulo="Despesas"        valor={despesas}   variacao={indicadores.variacaoDespesas} icone={TrendingDown} corIcone="text-magenta" corBarra="var(--magenta)" />
           <KPICard titulo="Saldo Livre"     valor={saldoLivre} icone={PiggyBank} corIcone="text-primary" corBarra="var(--primary)" descricao={`Sem ${indicadores.metodologia.semanaAtual}/${indicadores.metodologia.semanas.length} · Por dia`} />
+        </div>
+
+        {/* Planejamento Resumo */}
+        <div className="mb-6 sm:mb-8">
+          <PlanejamentoResumoPanel
+            salarioMembro0={dados.salarioMembro0}
+            salarioMembro1={dados.salarioMembro1}
+            percentualInvestimento={dados.percentualInvestimento}
+            limiteMensal={limite}
+            reservaEmergencia={indicadores.metodologia.metaEmergencia}
+            plano={plano as 'individual' | 'casal'}
+            nomesMembros={{ 
+              membro0: perfisVisiveis[0]?.nome ?? 'Membro 1', 
+              membro1: perfisVisiveis[1]?.nome ?? 'Membro 2' 
+            }}
+          />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
