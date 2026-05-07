@@ -14,7 +14,6 @@ import { SugestoesPanel } from './sugestoes-panel';
 import { InsightsIAPanel } from './insights-ia-panel';
 import { ParceladasPanel } from './parceladas-panel';
 import { ContasFixasPanel } from './contas-fixas-panel';
-import { PlanejamentoResumoPanel } from './planejamento-resumo-panel';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { OnboardingTutorial } from './onboarding-tutorial';
@@ -228,22 +227,6 @@ export function Dashboard() {
           <KPICard titulo="Receitas"        valor={receitas}   variacao={indicadores.variacaoReceitas} icone={TrendingUp}  corIcone="text-teal"     corBarra="var(--teal)" />
           <KPICard titulo="Despesas"        valor={despesas}   variacao={indicadores.variacaoDespesas} icone={TrendingDown} corIcone="text-magenta" corBarra="var(--magenta)" />
           <KPICard titulo="Saldo Livre"     valor={saldoLivre} icone={PiggyBank} corIcone="text-primary" corBarra="var(--primary)" descricao={`Sem ${indicadores.metodologia.semanaAtual}/${indicadores.metodologia.semanas.length} · Por dia`} />
-        </div>
-
-        {/* Planejamento Resumo */}
-        <div className="mb-6 sm:mb-8">
-          <PlanejamentoResumoPanel
-            salarioMembro0={dados.salarioMembro0}
-            salarioMembro1={dados.salarioMembro1}
-            percentualInvestimento={dados.percentualInvestimento}
-            limiteMensal={limite}
-            reservaEmergencia={indicadores.metodologia.metaEmergencia}
-            plano={plano as 'individual' | 'casal'}
-            nomesMembros={{ 
-              membro0: perfisVisiveis[0]?.nome ?? 'Membro 1', 
-              membro1: perfisVisiveis[1]?.nome ?? 'Membro 2' 
-            }}
-          />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
