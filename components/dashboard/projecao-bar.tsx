@@ -82,14 +82,14 @@ const projecaoComFixas = projecao + valorFixas;
               Ritmo diário × dias restantes — projeção linear
             </p>
           </div>
-          {!perfilGeral && (
+          {(!perfilGeral || limite === 0) && (
             <Button
               size="sm"
               variant="outline"
               onClick={handleAjustarLimiteClick}
               className="whitespace-nowrap"
             >
-              Ajustar limite
+              {limite === 0 ? 'Definir limite' : 'Ajustar limite'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -225,7 +225,7 @@ const projecaoComFixas = projecao + valorFixas;
                 ? overflow
                   ? `+${fmt(projecao - limite)} acima do limite`
                   : `${fmt(limite - projecao)} abaixo do limite`
-                : 'Defina um limite'}
+                : <button onClick={handleAjustarLimiteClick} className="underline text-primary font-bold">Definir limite</button>}
             </p>
           </div>
         </div>
