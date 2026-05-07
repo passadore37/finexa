@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase';
 import { Loader2, AlertTriangle, Eye, EyeOff, ArrowLeft, ArrowRight, Check, User, Users } from 'lucide-react';
 
 const PLANOS = [
@@ -105,6 +106,17 @@ export default function BetaPage() {
           body: JSON.stringify({ token, family_id: data.family_id }),
         });
       }
+
+      // Login automático — sem isso o authGuard rejeita as chamadas do onboarding
+      const supabase = createClient();
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (loginErr) {
+        setErro('Conta criada! Tente fazer login manualmente.');
+        return;
+      }
+
+      // Aguardar sessão ser persistida nos cookies
+      await new Promise(r => setTimeout(r, 800));
 
       // Avançar para onboarding
       setEtapa('onboarding');
