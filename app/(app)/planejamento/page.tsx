@@ -1,5 +1,5 @@
-import { PlanejamentoView } from '@/components/planejamento/planejamento-view';
+import { redirect } from 'next/navigation';
 
 export default function PlanejamentoPage() {
-  return <PlanejamentoView />;
+  redirect('/dashboard');
 }

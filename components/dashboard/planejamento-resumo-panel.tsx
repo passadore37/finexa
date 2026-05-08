@@ -56,7 +56,7 @@ export function PlanejamentoResumoPanel({
               </p>
             </div>
           </div>
-          <Link href="/planejamento">
+          <Link href="/dashboard">
             <Button className="w-full gap-2">
               <Edit2 className="h-4 w-4" />
               Configurar Agora
@@ -74,7 +74,7 @@ export function PlanejamentoResumoPanel({
           <BarChart3 className="h-4 w-4" />
           Planejamento
         </CardTitle>
-        <Link href="/planejamento">
+        <Link href="/dashboard">
           <Button 
             variant="ghost" 
             size="sm"
