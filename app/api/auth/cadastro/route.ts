@@ -1,5 +1,4 @@
 // app/api/auth/cadastro/route.ts
-// Cria usuário no Supabase Auth + perfil na tabela `perfis` imediatamente.
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -16,18 +15,24 @@ export async function POST(req: Request) {
 
     if (!email || !senha || !nome || !plano)
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
+
+    // Validação de senha robusta
     if (senha.length < 8)
       return NextResponse.json({ error: 'Senha deve ter pelo menos 8 caracteres' }, { status: 400 });
 
+    const temNumero = /\d/.test(senha);
+    const temLetra  = /[a-zA-Z]/.test(senha);
+    if (!temNumero || !temLetra)
+      return NextResponse.json({ error: 'Senha deve conter letras e números' }, { status: 400 });
+
     const admin = getAdmin();
 
-    // FIX #12 — email_confirm: false exige que o usuário confirme o e-mail real
-    // FIX #13 — em caso de e-mail duplicado, retornar mesma resposta de sucesso
-    //           para evitar user enumeration (descoberta de e-mails cadastrados)
+    // FIX #12 — email_confirm: false exige confirmação real via e-mail
+    // FIX #13 — resposta genérica para e-mail duplicado (evita user enumeration)
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: senha,
-      email_confirm: false, // exige confirmação real via e-mail
+      email_confirm: false,
       user_metadata: {
         nome,
         plano,
@@ -37,14 +42,11 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      // FIX #13 — não diferenciar "e-mail já cadastrado" de outros erros
-      // Retornar resposta genérica para impedir user enumeration
       if (
         error.message.includes('already registered') ||
         error.message.includes('already been registered')
       ) {
-        // Retornar sucesso falso — o fluxo de "verificar e-mail" cobrirá o caso
-        // O usuário existente receberá um e-mail de "tentativa de cadastro" se configurado
+        // Retornar sucesso falso para impedir user enumeration
         return NextResponse.json({ success: true, user_id: null });
       }
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 400 });
