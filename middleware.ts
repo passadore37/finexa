@@ -42,6 +42,11 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const session = user ? { user } : null;
 
+  // Redirecionar /planejamento para /dashboard (aba removida) — antes de qualquer outra checagem
+  if (pathname.startsWith('/planejamento')) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
   const isAppRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/lancar') ||
                      pathname.startsWith('/metas')      || pathname.startsWith('/onboarding');
 
@@ -51,11 +56,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/login?redirect=' + pathname, req.url));
     }
     return res;
-  }
-
-  // Redirecionar /planejamento para /dashboard (aba removida)
-  if (pathname.startsWith('/planejamento')) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // Página raiz sempre livre
