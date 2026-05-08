@@ -1,7 +1,5 @@
 // app/api/auth/cadastro/route.ts
 // Cria usuário no Supabase Auth + perfil na tabela `perfis` imediatamente.
-// Isso garante diferenciação de perfis no banco desde o momento do cadastro,
-// sem depender do onboarding para criar o registro.
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -23,11 +21,13 @@ export async function POST(req: Request) {
 
     const admin = getAdmin();
 
-    // 1. Criar usuário no Supabase Auth já confirmado
+    // FIX #12 — email_confirm: false exige que o usuário confirme o e-mail real
+    // FIX #13 — em caso de e-mail duplicado, retornar mesma resposta de sucesso
+    //           para evitar user enumeration (descoberta de e-mails cadastrados)
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: senha,
-      email_confirm: true,
+      email_confirm: false, // exige confirmação real via e-mail
       user_metadata: {
         nome,
         plano,
@@ -37,8 +37,16 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      if (error.message.includes('already registered') || error.message.includes('already been registered'))
-        return NextResponse.json({ error: 'Este e-mail já está cadastrado.' }, { status: 409 });
+      // FIX #13 — não diferenciar "e-mail já cadastrado" de outros erros
+      // Retornar resposta genérica para impedir user enumeration
+      if (
+        error.message.includes('already registered') ||
+        error.message.includes('already been registered')
+      ) {
+        // Retornar sucesso falso — o fluxo de "verificar e-mail" cobrirá o caso
+        // O usuário existente receberá um e-mail de "tentativa de cadastro" se configurado
+        return NextResponse.json({ success: true, user_id: null });
+      }
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 400 });
     }
 
@@ -46,8 +54,7 @@ export async function POST(req: Request) {
     if (!userId)
       return NextResponse.json({ error: 'Erro ao obter ID do usuário.' }, { status: 500 });
 
-    // 2. Criar família para usuários master (não convidados)
-    //    Convidados serão vinculados à família existente via /api/convite (PATCH)
+    // Criar família para usuários master (não convidados)
     let familyId: string | null = null;
 
     if (!is_invitee) {
@@ -63,20 +70,13 @@ export async function POST(req: Request) {
         .single();
 
       if (familiaErr) {
-        // Não bloquear o cadastro por falha de família — onboarding vai recriar
         console.error('[cadastro] Erro ao criar família:', familiaErr.message);
       } else {
         familyId = novaFamilia?.id ?? null;
       }
     }
 
-    // 3. Criar perfil na tabela `perfis` imediatamente
-    //    Isso garante que cada usuário tenha um registro identificável no banco
-    //    desde o momento do cadastro, possibilitando diferenciação por:
-    //    - role: 'master' (criador) ou 'membro' (convidado)
-    //    - is_master: boolean
-    //    - family_id: vínculo com a família (null para convidados até aceitar convite)
-    //    - onboarding_done: false até completar o fluxo de onboarding
+    // Criar perfil na tabela `perfis`
     const { error: perfilErr } = await admin.from('perfis').upsert(
       {
         id: userId,
@@ -93,10 +93,8 @@ export async function POST(req: Request) {
 
     if (perfilErr) {
       console.error('[cadastro] Erro ao criar perfil:', perfilErr.message);
-      // Não bloquear — o onboarding tem fallback para criar o perfil
     }
 
-    // Retornar user_id para que o frontend possa associar convite se necessário
     return NextResponse.json({ success: true, user_id: userId });
   } catch {
     return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 });

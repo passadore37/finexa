@@ -2,31 +2,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { checkRateLimit } from '@/lib/rate-limit';
 
-// Rate limit simples em memória — max 10 req/min por IP em rotas de auth
-const rateLimitMap = new Map<string, { count: number; reset: number }>();
-function checkRateLimit(ip: string, max = 10, windowMs = 60_000): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.reset) {
-    rateLimitMap.set(ip, { count: 1, reset: now + windowMs });
-    return true;
-  }
-  if (entry.count >= max) return false;
-  entry.count++;
-  return true;
-}
-
-const PUBLIC_ROUTES  = ['/', '/login', '/cadastro', '/plano', '/convite', '/termos', '/privacidade', '/auth/callback', '/verificar-email', '/nova-senha'];
-const AUTH_ROUTES    = ['/login', '/cadastro'];
+const AUTH_ROUTES = ['/login', '/cadastro'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Rate limit em rotas de autenticação
+  // FIX #6/#7 — Rate limit real via Upstash Redis (persiste entre instâncias serverless)
   if (pathname.startsWith('/api/auth/') || pathname.startsWith('/api/convite')) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
-    if (!checkRateLimit(ip)) {
+    const allowed = await checkRateLimit(`auth:${ip}`, 10, 60);
+    if (!allowed) {
       return NextResponse.json(
         { error: 'Muitas tentativas. Aguarde um momento.' },
         { status: 429 }
@@ -51,16 +38,27 @@ export async function middleware(req: NextRequest) {
     }},
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  // FIX #11 — usar getUser() em vez de getSession() para validar token server-side
+  const { data: { user } } = await supabase.auth.getUser();
+  const session = user ? { user } : null;
+
   const isAppRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/lancar') ||
                      pathname.startsWith('/metas')      || pathname.startsWith('/onboarding');
+
+  // FIX #3 — Proteger rotas /admin: exige sessão autenticada
+  if (pathname.startsWith('/admin')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login?redirect=' + pathname, req.url));
+    }
+    return res;
+  }
 
   // Redirecionar /planejamento para /dashboard (aba removida)
   if (pathname.startsWith('/planejamento')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // Página raiz sempre livre — não redirecionar mesmo logado
+  // Página raiz sempre livre
   if (pathname === '/') return res;
 
   // 1. Rota do app sem sessão → login
@@ -69,7 +67,6 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Já logado tentando acessar login/cadastro → dashboard
-  // Não redirecionar '/' — permite que usuário logado acesse a landing (ex: após logout)
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
   if (isAuthRoute && session) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
@@ -87,7 +84,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/verificar-email', req.url));
     }
 
-    // Trial ou assinatura expirada
     if (familia) {
       const { assinatura_status, trial_ends_at } = familia;
       const trialExpirou = assinatura_status === 'trial' &&

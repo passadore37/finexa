@@ -25,7 +25,6 @@ export default function BetaAdminPage() {
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
 
-  const adminTokenFromEnv = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
 
   useEffect(() => {
     // Solicitar token de admin

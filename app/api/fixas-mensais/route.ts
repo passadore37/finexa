@@ -11,14 +11,28 @@ function getAdminClient() {
   );
 }
 
+// FIX #2 — Cron autenticado via header Authorization enviado pela Vercel
+// A Vercel envia automaticamente: Authorization: Bearer <CRON_SECRET>
+// Documentação: https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs
+function isCronAuthorized(req: Request): boolean {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+
+  // Fallback para chamada manual com header x-admin-secret (uso interno)
+  const adminSecret = req.headers.get('x-admin-secret');
+  if (adminSecret && adminSecret === process.env.CRON_SECRET) return true;
+
+  return false;
+}
+
 export async function POST(req: Request) {
-  // Cron externo usa ?secret=... — não precisa de sessão
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get('secret');
-  if (secret) {
-    if (secret !== process.env.CRON_SECRET)
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  // Cron externo — verificar autorização via header (nunca via query string)
+  const isCron = isCronAuthorized(req);
+
+  if (isCron) {
+    // Autorizado como cron — prosseguir
   } else {
+    // Chamada de usuário autenticado (disparo manual pelo dashboard)
     const { error } = await authGuard(req);
     if (error) return error;
   }
@@ -29,7 +43,6 @@ export async function POST(req: Request) {
     const mesAtual = `${meses[hoje.getMonth()]}-${String(hoje.getFullYear()).slice(2)}`;
     const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 
-    // Para cron sem sessão, usa admin client para bypassar RLS
     const supabaseAdmin = getAdminClient();
     const { data: planejamentos } = await supabaseAdmin
       .from('planejamento').select('*').order('updated_at', { ascending: false });
