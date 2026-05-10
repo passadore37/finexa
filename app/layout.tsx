@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
+import { headers } from 'next/headers'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -8,12 +9,8 @@ export const metadata: Metadata = {
   description: 'Seu dinheiro, com clareza.',
   manifest: '/manifest.json',
   icons: {
-    icon: [
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icon-192.png', sizes: '180x180', type: 'image/png' },
-    ],
+    icon: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/icon-192.png', sizes: '180x180', type: 'image/png' }],
   },
 }
 
@@ -26,7 +23,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // FIX #7 — Ler o nonce gerado pelo middleware para aplicar nos scripts inline
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') ?? '';
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -36,18 +37,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        {/* Não duplicar <link rel="manifest"> — Next.js injeta automaticamente via metadata.manifest */}
       </head>
       <body className="font-sans antialiased bg-background text-foreground min-h-screen">
         <ThemeProvider>
           {children}
           <Analytics />
         </ThemeProvider>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-          }
-        `}} />
+        {/* FIX #7 — nonce aplicado no script inline do service worker */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: `
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+            }
+          `}}
+        />
       </body>
     </html>
   )

@@ -1,12 +1,36 @@
 // app/api/auth/cadastro/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 function getAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+// FIX #9 — Verificar se senha foi vazada via HaveIBeenPwned (API gratuita)
+// Usa k-anonymity: envia apenas os 5 primeiros chars do hash SHA1, nunca a senha
+async function senhaFoiVazada(senha: string): Promise<boolean> {
+  try {
+    const hash   = crypto.createHash('sha1').update(senha).digest('hex').toUpperCase();
+    const prefix = hash.slice(0, 5);
+    const suffix = hash.slice(5);
+
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+      headers: { 'Add-Padding': 'true' },
+      signal: AbortSignal.timeout(3000), // timeout de 3s para não travar o cadastro
+    });
+
+    if (!res.ok) return false; // se a API falhar, não bloquear o cadastro
+
+    const text = await res.text();
+    return text.split('\n').some(line => line.trim().startsWith(suffix));
+  } catch {
+    // Em caso de timeout ou erro de rede, não bloquear
+    return false;
+  }
 }
 
 export async function POST(req: Request) {
@@ -16,14 +40,22 @@ export async function POST(req: Request) {
     if (!email || !senha || !nome || !plano)
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
 
-    // Validação de senha robusta
+    // Validação: tamanho mínimo
     if (senha.length < 8)
       return NextResponse.json({ error: 'Senha deve ter pelo menos 8 caracteres' }, { status: 400 });
 
+    // Validação: letras e números
     const temNumero = /\d/.test(senha);
     const temLetra  = /[a-zA-Z]/.test(senha);
     if (!temNumero || !temLetra)
       return NextResponse.json({ error: 'Senha deve conter letras e números' }, { status: 400 });
+
+    // FIX #9 — Verificar se senha está em listas de vazamentos conhecidos
+    if (await senhaFoiVazada(senha))
+      return NextResponse.json(
+        { error: 'Essa senha já foi encontrada em vazamentos de dados. Escolha uma senha diferente.' },
+        { status: 400 }
+      );
 
     const admin = getAdmin();
 
@@ -46,7 +78,6 @@ export async function POST(req: Request) {
         error.message.includes('already registered') ||
         error.message.includes('already been registered')
       ) {
-        // Retornar sucesso falso para impedir user enumeration
         return NextResponse.json({ success: true, user_id: null });
       }
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 400 });
@@ -56,7 +87,6 @@ export async function POST(req: Request) {
     if (!userId)
       return NextResponse.json({ error: 'Erro ao obter ID do usuário.' }, { status: 500 });
 
-    // Criar família para usuários master (não convidados)
     let familyId: string | null = null;
 
     if (!is_invitee) {
@@ -78,7 +108,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Criar perfil na tabela `perfis`
     const { error: perfilErr } = await admin.from('perfis').upsert(
       {
         id: userId,
