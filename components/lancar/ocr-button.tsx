@@ -1,10 +1,9 @@
 'use client';
 
 // components/lancar/ocr-button.tsx
-// Botão de câmera/galeria — OCR via Tesseract.js (100% gratuito, roda no browser)
+// Botão de câmera/galeria — OCR via GPT-4o Vision
 import { useRef, useState } from 'react';
 import { Camera, Loader2, Sparkles, X, AlertCircle } from 'lucide-react';
-import { parsearTextoOcr } from '@/lib/ocr-parser';
 
 export interface OcrResultado {
   valor: number | null;
@@ -20,10 +19,9 @@ interface Props {
 
 export function OcrButton({ onResultado, cor = '#5330ff' }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [status,   setStatus]   = useState<'idle' | 'processando' | 'erro'>('idle');
-  const [progresso, setProgresso] = useState(0);
-  const [erroMsg,  setErroMsg]  = useState('');
-  const [preview,  setPreview]  = useState<string | null>(null);
+  const [status,  setStatus]  = useState<'idle' | 'processando' | 'erro'>('idle');
+  const [erroMsg, setErroMsg] = useState('');
+  const [preview, setPreview] = useState<string | null>(null);
 
   async function handleImagem(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -35,35 +33,34 @@ export function OcrButton({ onResultado, cor = '#5330ff' }: Props) {
     reader.readAsDataURL(file);
 
     setStatus('processando');
-    setProgresso(0);
     setErroMsg('');
 
     try {
-      // Carregar Tesseract dinamicamente (não aumenta o bundle inicial)
-      const { createWorker } = await import('tesseract.js');
+      const formData = new FormData();
+      formData.append('imagem', file);
 
-      const worker = await createWorker('por', 1, {
-        logger: (m: any) => {
-          if (m.status === 'recognizing text') {
-            setProgresso(Math.round(m.progress * 100));
-          }
-        },
+      const res = await fetch('/api/transacoes/ocr', {
+        method: 'POST',
+        body: formData,
       });
 
-      const { data: { text } } = await worker.recognize(file);
-      await worker.terminate();
+      const data = await res.json();
 
-      if (!text || text.trim().length < 3) {
-        throw new Error('Não consegui ler o texto da imagem. Tente uma foto mais nítida.');
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? 'Erro ao processar imagem');
       }
 
-      const resultado = parsearTextoOcr(text);
-
-      if (!resultado.valor) {
+      if (!data.valor) {
         throw new Error('Não encontrei um valor nessa imagem. Tente outra foto ou preencha manualmente.');
       }
 
-      onResultado(resultado);
+      onResultado({
+        valor:     data.valor,
+        descricao: data.descricao,
+        categoria: data.categoria,
+        confianca: data.confianca,
+      });
+
       setStatus('idle');
       setPreview(null);
 
@@ -82,7 +79,7 @@ export function OcrButton({ onResultado, cor = '#5330ff' }: Props) {
 
   return (
     <div className="w-full">
-      {/* Input oculto */}
+      {/* Input oculto — sem capture para permitir câmera e galeria */}
       <input
         ref={inputRef}
         type="file"
@@ -112,29 +109,15 @@ export function OcrButton({ onResultado, cor = '#5330ff' }: Props) {
           style={{ borderColor: `${cor}30`, background: `${cor}08` }}
         >
           {preview && (
-            <div className="w-full max-h-28 overflow-hidden rounded-lg relative">
+            <div className="w-full max-h-28 overflow-hidden rounded-lg">
               <img src={preview} alt="preview" className="w-full object-cover opacity-50" />
             </div>
           )}
-
-          <div className="flex items-center gap-2 w-full" style={{ color: cor }}>
-            <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-            <span className="text-sm font-bold flex-1">
-              {progresso === 0 ? 'Carregando leitor...' : `Lendo comprovante... ${progresso}%`}
-            </span>
+          <div className="flex items-center gap-2" style={{ color: cor }}>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm font-bold">Lendo comprovante...</span>
           </div>
-
-          {/* Barra de progresso */}
-          <div className="w-full h-1.5 rounded-full bg-border overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${progresso || 10}%`, background: cor }}
-            />
-          </div>
-
-          <p className="text-[11px] text-muted-foreground">
-            Processando localmente — sem envio de dados
-          </p>
+          <p className="text-[11px] text-muted-foreground">Isso leva alguns segundos</p>
         </div>
       )}
 

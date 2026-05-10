@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus, Sparkles } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus, Camera } from 'lucide-react';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
 import { PERFIL_CONFIG } from '@/lib/perfil-config';
@@ -9,7 +9,6 @@ import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useCategorias } from '@/hooks/use-categorias';
 import { ModalNovaCategoria } from './modal-nova-categoria';
-import { OcrButton } from './ocr-button';
 import { getTextSobreCor } from '@/lib/types';
 
 type Status = 'idle' | 'saving' | 'success' | 'error';
@@ -54,8 +53,8 @@ export function LancarView() {
   const [membrosSelecionados, setMembrosSelecionados] = useState<string[]>(MEMBROS_CASAL.map(m => m.id));
   const [responsavel,   setResponsavel]   = useState<string>(usuariaAtiva === 'casal' ? 'membro0' : usuariaAtiva);
 
-  // Banner de confirmação OCR
-  const [ocrConfianca, setOcrConfianca] = useState<'alta' | 'media' | 'baixa' | null>(null);
+  // Banner de confirmação OCR — reservado para quando a feature for ativada
+  // const [ocrConfianca, setOcrConfianca] = useState<'alta' | 'media' | 'baixa' | null>(null);
 
   useEffect(() => {
     setModoDivisao(ehIndividual ? 'pessoal' : '5050');
@@ -84,22 +83,6 @@ export function LancarView() {
     return { perfil: 'casal', divisao: '50/50' };
   }
 
-  // Callback do OCR — preenche o formulário automaticamente
-  function handleOcrResultado(dados: {
-    valor: number | null;
-    descricao: string;
-    categoria: string;
-    confianca: 'alta' | 'media' | 'baixa';
-  }) {
-    if (dados.valor) setValor(String(dados.valor).replace('.', ','));
-    if (dados.descricao) { setDescricao(dados.descricao); setMostrarAvancado(true); }
-    if (dados.categoria) setCategoria(dados.categoria);
-    setOcrConfianca(dados.confianca);
-
-    // Limpar banner após 5s
-    setTimeout(() => setOcrConfianca(null), 5000);
-  }
-
   async function handleSubmit() {
     if (!valor || !categoria) return;
     setStatus('saving');
@@ -120,7 +103,6 @@ export function LancarView() {
       const data = await res.json();
       if (data.success) {
         setStatus('success');
-        setOcrConfianca(null);
         window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
         setTimeout(() => {
           setStatus('idle'); setValor(''); setCategoria(''); setDescricao('');
@@ -161,31 +143,24 @@ export function LancarView() {
         </h2>
       </div>
 
-      {/* OCR — botão de foto/print */}
-      <OcrButton onResultado={handleOcrResultado} cor={perfilConfig.cor} />
-
-      {/* Banner de confirmação OCR */}
-      {ocrConfianca && (
-        <div
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-medium"
-          style={{
-            borderColor: ocrConfianca === 'alta' ? '#01b69540' : ocrConfianca === 'media' ? '#ffa85740' : '#ff646440',
-            background:  ocrConfianca === 'alta' ? '#01b69510' : ocrConfianca === 'media' ? '#ffa85710' : '#ff646410',
-            color:       ocrConfianca === 'alta' ? '#01b695'   : ocrConfianca === 'media' ? '#ffa857'   : '#ff6464',
-          }}
-        >
-          <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-          {ocrConfianca === 'alta' && 'Comprovante lido com sucesso! Confira os dados abaixo.'}
-          {ocrConfianca === 'media' && 'Dados extraídos com alguma incerteza. Por favor, confirme.'}
-          {ocrConfianca === 'baixa' && 'Leitura com baixa confiança. Verifique os valores antes de confirmar.'}
+      {/* Em breve — leitura de comprovante */}
+      <div
+        className="w-full flex items-center gap-3 py-3.5 px-4 rounded-xl border-2 border-dashed opacity-60 cursor-not-allowed"
+        style={{ borderColor: `${perfilConfig.cor}40`, background: `${perfilConfig.cor}06` }}
+      >
+        <Camera className="h-4 w-4 flex-shrink-0" style={{ color: perfilConfig.cor }} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black" style={{ color: perfilConfig.cor }}>
+            Leitura de comprovante
+          </p>
+          <p className="text-[11px] text-muted-foreground">Em breve — foto ou print preencherá automaticamente</p>
         </div>
-      )}
-
-      {/* Divisor visual */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-[10px] text-muted-foreground uppercase tracking-widest">ou preencha manualmente</span>
-        <div className="flex-1 h-px bg-border" />
+        <span
+          className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full flex-shrink-0"
+          style={{ background: `${perfilConfig.cor}15`, color: perfilConfig.cor }}
+        >
+          Em breve
+        </span>
       </div>
 
       {/* Valor */}
