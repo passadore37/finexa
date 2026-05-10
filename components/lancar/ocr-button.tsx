@@ -87,7 +87,6 @@ export function OcrButton({ onResultado, cor = '#5330ff' }: Props) {
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        capture="environment"
         className="hidden"
         onChange={handleImagem}
       />
