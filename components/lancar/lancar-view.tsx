@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, Users, User, Plus, Sparkles } from 'lucide-react';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
 import { PERFIL_CONFIG } from '@/lib/perfil-config';
@@ -9,6 +9,7 @@ import { usePlano } from '@/hooks/use-plano';
 import { useMembros } from '@/hooks/use-membros';
 import { useCategorias } from '@/hooks/use-categorias';
 import { ModalNovaCategoria } from './modal-nova-categoria';
+import { OcrButton } from './ocr-button';
 import { getTextSobreCor } from '@/lib/types';
 
 type Status = 'idle' | 'saving' | 'success' | 'error';
@@ -20,7 +21,6 @@ export function LancarView() {
   const { plano, temDivisao } = usePlano();
   const { membros } = useMembros();
 
-  // Membros dinâmicos para o seletor de divisão
   const MEMBROS_CASAL = membros.length >= 2
     ? membros.map(m => ({ id: m.role, nome: m.nome, cor: m.cor }))
     : [
@@ -31,28 +31,31 @@ export function LancarView() {
   const role0 = membros[0]?.role ?? 'membro0';
   const role1 = membros[1]?.role ?? 'membro1';
 
-  // perfilConfig com cor real do membro ativo
   const membroAtivo = membros.find(m => m.role === usuariaAtiva);
   const perfilConfig = membroAtivo
     ? { cor: membroAtivo.cor, corSecundaria: membroAtivo.corSecundaria, corBg: membroAtivo.corBg, nome: membroAtivo.nome, emoji: '' }
     : (PERFIL_CONFIG[usuariaAtiva] ?? PERFIL_CONFIG['casal']);
+
   const [modalCategoria, setModalCategoria] = useState(false);
   const { categoriasPadrao, categoriasCustom, getCor, criarCategoria } = useCategorias(usuariaAtiva);
   const todasCategorias = [...categoriasPadrao, ...categoriasCustom];
   const ehIndividual = plano === 'individual';
 
-  const [valor,       setValor]       = useState('');
-  const [categoria,   setCategoria]   = useState('');
-  const [descricao,   setDescricao]   = useState('');
-  const [parcelado,   setParcelado]   = useState(false);
-  const [recorrente,  setRecorrente]  = useState(false);
+  const [valor,         setValor]         = useState('');
+  const [categoria,     setCategoria]     = useState('');
+  const [descricao,     setDescricao]     = useState('');
+  const [parcelado,     setParcelado]     = useState(false);
+  const [recorrente,    setRecorrente]    = useState(false);
   const [totalParcelas, setTotalParcelas] = useState('2');
   const [parcelaAtual,  setParcelaAtual]  = useState('1');
-  const [status,      setStatus]      = useState<Status>('idle');
+  const [status,        setStatus]        = useState<Status>('idle');
   const [mostrarAvancado, setMostrarAvancado] = useState(false);
-  const [modoDivisao, setModoDivisao] = useState<ModoDivisao>(ehIndividual ? 'pessoal' : '5050');
+  const [modoDivisao,   setModoDivisao]   = useState<ModoDivisao>(ehIndividual ? 'pessoal' : '5050');
   const [membrosSelecionados, setMembrosSelecionados] = useState<string[]>(MEMBROS_CASAL.map(m => m.id));
-  const [responsavel, setResponsavel] = useState<string>(usuariaAtiva === 'casal' ? 'membro0' : usuariaAtiva);
+  const [responsavel,   setResponsavel]   = useState<string>(usuariaAtiva === 'casal' ? 'membro0' : usuariaAtiva);
+
+  // Banner de confirmação OCR
+  const [ocrConfianca, setOcrConfianca] = useState<'alta' | 'media' | 'baixa' | null>(null);
 
   useEffect(() => {
     setModoDivisao(ehIndividual ? 'pessoal' : '5050');
@@ -81,6 +84,22 @@ export function LancarView() {
     return { perfil: 'casal', divisao: '50/50' };
   }
 
+  // Callback do OCR — preenche o formulário automaticamente
+  function handleOcrResultado(dados: {
+    valor: number | null;
+    descricao: string;
+    categoria: string;
+    confianca: 'alta' | 'media' | 'baixa';
+  }) {
+    if (dados.valor) setValor(String(dados.valor).replace('.', ','));
+    if (dados.descricao) { setDescricao(dados.descricao); setMostrarAvancado(true); }
+    if (dados.categoria) setCategoria(dados.categoria);
+    setOcrConfianca(dados.confianca);
+
+    // Limpar banner após 5s
+    setTimeout(() => setOcrConfianca(null), 5000);
+  }
+
   async function handleSubmit() {
     if (!valor || !categoria) return;
     setStatus('saving');
@@ -95,12 +114,13 @@ export function LancarView() {
           perfil, divisao,
           parcela_atual:  (parcelado && !recorrente) ? parseInt(parcelaAtual)  : 1,
           total_parcelas: (parcelado && !recorrente) ? parseInt(totalParcelas) : 1,
-          recorrente: recorrente,
+          recorrente,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setStatus('success');
+        setOcrConfianca(null);
         window.dispatchEvent(new CustomEvent('planejamento-atualizado'));
         setTimeout(() => {
           setStatus('idle'); setValor(''); setCategoria(''); setDescricao('');
@@ -141,13 +161,40 @@ export function LancarView() {
         </h2>
       </div>
 
+      {/* OCR — botão de foto/print */}
+      <OcrButton onResultado={handleOcrResultado} cor={perfilConfig.cor} />
+
+      {/* Banner de confirmação OCR */}
+      {ocrConfianca && (
+        <div
+          className="flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-medium"
+          style={{
+            borderColor: ocrConfianca === 'alta' ? '#01b69540' : ocrConfianca === 'media' ? '#ffa85740' : '#ff646440',
+            background:  ocrConfianca === 'alta' ? '#01b69510' : ocrConfianca === 'media' ? '#ffa85710' : '#ff646410',
+            color:       ocrConfianca === 'alta' ? '#01b695'   : ocrConfianca === 'media' ? '#ffa857'   : '#ff6464',
+          }}
+        >
+          <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+          {ocrConfianca === 'alta' && 'Comprovante lido com sucesso! Confira os dados abaixo.'}
+          {ocrConfianca === 'media' && 'Dados extraídos com alguma incerteza. Por favor, confirme.'}
+          {ocrConfianca === 'baixa' && 'Leitura com baixa confiança. Verifique os valores antes de confirmar.'}
+        </div>
+      )}
+
+      {/* Divisor visual */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest">ou preencha manualmente</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
       {/* Valor */}
       <div>
         <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Valor</label>
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">R$</span>
           <input type="text" inputMode="decimal" placeholder="0,00" value={valor}
-            onChange={e => setValor(e.target.value)} autoFocus
+            onChange={e => setValor(e.target.value)}
             className="w-full bg-secondary border border-border rounded-xl pl-12 pr-4 py-4 text-2xl font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2"
             style={{ '--tw-ring-color': perfilConfig.cor } as any}
           />
@@ -193,7 +240,6 @@ export function LancarView() {
         </div>
       </div>
 
-      {/* Modal nova categoria */}
       {modalCategoria && (
         <ModalNovaCategoria
           perfilAtivo={usuariaAtiva}
@@ -203,65 +249,34 @@ export function LancarView() {
         />
       )}
 
-      {/* Divisão — oculto para individual */}
+      {/* Divisão */}
       {temDivisao && (
         <div>
           <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-3">Como dividir?</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { id: 'pessoal',      label: 'Só meu',       sub: '100% de um',  icon: User  },
+              { id: '5050',         label: '50 / 50',       sub: 'Metade cada', icon: Users },
+              { id: 'proporcional', label: 'Proporcional',  sub: 'Pelo salário',icon: Users },
+            ] as const).map(op => {
+              const Icon = op.icon;
+              const active = modoDivisao === op.id;
+              return (
+                <button key={op.id} onClick={() => setModoDivisao(op.id)}
+                  className="py-3 px-2 rounded-xl text-xs font-medium transition-all border flex flex-col items-center gap-1.5"
+                  style={active
+                    ? { background: perfilConfig.cor, color: 'white', borderColor: perfilConfig.cor, boxShadow: `0 4px 12px ${perfilConfig.cor}40` }
+                    : { background: 'var(--secondary)', color: 'var(--muted-foreground)', borderColor: 'var(--border)' }
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="font-bold">{op.label}</span>
+                  <span className="text-[9px] opacity-70">{op.sub}</span>
+                </button>
+              );
+            })}
+          </div>
 
-          {/* CASAL: 3 opções */}
-          {temDivisao && (
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { id: 'pessoal',      label: 'Só meu',       sub: '100% de um',       icon: User },
-                { id: '5050',         label: '50 / 50',       sub: 'Metade cada',       icon: Users },
-                { id: 'proporcional', label: 'Proporcional',  sub: 'Pelo salário',      icon: Users },
-              ] as const).map(op => {
-                const Icon = op.icon;
-                const active = modoDivisao === op.id;
-                return (
-                  <button key={op.id} onClick={() => setModoDivisao(op.id)}
-                    className="py-3 px-2 rounded-xl text-xs font-medium transition-all border flex flex-col items-center gap-1.5"
-                    style={active
-                      ? { background: perfilConfig.cor, color: 'white', borderColor: perfilConfig.cor, boxShadow: `0 4px 12px ${perfilConfig.cor}40` }
-                      : { background: 'var(--secondary)', color: 'var(--muted-foreground)', borderColor: 'var(--border)' }
-                    }
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="font-bold">{op.label}</span>
-                    <span className="text-[9px] opacity-70">{op.sub}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* FAMÍLIA: 2 opções */}
-          {false && (
-            <div className="grid grid-cols-2 gap-2">
-              {([
-                { id: 'pessoal', label: 'Só meu',          sub: 'Gasto individual', icon: User },
-                { id: 'membros', label: 'Selecionar quem', sub: 'Escolher membros', icon: Users },
-              ] as const).map(op => {
-                const Icon = op.icon;
-                const active = modoDivisao === op.id;
-                return (
-                  <button key={op.id} onClick={() => setModoDivisao(op.id)}
-                    className="py-3 px-2 rounded-xl text-sm font-medium transition-all border flex flex-col items-center gap-1.5"
-                    style={active
-                      ? { background: perfilConfig.cor, color: 'white', borderColor: perfilConfig.cor, boxShadow: `0 4px 12px ${perfilConfig.cor}40` }
-                      : { background: 'var(--secondary)', color: 'var(--muted-foreground)', borderColor: 'var(--border)' }
-                    }
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="font-bold">{op.label}</span>
-                    <span className="text-[9px] opacity-70">{op.sub}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Sub-seletor: responsável quando 'Só meu' no contexto casal */}
           {modoDivisao === 'pessoal' && usuariaAtiva === 'casal' && (
             <div className="mt-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">De quem é o gasto?</p>
@@ -279,41 +294,11 @@ export function LancarView() {
             </div>
           )}
 
-          {/* Sub-seletor: membros para plano família */}
-          {modoDivisao === 'membros' && (
-            <div className="mt-3">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Quem participa?</p>
-              <div className="flex gap-2 flex-wrap">
-                {MEMBROS_CASAL.map(m => {
-                  const sel = membrosSelecionados.includes(m.id);
-                  return (
-                    <button key={m.id} onClick={() => toggleMembro(m.id)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border"
-                      style={sel
-                        ? { background: m.cor, color: 'white', borderColor: m.cor }
-                        : { background: `${m.cor}15`, color: m.cor, borderColor: `${m.cor}40` }
-                      }
-                    >
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${sel ? 'bg-white/30 border-white' : 'border-current'}`}>
-                        {sel && <Check className="h-2.5 w-2.5 text-white" />}
-                      </div>
-                      {m.nome}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Preview */}
           <div className="mt-3 px-3 py-2.5 rounded-lg bg-secondary/60 border border-border/40">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               {modoDivisao === 'pessoal' && `💳 Gasto pessoal — ${respNome} arca com 100%`}
               {modoDivisao === '5050' && '⚖️ Dividido igualmente — 50% cada'}
               {modoDivisao === 'proporcional' && '📊 Dividido proporcional ao salário de cada uma'}
-              {modoDivisao === 'membros' && membrosSelecionados.length === 0 && '⚠️ Selecione ao menos um membro'}
-              {modoDivisao === 'membros' && membrosSelecionados.length === 1 && `💳 Só ${membroNome(membrosSelecionados[0])} paga 100%`}
-              {modoDivisao === 'membros' && membrosSelecionados.length > 1 && `👥 ${membrosSelecionados.map(membroNome).join(' + ')} — dividido igualmente`}
             </p>
           </div>
         </div>
@@ -339,7 +324,7 @@ export function LancarView() {
             </div>
 
             <div>
-              <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Despesa fixa mensais (recorrente)?</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-2">Despesa fixa mensal (recorrente)?</label>
               <div className="flex items-center gap-3 mb-4">
                 <button onClick={() => { setRecorrente(!recorrente); if (!recorrente) setParcelado(false); }}
                   className={`w-10 h-5 rounded-full transition-colors relative ${recorrente ? 'bg-primary' : 'bg-secondary border border-border'}`}
@@ -385,7 +370,7 @@ export function LancarView() {
       {/* Confirmar */}
       <button
         onClick={handleSubmit}
-        disabled={!valor || !categoria || status === 'saving' || (modoDivisao === 'membros' && membrosSelecionados.length === 0)}
+        disabled={!valor || !categoria || status === 'saving'}
         className="w-full py-4 rounded-xl text-white font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         style={{ background: (!valor || !categoria) ? 'var(--secondary)' : perfilConfig.cor }}
       >

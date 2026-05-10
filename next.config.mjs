@@ -14,7 +14,7 @@ const buildCsp = (nonce) => [
   // Na prática browsers modernos ignoram unsafe-inline quando nonce está presente
   `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
-  `connect-src 'self' ${ALLOWED_ORIGINS.join(' ')} https://*.supabase.co wss://*.supabase.co https://api.resend.com https://api.anthropic.com`,
+  `connect-src 'self' ${ALLOWED_ORIGINS.join(' ')} https://*.supabase.co wss://*.supabase.co https://api.resend.com`,
   "img-src 'self' data: blob:",
   "font-src 'self' https://fonts.gstatic.com",
   "frame-ancestors 'none'",
