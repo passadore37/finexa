@@ -6,16 +6,34 @@ import { checkRateLimit } from '@/lib/rate-limit';
 
 const AUTH_ROUTES = ['/login', '/cadastro'];
 
+// Rotas de dados sensíveis com rate limit por usuário autenticado
+const DATA_ROUTES = [
+  '/api/financeiro', '/api/transacoes', '/api/planejamento',
+  '/api/metas', '/api/evolucao', '/api/perfis', '/api/reserva',
+];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // FIX #6/#7 — Rate limit real via Upstash Redis (persiste entre instâncias serverless)
+  // FIX #6/#7 — Rate limit em rotas de autenticação (por IP)
   if (pathname.startsWith('/api/auth/') || pathname.startsWith('/api/convite')) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
     const allowed = await checkRateLimit(`auth:${ip}`, 10, 60);
     if (!allowed) {
       return NextResponse.json(
         { error: 'Muitas tentativas. Aguarde um momento.' },
+        { status: 429 }
+      );
+    }
+  }
+
+  // FIX #6 — Rate limit em rotas de dados sensíveis (por IP)
+  if (DATA_ROUTES.some(r => pathname.startsWith(r))) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const allowed = await checkRateLimit(`data:${ip}`, 120, 60); // 120 req/min por IP
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Limite de requisições atingido.' },
         { status: 429 }
       );
     }
@@ -42,7 +60,7 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const session = user ? { user } : null;
 
-  // Redirecionar /planejamento para /dashboard (aba removida) — antes de qualquer outra checagem
+  // Redirecionar /planejamento para /dashboard (aba removida)
   if (pathname.startsWith('/planejamento')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
@@ -79,7 +97,6 @@ export async function middleware(req: NextRequest) {
       .eq('id', session.user.user_metadata?.family_id ?? '')
       .single();
 
-    // Email não confirmado
     if (!session.user.email_confirmed_at) {
       return NextResponse.redirect(new URL('/verificar-email', req.url));
     }

@@ -3,6 +3,10 @@
     {
       "path": "/api/fixas-mensais",
       "schedule": "0 6 1 * *"
+    },
+    {
+      "path": "/api/email-semanal",
+      "schedule": "0 8 * * 1"
     }
   ],
   "headers": [

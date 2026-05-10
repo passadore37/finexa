@@ -8,9 +8,21 @@ function getAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 }
 
+// FIX #3 — autenticar apenas via header, nunca via query string
+// A Vercel envia automaticamente: Authorization: Bearer <CRON_SECRET>
+// Chamadas manuais: x-admin-secret: <CRON_SECRET>
+function isCronAuthorized(req: Request): boolean {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+
+  const adminSecret = req.headers.get('x-admin-secret');
+  if (adminSecret && adminSecret === process.env.CRON_SECRET) return true;
+
+  return false;
+}
+
 export async function POST(req: Request) {
-  const secret = req.headers.get('x-admin-secret') ?? new URL(req.url).searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET)
+  if (!isCronAuthorized(req))
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   const admin = getAdmin();
@@ -22,7 +34,7 @@ export async function POST(req: Request) {
   if (!familias?.length) return NextResponse.json({ ok: true, enviados: 0 });
 
   // Calcular semana passada
-  const hoje     = new Date();
+  const hoje      = new Date();
   const semanaStr = `${hoje.getDate().toString().padStart(2,'0')}/${(hoje.getMonth()+1).toString().padStart(2,'0')}`;
   const inicioSemana = new Date(hoje); inicioSemana.setDate(hoje.getDate() - 7);
 
@@ -31,25 +43,21 @@ export async function POST(req: Request) {
 
   for (const familia of familias) {
     try {
-      // Buscar perfil principal
       const { data: perfil } = await admin.from('perfis')
         .select('email, nome').eq('family_id', familia.id).order('criado_em').limit(1).single();
 
       if (!perfil?.email) continue;
 
-      // Buscar transações da semana passada
       const { data: transacoes } = await admin.from('transacoes')
         .select('data, valor, perfil')
         .eq('family_id', familia.id)
         .gte('data', inicioSemana.toISOString().split('T')[0])
         .lt('data', hoje.toISOString().split('T')[0]);
 
-      // Calcular métricas
-      const diasAtivos = new Set((transacoes || []).map((t: any) => t.data)).size;
-      const totalGastos = (transacoes || []).reduce((acc: number, t: any) => acc + Number(t.valor), 0);
-      const totalLancamentos = (transacoes || []).length;
+      const diasAtivos        = new Set((transacoes || []).map((t: any) => t.data)).size;
+      const totalGastos       = (transacoes || []).reduce((acc: number, t: any) => acc + Number(t.valor), 0);
+      const totalLancamentos  = (transacoes || []).length;
 
-      // Buscar aportes de metas da semana
       const { count: metasAtualizadas } = await admin.from('meta_aportes')
         .select('*', { count: 'exact', head: true })
         .eq('family_id', familia.id)
