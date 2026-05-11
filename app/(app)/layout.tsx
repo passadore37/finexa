@@ -11,7 +11,7 @@ import type { PlanoId } from '@/lib/planos';
 import {
   LogOut, ChevronDown, Settings, X, Users, CreditCard,
   Shield, UserPlus, Copy, Mail, Loader2, Check, Trash2,
-  Wallet, Plus, Trash
+  Wallet, Plus, Trash, Bell, BellOff, Clock
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePlano } from '@/hooks/use-plano';
@@ -103,11 +103,69 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
     setTimeout(() => setCopiado(false), 2000);
   }
 
+  // Estados aba Notificações
+  const [pushAtivo,      setPushAtivo]      = useState<boolean | null>(null);
+  const [historico,      setHistorico]      = useState<{ title: string; body: string; data: string }[]>([]);
+  const [carregandoPush, setCarregandoPush] = useState(false);
+
+  useEffect(() => {
+    if (aba !== 'notificacoes') return;
+    if (!('Notification' in window)) return;
+
+    setPushAtivo(Notification.permission === 'granted');
+
+    // Buscar histórico do localStorage
+    try {
+      const hist = JSON.parse(localStorage.getItem('push-historico') ?? '[]');
+      setHistorico(hist.slice(0, 10));
+    } catch {}
+  }, [aba]);
+
+  async function togglePush() {
+    setCarregandoPush(true);
+    try {
+      if (pushAtivo) {
+        // Desativar — remover subscription do banco
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch('/api/push', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+        }
+        setPushAtivo(false);
+      } else {
+        // Ativar — solicitar permissão
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') { setCarregandoPush(false); return; }
+
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        });
+        await fetch('/api/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON(), perfil: perfil?.role ?? 'membro' }),
+        });
+        setPushAtivo(true);
+      }
+    } catch (err) {
+      console.error('[push] Erro ao toggle:', err);
+    }
+    setCarregandoPush(false);
+  }
+
   const abas = [
     { id: 'plano',    label: 'Meu plano', icon: CreditCard },
     { id: 'financas', label: 'Finanças',  icon: Wallet },
     { id: 'membros',  label: 'Membros',   icon: Users },
     ...(planoAtual === 'familia' ? [{ id: 'privacidade', label: 'Privacidade', icon: Shield }] : []),
+    { id: 'notificacoes', label: 'Notificações', icon: Bell },
   ] as const;
 
   return (
@@ -413,6 +471,96 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
             </div>
           )}
 
+          {/* ── ABA: NOTIFICAÇÕES ── */}
+          {aba === 'notificacoes' && (
+            <div className="space-y-4">
+
+              {/* Toggle de ativação */}
+              <div className="p-4 rounded-xl border-2 border-border flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: pushAtivo ? '#5330ff15' : 'var(--secondary)' }}>
+                    {pushAtivo
+                      ? <Bell className="h-4 w-4 text-[#5330ff]" />
+                      : <BellOff className="h-4 w-4 text-muted-foreground" />
+                    }
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-foreground">
+                      {pushAtivo ? 'Notificações ativas' : 'Notificações desativadas'}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {pushAtivo
+                        ? 'Você receberá lembretes e alertas'
+                        : 'Ative para receber lembretes de gastos'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={togglePush}
+                  disabled={carregandoPush}
+                  className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 disabled:opacity-50 ${pushAtivo ? 'bg-[#5330ff]' : 'bg-border'}`}
+                >
+                  {carregandoPush
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin absolute top-1.5 left-1/2 -translate-x-1/2 text-white" />
+                    : <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${pushAtivo ? 'left-7' : 'left-1'}`} />
+                  }
+                </button>
+              </div>
+
+              {/* Tipos de notificação */}
+              {pushAtivo && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Você receberá
+                  </p>
+                  {[
+                    { icon: '📊', titulo: 'Lembrete diário', desc: 'Todo dia às 21h se não lançou nada' },
+                    { icon: '😴', titulo: 'Alerta de inatividade', desc: 'Quando ficar 3+ dias sem lançar' },
+                    { icon: '⚠️', titulo: 'Limite de gastos', desc: 'Ao atingir 80% e 100% do orçamento' },
+                    { icon: '⏰', titulo: 'Trial expirando', desc: 'Aviso 1, 2 e 3 dias antes de expirar' },
+                    { icon: '🎉', titulo: 'Novidades', desc: 'Quando lançarmos novas funcionalidades' },
+                  ].map(item => (
+                    <div key={item.titulo} className="flex items-center gap-3 p-2.5 rounded-xl bg-secondary/50">
+                      <span className="text-base flex-shrink-0">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground">{item.titulo}</p>
+                        <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                      </div>
+                      <Check className="h-3.5 w-3.5 text-[#01b695] flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Histórico */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                  Últimas notificações recebidas
+                </p>
+                {historico.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-border text-center">
+                    <Clock className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
+                    <p className="text-xs text-muted-foreground">Nenhuma notificação ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {historico.map((n, i) => (
+                      <div key={i} className="p-3 rounded-xl border border-border bg-secondary/30">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-bold text-foreground">{n.title}</p>
+                          <p className="text-[10px] text-muted-foreground flex-shrink-0">{n.data}</p>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{n.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
           {/* ── ABA: PRIVACIDADE (só família) ── */}
           {aba === 'privacidade' && (
             <div className="space-y-3">
@@ -471,6 +619,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [modalConfig, setModalConfig]     = useState(false);
 
   const planoInfo = getPlano((perfil?.plano as PlanoId) || 'casal');
+
+  // Ouvir mensagens do Service Worker para salvar histórico de notificações
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    function handleMsg(e: MessageEvent) {
+      if (e.data?.type !== 'PUSH_RECEIVED') return;
+      try {
+        const hist = JSON.parse(localStorage.getItem('push-historico') ?? '[]');
+        hist.unshift({ title: e.data.title, body: e.data.body, data: e.data.data });
+        localStorage.setItem('push-historico', JSON.stringify(hist.slice(0, 20)));
+      } catch {}
+    }
+    navigator.serviceWorker.addEventListener('message', handleMsg);
+    return () => navigator.serviceWorker.removeEventListener('message', handleMsg);
+  }, []);
 
   return (
     <>

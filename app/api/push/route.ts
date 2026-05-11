@@ -15,3 +15,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch { return NextResponse.json({ success: false }, { status: 500 }); }
 }
+
+export async function DELETE(req: Request) {
+  const { error } = await authGuard(req);
+  if (error) return error;
+  try {
+    const { endpoint } = await req.json();
+    if (!endpoint) return NextResponse.json({ error: 'endpoint obrigatório' }, { status: 400 });
+    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    return NextResponse.json({ success: true });
+  } catch { return NextResponse.json({ success: false }, { status: 500 }); }
+}
