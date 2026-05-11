@@ -104,15 +104,24 @@ function ModalConfig({ onFechar }: { onFechar: () => void }) {
   }
 
   // Estados aba Notificações
-  const [pushAtivo,      setPushAtivo]      = useState<boolean | null>(null);
+  const [pushAtivo,      setPushAtivo]      = useState<boolean>(false);
   const [historico,      setHistorico]      = useState<{ title: string; body: string; data: string }[]>([]);
   const [carregandoPush, setCarregandoPush] = useState(false);
 
   useEffect(() => {
     if (aba !== 'notificacoes') return;
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
 
-    setPushAtivo(Notification.permission === 'granted');
+    // Verificar se tem subscription ativa (permissão + registro no SW)
+    async function checarPush() {
+      if (Notification.permission !== 'granted') { setPushAtivo(false); return; }
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        setPushAtivo(!!sub);
+      } catch { setPushAtivo(false); }
+    }
+    checarPush();
 
     // Buscar histórico do localStorage
     try {
