@@ -1,4 +1,4 @@
-const CACHE = 'finexa-v2';
+const CACHE = 'finexa-v3';
 const STATIC = ['/', '/dashboard', '/lancar', '/metas'];
 
 self.addEventListener('install', e => {
@@ -16,25 +16,32 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('/api/')) return;
+
+  // Nunca cachear fontes externas — deixar o browser gerenciar
+  if (
+    e.request.url.includes('fonts.googleapis.com') ||
+    e.request.url.includes('fonts.gstatic.com')
+  ) return;
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        // Só cachear respostas válidas e do mesmo origin
+        if (res.ok && e.request.url.startsWith(self.location.origin)) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return res;
       })
       .catch(() => caches.match(e.request))
   );
 });
 
-// Push notifications — mostrar e salvar no histórico
+// Push notifications
 self.addEventListener('push', e => {
   const data = e.data?.json() || {};
-
-  // Salvar no histórico (localStorage via cliente)
   e.waitUntil(
     Promise.all([
-      // Mostrar notificação
       self.registration.showNotification(data.title || 'Finexa', {
         body:    data.body || '',
         icon:    '/icon-192.png',
@@ -46,13 +53,14 @@ self.addEventListener('push', e => {
           { action: 'fechar', title: 'Agora não' },
         ],
       }),
-      // Notificar clientes abertos para salvar histórico
       self.clients.matchAll({ type: 'window' }).then(clients => {
         clients.forEach(client => client.postMessage({
-          type: 'PUSH_RECEIVED',
+          type:  'PUSH_RECEIVED',
           title: data.title,
           body:  data.body,
-          data:  new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          data:  new Date().toLocaleDateString('pt-BR', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+          }),
         }));
       }),
     ])
