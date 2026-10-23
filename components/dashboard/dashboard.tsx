@@ -6,7 +6,7 @@ import { DashboardSkeleton } from './dashboard-skeleton';
 import { UsuarioSelector } from './usuario-selector';
 import { MesNavegador } from './mes-navegador';
 import { OnboardingTutorial } from './onboarding-tutorial';
-import { GastosMetaChart } from './gastos-meta-chart';
+import { ProjecaoBar } from './projecao-bar';
 import { ComprometimentoRendaCard } from './comprometimento-renda-card';
 import { EntradaRapidaGasto } from './entrada-rapida-gasto';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
@@ -17,7 +17,7 @@ import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import type { IndicadoresFinanceiros, DadosPlanilha } from '@/lib/types';
-import { calcularEvolucaoMensal, calcularParceladas } from '@/lib/indicadores';
+import { calcularParceladas, calcularProjecaoBar } from '@/lib/indicadores';
 
 interface APIResponse {
   success: boolean;
@@ -25,11 +25,6 @@ interface APIResponse {
   indicadores: IndicadoresFinanceiros;
   limites: { membro0: number; membro1: number };
   error?: string;
-}
-
-interface EvolucaoItem {
-  mes: number; ano: number; label: string;
-  receitas: number; despesas: number; saldo: number;
 }
 
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(r => r.json());
@@ -53,12 +48,6 @@ export function Dashboard() {
   const { data, error, isLoading, mutate } = useSWR<APIResponse>(
     apiUrl, fetcher,
     { refreshInterval: 60000, revalidateOnFocus: true, revalidateOnMount: true }
-  );
-
-  // Histórico completo para o gráfico de gastos x meta
-  const { data: evolucaoData } = useSWR<{ evolucao: EvolucaoItem[] }>(
-    `/api/evolucao`, fetcher,
-    { revalidateOnFocus: false }
   );
 
   useEffect(() => { aplicarCorPerfil(usuariaAtiva); }, [usuariaAtiva]);
@@ -130,17 +119,20 @@ export function Dashboard() {
     : indicadores.parceladas;
   const parcelasMes = parceladas.reduce((acc, p) => acc + p.valorParcela, 0);
 
-  const evolucaoMensal = isPerfil
-    ? calcularEvolucaoMensal(dados.transacoes, roleLogico(usuariaAtiva) as 'membro0' | 'membro1', dados.salarioMembro0, dados.salarioMembro1, null)
-    : indicadores.evolucaoMensal;
-
-  // Dados do gráfico de gastos x meta — usa API completa se disponível (visão casal), senão cálculo local (perfil)
-  const MESES_IDX: Record<string, number> = { Jan:0,Fev:1,Mar:2,Abr:3,Mai:4,Jun:5,Jul:6,Ago:7,Set:8,Out:9,Nov:10,Dez:11 };
-  const evolucaoGrafico = isPerfil
-    ? evolucaoMensal.map(e => ({ mes: e.mes.replace(' ●',''), despesas: e.despesas, receitas: e.receitas, saldo: e.saldo }))
-    : (evolucaoData?.evolucao?.length
-        ? evolucaoData.evolucao.map(e => ({ mes: e.label, despesas: e.despesas, receitas: e.receitas, saldo: e.saldo }))
-        : evolucaoMensal.map(e => ({ mes: e.mes.replace(' ●',''), despesas: e.despesas, receitas: e.receitas, saldo: e.saldo })));
+  // Barra de gastos do mês atual: gasto até agora, projeção até o fim do mês
+  // (ritmo diário só das despesas variáveis — fixas e parcelas entram como valor
+  // integral já conhecido, sem serem "esticadas" pelos dias restantes) e meta.
+  const projecaoBarDados = calcularProjecaoBar(
+    dados.transacoes,
+    mesSel.mes,
+    mesSel.ano,
+    meta,
+    fixas,
+    isPerfil ? (roleLogico(usuariaAtiva) as 'membro0' | 'membro1') : undefined,
+    dados.salarioMembro0,
+    dados.salarioMembro1,
+    parceladas,
+  );
 
   const nomePerfil = isPerfil ? perfilConfig.nome : 'Casal';
 
@@ -149,8 +141,9 @@ export function Dashboard() {
       {/* Tutorial para novo usuário */}
       {mostrarTutorial && <OnboardingTutorial onClose={() => setMostrarTutorial(false)} />}
 
-      {/* Barra de controles */}
-      <div className="border-b border-border bg-card/50 sticky top-[113px] z-30">
+      {/* Barra de controles — não é fixa, rola junto com a página para nunca
+          cobrir o conteúdo abaixo (só o cabeçalho principal do app fica fixo) */}
+      <div className="border-b border-border bg-card/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3 flex-wrap">
           <UsuarioSelector usuarioAtivo={usuariaAtiva} onChangeUsuario={setUsuariaAtiva} />
           <MesNavegador mes={mesSel.mes} ano={mesSel.ano} onChange={navegarMes} />
@@ -161,7 +154,22 @@ export function Dashboard() {
 
         {/* Os 2 indicadores principais */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <GastosMetaChart dados={evolucaoGrafico} meta={meta} nomePerfil={nomePerfil} />
+          <ProjecaoBar
+            dados={projecaoBarDados}
+            perfilGeral={!isPerfil}
+            fixas={fixas + parcelasMes}
+            corPerfil={perfilConfig.cor}
+            nomePerfil={nomePerfil}
+            onAjustarLimite={isPerfil ? async (valor) => {
+              await fetch('/api/limite', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ perfil: roleLogico(usuariaAtiva), limite: valor }),
+              });
+              mutate();
+            } : undefined}
+          />
           <ComprometimentoRendaCard renda={receitas} custoFixo={fixas} parcelas={parcelasMes} nomePerfil={nomePerfil} />
         </div>
 

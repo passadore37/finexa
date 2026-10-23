@@ -22,9 +22,10 @@ interface ProjecaoBarProps {
   perfilGeral?: boolean;
   fixas?: number;
   corPerfil?: string;
+  nomePerfil?: string;
 }
 
-export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0, corPerfil }: ProjecaoBarProps) {
+export function ProjecaoBar({ dados, onAjustarLimite, perfilGeral, fixas = 0, corPerfil, nomePerfil }: ProjecaoBarProps) {
   const router = useRouter();
 const { gastoAtual, gastoAtualComFixas, projecao, limite: limiteRaw } = dados;
 const limite = typeof limiteRaw === 'number' && !isNaN(limiteRaw) ? limiteRaw : 0;
@@ -76,10 +77,10 @@ const projecaoComFixas = projecao + valorFixas;
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="label-uppercase text-muted-foreground">
-              Projeção de Gastos do Mês
+              Gastos x Meta {nomePerfil ? `— ${nomePerfil}` : ''}
             </CardTitle>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Ritmo diário × dias restantes — projeção linear
+              Ritmo diário dos gastos variáveis — fixas e parcelas entram à parte, sem escalar
             </p>
           </div>
           {(!perfilGeral || limite === 0) && (
@@ -192,7 +193,7 @@ const projecaoComFixas = projecao + valorFixas;
 
             {valorFixas > 0 && (
   <p className="text-[10px] text-muted-foreground mt-1">
-    + Fixas: {fmt(valorFixas)}
+    + Fixas e parcelas: {fmt(valorFixas)}
   </p>
 )}
 

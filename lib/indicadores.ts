@@ -234,21 +234,31 @@ export function calcularProjecaoBar(
     ? parceladasAtivas.reduce((acc, p) => acc + p.valorParcela, 0)
     : 0;
 
-  const gastoAtual = gastoAtualTransacoes + gastoParceladas + fixas;
+  // gastoAtual representa só a parte VARIÁVEL do gasto (o que de fato varia dia
+  // a dia); fixas e parceladas entram à parte em "gastoAtualComFixas", pois são
+  // valores integrais e já conhecidos do mês — não devem ser "esticados" pela
+  // razão dias-restantes/dias-passados (ex: aluguel pago no dia 5 não deveria
+  // "repetir" 6x até o fim do mês) nem contados duas vezes na projeção.
+  const gastoAtual = gastoAtualTransacoes;
+  const gastoAtualComFixas = gastoAtualTransacoes + gastoParceladas + fixas;
 
   const mesAtual = hoje.getMonth();
   const anoAtual = hoje.getFullYear();
   const diaAtual = mes === mesAtual && ano === anoAtual ? Math.max(hoje.getDate(), 1) : 30;
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const diasConsiderados = Math.max(diaAtual, 5);
+
+  // A projeção extrapola apenas o ritmo das despesas variáveis; fixas e
+  // parceladas são somadas por fora, como valor integral (sem escalar).
   const projecao = gastoAtual > 0
     ? Math.min((gastoAtual / diasConsiderados) * diasNoMes, gastoAtual * 2)
     : 0;
-  const percentualAtual = limite > 0 ? (gastoAtual / limite) * 100 : 0;
-  const percentualProjetado = limite > 0 ? (projecao / limite) * 100 : 0;
-  const status = projecao > limite ? 'perigo' : projecao > limite * 0.8 ? 'atencao' : 'ok';
+  const projecaoComFixas = projecao + gastoParceladas + fixas;
+  const percentualAtual = limite > 0 ? (gastoAtualComFixas / limite) * 100 : 0;
+  const percentualProjetado = limite > 0 ? (projecaoComFixas / limite) * 100 : 0;
+  const status = projecaoComFixas > limite ? 'perigo' : projecaoComFixas > limite * 0.8 ? 'atencao' : 'ok';
 
-  return { gastoAtual, projecao, limite, percentualAtual, percentualProjetado, status };
+  return { gastoAtual, gastoAtualComFixas, projecao, limite, percentualAtual, percentualProjetado, status };
 }
 
 // ─── Semanas do Mês ──────────────────────────────────────────────────────────
