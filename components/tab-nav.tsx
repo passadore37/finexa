@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PlusCircle, Target } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/lancar', label: 'Lançar', icon: PlusCircle },
-  { href: '/metas', label: 'Metas', icon: Target },
 ] as const;
 
 export function TabNav() {
