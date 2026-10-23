@@ -9,6 +9,7 @@ import { OnboardingTutorial } from './onboarding-tutorial';
 import { ProjecaoBar } from './projecao-bar';
 import { ComprometimentoRendaCard } from './comprometimento-renda-card';
 import { EntradaRapidaGasto } from './entrada-rapida-gasto';
+import { HistoricoMes } from './historico-mes';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useMembros } from '@/hooks/use-membros';
@@ -178,6 +179,19 @@ export function Dashboard() {
         {/* Entrada rápida de gasto (voz ou texto, sem categoria) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <EntradaRapidaGasto onGastoAdicionado={() => mutate()} />
+        </div>
+
+        {/* Histórico do mês — colapsado por padrão, expande inline */}
+        <div className="mt-4 sm:mt-6">
+          <HistoricoMes
+            transacoes={dados.transacoes}
+            mes={mesSel.mes}
+            ano={mesSel.ano}
+            perfil={isPerfil ? (roleLogico(usuariaAtiva) as 'membro0' | 'membro1') : undefined}
+            salarioMembro0={dados.salarioMembro0}
+            salarioMembro1={dados.salarioMembro1}
+            nomePerfil={isPerfil ? nomePerfil : undefined}
+          />
         </div>
       </main>
     </div>
