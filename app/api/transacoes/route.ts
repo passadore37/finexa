@@ -66,18 +66,22 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, data } = body;
 
-    if (!valor || !categoria)
-      return NextResponse.json({ success: false, error: 'Valor e categoria obrigatórios' }, { status: 400 });
+    if (!valor)
+      return NextResponse.json({ success: false, error: 'Valor obrigatório' }, { status: 400 });
 
     const valorNum = Number(valor);
     if (isNaN(valorNum) || valorNum <= 0)
       return NextResponse.json({ success: false, error: 'Valor inválido' }, { status: 400 });
 
+    // Categoria é opcional (ex: lançamentos via entrada rápida de voz/texto,
+    // que não pedem categoria ao usuário).
+    const categoriaFinal = categoria || 'Não categorizado';
+
     const { data: result, error: err } = await getAdmin().from('transacoes').insert({
       data: data || dataLocalHoje(),
       valor: valorNum,
-      categoria,
-      descricao: descricao || categoria,
+      categoria: categoriaFinal,
+      descricao: descricao || categoriaFinal,
       perfil: perfil || 'casal',
       divisao: divisao || '50/50',
       parcela_atual: parcela_atual || 1,
