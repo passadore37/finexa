@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useMembros } from '@/hooks/use-membros';
 
 interface EntradaRapidaGastoProps {
   onGastoAdicionado?: () => void;
@@ -33,6 +34,7 @@ type StatusEnvio = 'idle' | 'enviando' | 'sucesso' | 'erro';
 
 export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProps) {
   const { perfil } = useAuth();
+  const { membros } = useMembros();
   const [texto, setTexto] = useState('');
   const [gravando, setGravando] = useState(false);
   const [status, setStatus] = useState<StatusEnvio>('idle');
@@ -77,7 +79,14 @@ export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProp
       return;
     }
 
-    const perfilEnvio = alocacao === 'eu' ? (perfil?.role || 'membro0') : 'casal';
+    // O "role" salvo em perfis (ex: "master"/"membro") não é o valor que a
+    // tabela transacoes aceita (membro0/membro1/casal) — é preciso converter
+    // pela posição do perfil logado na lista de membros da família, igual ao
+    // dashboard faz (roleLogico).
+    const meuIndice = membros.findIndex(m => m.id === perfil?.id);
+    const meuRoleLogico: 'membro0' | 'membro1' = meuIndice === 1 ? 'membro1' : 'membro0';
+
+    const perfilEnvio = alocacao === 'eu' ? meuRoleLogico : 'casal';
     const divisaoEnvio = alocacao === 'eu' ? 'pessoal' : '50/50';
 
     setStatus('enviando');
