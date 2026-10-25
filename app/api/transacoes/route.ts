@@ -54,7 +54,8 @@ export async function GET(req: Request) {
     })) || [];
 
     return NextResponse.json({ success: true, data: dataTratada });
-  } catch {
+  } catch (err) {
+    console.error('[GET /api/transacoes]', err);
     return NextResponse.json({ success: false, error: 'Erro ao buscar' }, { status: 500 });
   }
 }
@@ -107,7 +108,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, data: result });
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/transacoes]', err);
     return NextResponse.json({ success: false, error: 'Erro ao salvar' }, { status: 500 });
   }
 }
@@ -129,7 +131,8 @@ export async function PATCH(req: Request) {
 
     if (err) throw err;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (err) {
+    console.error('[PATCH /api/transacoes]', err);
     return NextResponse.json({ success: false, error: 'Erro ao atualizar' }, { status: 500 });
   }
 }
@@ -142,7 +145,8 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ success: false, error: 'ID obrigatório' }, { status: 400 });
     await getAdmin().from('transacoes').delete().eq('id', id).eq('family_id', family_id);
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error('[DELETE /api/transacoes]', err);
     return NextResponse.json({ success: false, error: 'Erro ao deletar' }, { status: 500 });
   }
 }
