@@ -50,8 +50,9 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
           : t.valor,
       }))
       .sort((a, b) => {
-        const da = a.dataCompra ?? a.data;
-        const db = b.dataCompra ?? b.data;
+        // as datas chegam como texto (JSON) — sempre converter antes de comparar
+        const da = new Date(a.dataCompra ?? a.data);
+        const db = new Date(b.dataCompra ?? b.data);
         return db.getTime() - da.getTime();
       });
   }, [transacoes, mes, ano, perfil, salarioMembro0, salarioMembro1]);
