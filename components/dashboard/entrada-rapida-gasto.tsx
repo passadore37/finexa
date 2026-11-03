@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useMembros } from '@/hooks/use-membros';
+import type { Cartao } from '@/hooks/use-cartoes';
+import { cn } from '@/lib/utils';
 
 interface EntradaRapidaGastoProps {
   onGastoAdicionado?: () => void;
+  cartoes?: Cartao[];
 }
 
 // Extrai o primeiro valor monetário do texto (ex: "uber 32,50" -> 32.5)
@@ -32,7 +35,9 @@ function parseGastoTexto(texto: string): { valor: number | null; descricao: stri
 
 type StatusEnvio = 'idle' | 'enviando' | 'sucesso' | 'erro';
 
-export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProps) {
+const CHAVE_CARTAO = 'finexa_ultimo_cartao';
+
+export function EntradaRapidaGasto({ onGastoAdicionado, cartoes = [] }: EntradaRapidaGastoProps) {
   const { perfil } = useAuth();
   const { membros } = useMembros();
   const [texto, setTexto] = useState('');
@@ -40,6 +45,21 @@ export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProp
   const [status, setStatus] = useState<StatusEnvio>('idle');
   const [erroMsg, setErroMsg] = useState('');
   const recognitionRef = useRef<any>(null);
+  // '' = sem cartão (vale a data da compra); lembra o último cartão usado
+  const [cartaoId, setCartaoId] = useState('');
+  useEffect(() => {
+    try { setCartaoId(localStorage.getItem(CHAVE_CARTAO) ?? ''); } catch {}
+  }, []);
+  const escolherCartao = (id: string) => {
+    setCartaoId(id);
+    try { localStorage.setItem(CHAVE_CARTAO, id); } catch {}
+  };
+
+  // Cartões pessoais do outro membro não aparecem
+  const meuIdx = membros.findIndex(m => m.id === perfil?.id);
+  const meuLogico = meuIdx === 1 ? 'membro1' : 'membro0';
+  const cartoesVisiveis = cartoes.filter(c => !c.perfil_dono || c.perfil_dono === meuLogico);
+  const cartaoValido = cartoesVisiveis.some(c => c.id === cartaoId) ? cartaoId : '';
 
   const iniciarVoz = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -102,6 +122,7 @@ export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProp
           descricao,
           perfil: perfilEnvio,
           divisao: divisaoEnvio,
+          cartao_id: cartaoValido || undefined,
         }),
       });
       const json = await res.json();
@@ -147,6 +168,28 @@ export function EntradaRapidaGasto({ onGastoAdicionado }: EntradaRapidaGastoProp
             {gravando ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
           </Button>
         </div>
+
+        {cartoesVisiveis.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Cartão">
+            {[...cartoesVisiveis.map(c => ({ id: c.id, nome: c.nome })), { id: '', nome: 'Sem cartão' }].map(c => (
+              <button
+                key={c.id || 'nenhum'}
+                type="button"
+                role="radio"
+                aria-checked={cartaoValido === c.id}
+                onClick={() => escolherCartao(c.id)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs border transition-colors',
+                  cartaoValido === c.id
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-transparent text-muted-foreground border-border hover:text-foreground'
+                )}
+              >
+                {c.nome}
+              </button>
+            ))}
+          </div>
+        )}
 
         {valorPreview !== null && (
           <p className="text-xs text-muted-foreground">

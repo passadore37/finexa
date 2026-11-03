@@ -45,11 +45,11 @@ export async function fetchDadosPlanilha(
 
   const [resMes, resAnt, resHistorico, resPl, resPerfis] = await Promise.all([
     getAdmin().from('transacoes').select('*').eq('family_id', family_id)
-      .gte('data', inicioMes).lte('data', fimMes).order('data', { ascending: false }),
+      .gte('data_fatura', inicioMes).lte('data_fatura', fimMes).order('data_fatura', { ascending: false }),
     getAdmin().from('transacoes').select('*').eq('family_id', family_id)
-      .gte('data', inicioAnt).lte('data', fimAnt).order('data', { ascending: false }),
+      .gte('data_fatura', inicioAnt).lte('data_fatura', fimAnt).order('data_fatura', { ascending: false }),
     getAdmin().from('transacoes').select('*').eq('family_id', family_id)
-      .gte('data', inicioHistorico).lte('data', fimMes).order('data', { ascending: false }),
+      .gte('data_fatura', inicioHistorico).lte('data_fatura', fimMes).order('data_fatura', { ascending: false }),
     getAdmin().from('planejamento').select('*').eq('family_id', family_id)
       .order('updated_at', { ascending: false }).limit(1).single(),
     getAdmin().from('perfis').select('id, nome, role').eq('family_id', family_id)
@@ -89,7 +89,10 @@ export async function fetchDadosPlanilha(
         : undefined;
       return {
         id: row.id,
-        data: new Date(row.data + 'T12:00:00'),
+        // 'data' = mês da FATURA (vencimento); dataCompra = dia real da compra
+        data: new Date((row.data_fatura || row.data) + 'T12:00:00'),
+        dataCompra: new Date(row.data + 'T12:00:00'),
+        cartaoId: row.cartao_id || undefined,
         descricao: row.descricao,
         categoria: (row.recorrente && row.tipo !== 'receita') ? 'Despesas Fixas' : row.categoria,
         tipo: 'despesa' as const,
@@ -122,7 +125,7 @@ export async function fetchDadosPlanilha(
 
   // Meses do histórico — injeta salário em todo mês que tiver transações reais
   const mesesComDados = new Set(
-    rowsHistorico.map(r => `${new Date(r.data).getFullYear()}-${new Date(r.data).getMonth()}`)
+    rowsHistorico.map(r => { const [a, m] = String(r.data_fatura || r.data).split('-').map(Number); return `${a}-${m - 1}`; })
   );
   mesesComDados.forEach(chave => {
     const [a, m] = chave.split('-').map(Number);

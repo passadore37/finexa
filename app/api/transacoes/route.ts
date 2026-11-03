@@ -43,8 +43,8 @@ export async function GET(req: Request) {
 
     const { data, error: err } = await getAdmin().from('transacoes').select('*')
       .eq('family_id', family_id)
-      .gte('data', inicio).lte('data', fim)
-      .order('data', { ascending: false }).limit(500);
+      .gte('data_fatura', inicio).lte('data_fatura', fim)
+      .order('data_fatura', { ascending: false }).limit(500);
 
     if (err) throw err;
 
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   if (error) return error;
   try {
     const body = await req.json();
-    const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, data } = body;
+    const { valor, categoria, descricao, perfil, divisao, parcela_atual, total_parcelas, recorrente, data, cartao_id } = body;
 
     if (!valor)
       return NextResponse.json({ success: false, error: 'Valor obrigatório' }, { status: 400 });
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
       parcela_atual: parcela_atual || 1,
       total_parcelas: total_parcelas || 1,
       recorrente: recorrente || false,
+      cartao_id: cartao_id || null,
       family_id,
     }).select().single();
 

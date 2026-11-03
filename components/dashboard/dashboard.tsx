@@ -13,6 +13,7 @@ import { HistoricoMes } from './historico-mes';
 import { useUsuarioContext } from '@/hooks/use-usuario-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useMembros } from '@/hooks/use-membros';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { useMesContext } from '@/hooks/use-mes-context';
 import { aplicarCorPerfil, PERFIL_CONFIG } from '@/lib/perfil-config';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ export function Dashboard() {
   const { usuariaAtiva, setUsuariaAtiva, mounted } = useUsuarioContext();
   const { perfil } = useAuth();
   const { membros } = useMembros();
+  const { cartoes } = useCartoes();
   const [mostrarTutorial, setMostrarTutorial] = useState(false);
   // Mapeia role real → role lógico para os cálculos
   const role0 = membros[0]?.role ?? 'membro0';
@@ -178,7 +180,7 @@ export function Dashboard() {
 
         {/* Entrada rápida de gasto (voz ou texto, sem categoria) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <EntradaRapidaGasto onGastoAdicionado={() => mutate()} />
+          <EntradaRapidaGasto cartoes={cartoes} onGastoAdicionado={() => mutate()} />
         </div>
 
         {/* Histórico do mês — colapsado por padrão, expande inline */}
@@ -191,6 +193,7 @@ export function Dashboard() {
             salarioMembro0={dados.salarioMembro0}
             salarioMembro1={dados.salarioMembro1}
             nomePerfil={isPerfil ? nomePerfil : undefined}
+            cartoes={cartoes}
           />
         </div>
       </main>
