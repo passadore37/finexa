@@ -6,15 +6,18 @@ interface ComprometimentoRendaCardProps {
   renda: number;
   custoFixo: number;
   parcelas: number;
+  variaveis?: number; // gastos variáveis já lançados na fatura do mês
+  projecaoVariaveis?: number; // projeção dos variáveis até o fim do mês
   nomePerfil?: string;
 }
 
-export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, nomePerfil }: ComprometimentoRendaCardProps) {
-  const comprometido = custoFixo + parcelas;
+export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, variaveis = 0, projecaoVariaveis = 0, nomePerfil }: ComprometimentoRendaCardProps) {
+  const comprometido = custoFixo + parcelas + variaveis;
   const livre = Math.max(renda - comprometido, 0);
   const rendaSafe = renda > 0 ? renda : 1;
   const pctComprometido = renda > 0 ? Math.min((comprometido / renda) * 100, 100) : 0;
   const estourou = comprometido > renda;
+  const sobraProjetada = renda - (custoFixo + parcelas + projecaoVariaveis);
 
   const fmt = (v: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
@@ -23,6 +26,7 @@ export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, nomePerfi
   const segmentos = [
     { nome: 'Custo Fixo', valor: custoFixo, cor: 'var(--magenta)' },
     { nome: 'Parcelas', valor: parcelas, cor: 'var(--indigo)' },
+    { nome: 'Variáveis', valor: variaveis, cor: 'var(--amber, #EF9F27)' },
     { nome: 'Livre', valor: livre, cor: 'var(--teal)' },
   ].filter(s => s.valor > 0);
 
@@ -45,7 +49,7 @@ export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, nomePerfi
             {pctComprometido.toFixed(0)}%
           </span>
           <span className="text-xs text-muted-foreground">
-            da renda já comprometida com fixos e parcelas
+            da renda já comprometida
           </span>
         </div>
 
@@ -67,14 +71,24 @@ export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, nomePerfi
           ))}
         </div>
 
-        {estourou && (
-          <p className="text-[11px] text-[#E24B4A]">
-            Fixos + parcelas já passam da renda em {fmt(comprometido - renda)}.
+        <p className="text-sm">
+          {estourou ? (
+            <span className="text-[#E24B4A] font-medium">Passou da renda em {fmt(comprometido - renda)}</span>
+          ) : (
+            <>Sobram <span className="font-semibold tabular-nums" style={{ color: corHeadline }}>{fmt(livre)}</span></>
+          )}
+        </p>
+
+        {projecaoVariaveis > 0 && (
+          <p className="text-[11px] text-muted-foreground">
+            {sobraProjetada >= 0
+              ? <>No ritmo atual dos gastos variáveis, o mês fecha com <span className="font-medium text-foreground">{fmt(sobraProjetada)}</span> sobrando.</>
+              : <>No ritmo atual dos gastos variáveis, o mês fecha estourando em <span className="font-medium text-[#E24B4A]">{fmt(-sobraProjetada)}</span>.</>}
           </p>
         )}
 
         {/* Legenda com valores */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-4 gap-2 pt-1">
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: 'var(--magenta)' }} />
@@ -88,6 +102,13 @@ export function ComprometimentoRendaCard({ renda, custoFixo, parcelas, nomePerfi
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Parcelas</span>
             </div>
             <span className="text-sm font-medium tabular-nums">{fmt(parcelas)}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: 'var(--amber, #EF9F27)' }} />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Variáveis</span>
+            </div>
+            <span className="text-sm font-medium tabular-nums">{fmt(variaveis)}</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5">
