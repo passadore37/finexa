@@ -1,6 +1,8 @@
 export interface Transacao {
   id: string;
-  data: Date;
+  data: Date; // data da fatura (vencimento) quando há cartão; senão a data da compra
+  dataCompra?: Date;
+  cartaoId?: string;
   descricao: string;
   categoria: string;
   tipo: 'receita' | 'despesa';

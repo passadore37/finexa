@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { getCorCategoria } from '@/lib/types';
 import { calcularValorParMembro, transacaoVisivel } from '@/lib/perfil-config';
 import type { Transacao } from '@/lib/types';
+import type { Cartao } from '@/hooks/use-cartoes';
 
 interface HistoricoMesProps {
   transacoes: Transacao[];
@@ -16,6 +17,7 @@ interface HistoricoMesProps {
   salarioMembro0: number;
   salarioMembro1: number;
   nomePerfil?: string;
+  cartoes?: Cartao[];
 }
 
 const MESES_NOME = [
@@ -23,7 +25,7 @@ const MESES_NOME = [
   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
 ];
 
-export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, salarioMembro1, nomePerfil }: HistoricoMesProps) {
+export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, salarioMembro1, nomePerfil, cartoes = [] }: HistoricoMesProps) {
   const [aberto, setAberto] = useState(false);
   const salarios = { membro0: salarioMembro0, membro1: salarioMembro1 };
 
@@ -48,8 +50,8 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
           : t.valor,
       }))
       .sort((a, b) => {
-        const da = a.data instanceof Date ? a.data : new Date(a.data);
-        const db = b.data instanceof Date ? b.data : new Date(b.data);
+        const da = a.dataCompra ?? a.data;
+        const db = b.dataCompra ?? b.data;
         return db.getTime() - da.getTime();
       });
   }, [transacoes, mes, ano, perfil, salarioMembro0, salarioMembro1]);
@@ -71,7 +73,7 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
       >
         <span className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Receipt className="h-4 w-4 text-muted-foreground" />
-          Ver lançamentos de {MESES_NOME[mes]}
+          Ver faturas de {MESES_NOME[mes]}
           {nomePerfil ? ` — ${nomePerfil}` : ''}
           <span className="text-xs text-muted-foreground font-normal">
             ({itens.length} {itens.length === 1 ? 'gasto' : 'gastos'})
@@ -87,7 +89,7 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
         <CardContent className="pt-0 pb-4">
           {itens.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              Nenhum gasto lançado em {MESES_NOME[mes]} ainda.
+              Nenhum gasto nas faturas de {MESES_NOME[mes]} ainda.
             </p>
           ) : (
             <div className="border-t border-border -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 max-h-[420px] overflow-y-auto divide-y divide-border">
@@ -100,7 +102,8 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-foreground truncate">{t.descricao || t.categoria}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {fmtData(t.data)} · {t.categoria}
+                      {fmtData(t.dataCompra ?? t.data)} · {t.categoria}
+                      {t.cartaoId ? ` · ${cartoes.find(c => c.id === t.cartaoId)?.nome ?? 'cartão'}` : ''}
                       {t.totalParcelas && t.totalParcelas > 1 ? ` · ${t.parcelaAtual}/${t.totalParcelas}` : ''}
                       {t.divisao === '50/50' ? ' · 50/50' : ''}
                     </p>
