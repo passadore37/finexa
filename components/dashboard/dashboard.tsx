@@ -157,6 +157,14 @@ export function Dashboard() {
 
         {/* Os 2 indicadores principais */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <ComprometimentoRendaCard
+            renda={receitas}
+            custoFixo={fixas}
+            parcelas={parcelasMes}
+            variaveis={projecaoBarDados.gastoAtual}
+            projecaoVariaveis={projecaoBarDados.projecao}
+            nomePerfil={nomePerfil}
+          />
           <ProjecaoBar
             dados={projecaoBarDados}
             perfilGeral={!isPerfil}
@@ -173,7 +181,6 @@ export function Dashboard() {
               mutate();
             } : undefined}
           />
-          <ComprometimentoRendaCard renda={receitas} custoFixo={fixas} parcelas={parcelasMes} nomePerfil={nomePerfil} />
         </div>
 
         <div className="section-separator my-6 sm:my-8" />
