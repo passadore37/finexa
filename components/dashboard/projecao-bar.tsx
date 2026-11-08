@@ -58,10 +58,19 @@ const projecaoComFixas = projecao + valorFixas;
     setOpen(true);
   };
 
+  // O limite vale para o mês inteiro: fixas + parcelas + variáveis. Todas as
+  // comparações usam os totais com fixas, para a barra, o "% do limite" e o
+  // texto "acima/abaixo" dizerem sempre a mesma coisa.
   const limiteSafe = limite > 0 ? limite : 1;
-  const pctGasto = Math.min(((gastoAtualComFixas ?? gastoAtual) / limiteSafe) * 100, 100);
+  const totalAtual = gastoAtualComFixas ?? gastoAtual;
+  const pctReal = (totalAtual / limiteSafe) * 100;
+  const pctGasto = Math.min(pctReal, 100);
   const pctProjecao = Math.min((projecaoComFixas / limiteSafe) * 100, 110);
-  const overflow = projecao > limiteSafe;
+  const overflow = limite > 0 && projecaoComFixas > limite;
+  const jaPassou = limite > 0 && totalAtual > limite;
+  const leftHoje = Math.min(pctGasto, 88);
+  const leftProj = Math.min(pctProjecao, 95);
+  const mostrarRotuloProjecao = projecaoComFixas > totalAtual && leftProj - leftHoje >= 16;
 
   const getCorGasto = () => {
     if (pctGasto >= 90) return '#E24B4A';
@@ -80,7 +89,7 @@ const projecaoComFixas = projecao + valorFixas;
               Gastos x Meta {nomePerfil ? `— ${nomePerfil}` : ''}
             </CardTitle>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Ritmo diário dos gastos variáveis — fixas e parcelas entram à parte, sem escalar
+              Limite do mês inteiro. Fixas e parcelas entram com o valor cheio; só os gastos variáveis seguem o ritmo dos dias
             </p>
           </div>
           {(!perfilGeral || limite === 0) && (
@@ -104,18 +113,18 @@ const projecaoComFixas = projecao + valorFixas;
             <span
               className="absolute text-[10px] text-muted-foreground"
               style={{
-                left: `${Math.min(pctGasto, 88)}%`,
+                left: `${leftHoje}%`,
                 transform: 'translateX(-50%)',
               }}
             >
               Hoje
             </span>
 
-            {pctProjecao > pctGasto + 8 && (
+            {mostrarRotuloProjecao && (
               <span
                 className="absolute text-[10px] text-muted-foreground"
                 style={{
-                  left: `${Math.min(pctProjecao, 95)}%`,
+                  left: `${leftProj}%`,
                   transform: 'translateX(-50%)',
                 }}
               >
@@ -150,7 +159,7 @@ const projecaoComFixas = projecao + valorFixas;
             >
               {pctGasto > 15 && (
                 <span className="text-[10px] font-medium text-white tabular-nums">
-                  {Math.round(pctGasto)}%
+                  {Math.round(pctReal)}%
                 </span>
               )}
             </div>
@@ -198,7 +207,11 @@ const projecaoComFixas = projecao + valorFixas;
 )}
 
             <p className="text-[10px] text-muted-foreground mt-1">
-              {limite > 0 ? `${Math.round(pctGasto)}% do limite` : 'Limite não definido'}
+              {limite > 0
+                ? jaPassou
+                  ? `${Math.round(pctReal)}% do limite · ${fmt(totalAtual - limite)} acima`
+                  : `${Math.round(pctReal)}% do limite`
+                : 'Limite não definido'}
             </p>
           </div>
 
@@ -224,8 +237,8 @@ const projecaoComFixas = projecao + valorFixas;
             <p className="text-[10px] text-muted-foreground mt-1">
               {limite > 0
                 ? overflow
-                  ? `+${fmt(projecao - limite)} acima do limite`
-                  : `${fmt(limite - projecao)} abaixo do limite`
+                  ? `+${fmt(projecaoComFixas - limite)} acima do limite`
+                  : `${fmt(limite - projecaoComFixas)} abaixo do limite`
                 : <button onClick={handleAjustarLimiteClick} className="underline text-primary font-bold">Definir limite</button>}
             </p>
           </div>
@@ -236,7 +249,7 @@ const projecaoComFixas = projecao + valorFixas;
             <span className="text-[#E24B4A] text-sm">⚠</span>
             <p className="text-xs text-[#E24B4A]">
               No ritmo atual você vai ultrapassar o limite em{' '}
-              <strong>{fmt(projecao - limite)}</strong>
+              <strong>{fmt(projecaoComFixas - limite)}</strong>
             </p>
           </div>
         )}
