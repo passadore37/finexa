@@ -1,6 +1,6 @@
 export interface Transacao {
   id: string;
-  data: Date; // data da fatura (vencimento) quando há cartão; senão a data da compra
+  data: Date; // data da compra: é ela que define o mês do gasto
   dataCompra?: Date;
   cartaoId?: string;
   descricao: string;

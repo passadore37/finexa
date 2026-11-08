@@ -43,8 +43,8 @@ export async function GET(req: Request) {
 
     const { data, error: err } = await getAdmin().from('transacoes').select('*')
       .eq('family_id', family_id)
-      .gte('data_fatura', inicio).lte('data_fatura', fim)
-      .order('data_fatura', { ascending: false }).limit(500);
+      .gte('data', inicio).lte('data', fim)
+      .order('data', { ascending: false }).limit(500);
 
     if (err) throw err;
 

@@ -44,8 +44,8 @@ export async function POST(req: Request) {
       .from('transacoes')
       .select('valor')
       .eq('family_id', limite.family_id)
-      .gte('data_fatura', inicio)
-      .lte('data_fatura', fim);
+      .gte('data', inicio)
+      .lte('data', fim);
 
     const totalGasto = (transacoes ?? []).reduce((acc: number, t: any) => acc + Number(t.valor), 0);
     const percentual = (totalGasto / limite.limite_mensal) * 100;
