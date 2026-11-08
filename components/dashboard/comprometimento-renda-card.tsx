@@ -6,7 +6,7 @@ interface ComprometimentoRendaCardProps {
   renda: number;
   custoFixo: number;
   parcelas: number;
-  variaveis?: number; // gastos variáveis já lançados na fatura do mês
+  variaveis?: number; // gastos variáveis já lançados no mês (pela data da compra)
   projecaoVariaveis?: number; // projeção dos variáveis até o fim do mês
   nomePerfil?: string;
 }

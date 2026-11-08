@@ -74,7 +74,7 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
       >
         <span className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Receipt className="h-4 w-4 text-muted-foreground" />
-          Ver faturas de {MESES_NOME[mes]}
+          Ver gastos de {MESES_NOME[mes]}
           {nomePerfil ? ` — ${nomePerfil}` : ''}
           <span className="text-xs text-muted-foreground font-normal">
             ({itens.length} {itens.length === 1 ? 'gasto' : 'gastos'})
@@ -90,7 +90,7 @@ export function HistoricoMes({ transacoes, mes, ano, perfil, salarioMembro0, sal
         <CardContent className="pt-0 pb-4">
           {itens.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              Nenhum gasto nas faturas de {MESES_NOME[mes]} ainda.
+              Nenhum gasto em {MESES_NOME[mes]} ainda.
             </p>
           ) : (
             <div className="border-t border-border -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 max-h-[420px] overflow-y-auto divide-y divide-border">
